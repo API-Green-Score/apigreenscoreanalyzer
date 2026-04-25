@@ -14,9 +14,17 @@ detect_container_runtime() {
   elif command -v docker &>/dev/null && docker info &>/dev/null; then
     CONTAINER_RT="docker"
   else
-    echo "❌ Aucun container runtime trouvé (ni docker ni podman)." >&2
-    echo "   Installez Manager de container comme (Docker, Podman, Rancher Desktop ... ou votre manager de container preferé),  et réessayez." >&2
-    exit 1
+    # Don't fail when sourced — only the consumers that *need* a runtime
+    # (creedengo) should fail. Pure HTTP API analysis works without Docker.
+    CONTAINER_RT=""
+    CONTAINER_COMPOSE=""
+    if [ "${CONTAINER_RT_REQUIRED:-0}" = "1" ]; then
+      echo "❌ Aucun container runtime trouvé (ni docker ni podman)." >&2
+      echo "   Installez un manager de container (Docker, Podman, Rancher Desktop, …) et réessayez." >&2
+      exit 1
+    fi
+    echo "ℹ️  Aucun container runtime détecté — les fonctionnalités Creedengo seront désactivées." >&2
+    return 0
   fi
 
   CONTAINER_COMPOSE="$CONTAINER_RT compose"

@@ -70,7 +70,8 @@ if command -v cygpath &>/dev/null; then
   GREEN_DIR="$(cygpath -m "$GREEN_DIR")"
 fi
 
-# ── Detect container runtime (Docker/Podman) ──
+# ── Detect container runtime (Docker/Podman) — REQUIRED for creedengo ──
+CONTAINER_RT_REQUIRED=1
 source "$GREEN_DIR/scripts/_container-runtime.sh"
 
 # ── Portable null device ──
