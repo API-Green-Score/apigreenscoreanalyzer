@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-04-16T13:24:15Z",
-  "appname": "greenscoreoptimized",
+  "timestamp": "2026-04-25T11:00:08Z",
+  "appname": "multitarget",
   "project": "green-api-workshop",
   "language": "java",
   "analyzer": "creedengo",
@@ -27,7 +27,7 @@
     "ncloc": 718,
     "bugs": 0,
     "vulnerabilities": 0,
-    "code_smells": 155,
+    "code_smells": 152,
     "complexity": 112,
     "cognitive_complexity": 57
   },
@@ -41,20 +41,20 @@
       "category": "general",
       "count": 140,
       "files": [
+        "green-api-baseline/src/main/java/com/example/baseline/BaselineApplication.java",
+        "green-api-baseline/src/main/java/com/example/baseline/api/BookController.java",
+        "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
         "green-api-baseline/src/main/java/com/example/baseline/repo/BookRepository.java",
+        "green-api-optimized/src/main/java/com/example/optimized/OptimizedApplication.java",
         "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
         "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
         "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
+        "green-api-optimized/src/main/java/com/example/optimized/config/R2dbcDatabaseConfig.java",
+        "green-api-optimized/src/main/java/com/example/optimized/config/WebConfig.java",
+        "green-api-optimized/src/main/java/com/example/optimized/observability/PayloadLoggingFilter.java",
         "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
         "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
         "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
-        "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
-        "green-api-optimized/src/main/java/com/example/optimized/config/R2dbcDatabaseConfig.java",
-        "green-api-baseline/src/main/java/com/example/baseline/BaselineApplication.java",
-        "green-api-baseline/src/main/java/com/example/baseline/api/BookController.java",
-        "green-api-optimized/src/main/java/com/example/optimized/OptimizedApplication.java",
-        "green-api-optimized/src/main/java/com/example/optimized/config/WebConfig.java",
-        "green-api-optimized/src/main/java/com/example/optimized/observability/PayloadLoggingFilter.java",
         "green-api-optimized/src/main/java/com/example/optimized/web/RateLimitFilter.java"
       ]
     },
@@ -152,6 +152,78 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/BaselineApplication.java",
+      "line": 8,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/api/BookController.java",
+      "line": 19,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
+      "line": 4,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
+      "line": 5,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
+      "line": 6,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
+      "line": 7,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
+      "line": 8,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
+      "line": 9,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-baseline/src/main/java/com/example/baseline/repo/BookRepository.java",
       "line": 15,
       "effort": "5min",
@@ -179,6 +251,33 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/repo/BookRepository.java",
+      "line": 31,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-baseline/src/main/java/com/example/baseline/repo/BookRepository.java",
+      "line": 31,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/OptimizedApplication.java",
+      "line": 12,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
       "line": 34,
       "effort": "5min",
@@ -198,7 +297,43 @@
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 49,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 50,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 51,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
       "line": 57,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 69,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -216,6 +351,15 @@
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 74,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
       "line": 75,
       "effort": "5min",
       "type": "CODE_SMELL"
@@ -224,8 +368,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
-      "line": 56,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 76,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -233,8 +377,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
-      "line": 57,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 91,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -242,8 +386,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
-      "line": 68,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 92,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -251,8 +395,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
-      "line": 69,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 93,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -260,35 +404,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
-      "line": 71,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI76",
-      "severity": "MINOR",
-      "message": "Avoid usage of static collections.",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
-      "line": 12,
-      "effort": "20min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI76",
-      "severity": "MINOR",
-      "message": "Avoid usage of static collections.",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
-      "line": 16,
-      "effort": "20min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
-      "line": 20,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 95,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -296,8 +413,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
-      "line": 24,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 97,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -305,8 +422,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
-      "line": 26,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 104,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -314,8 +431,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
-      "line": 34,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 105,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -323,8 +440,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
-      "line": 35,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 107,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -332,8 +449,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
-      "line": 18,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 109,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -341,8 +458,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
-      "line": 19,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 110,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -350,8 +467,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
-      "line": 20,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 111,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -359,8 +476,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
-      "line": 41,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 118,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -368,8 +485,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
-      "line": 6,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 119,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -377,8 +494,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
-      "line": 7,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 124,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -386,8 +503,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
-      "line": 8,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 135,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -395,8 +512,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
-      "line": 9,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 137,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -404,8 +521,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
-      "line": 10,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 145,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -413,8 +530,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
-      "line": 24,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 145,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -422,8 +539,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
-      "line": 29,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 146,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -431,8 +548,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
-      "line": 34,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 154,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -440,8 +557,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
-      "line": 38,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 168,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -449,35 +566,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
-      "line": 38,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
-      "line": 38,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
-      "line": 39,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
-      "line": 7,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+      "line": 170,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -513,51 +603,6 @@
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
-      "line": 169,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/config/R2dbcDatabaseConfig.java",
-      "line": 15,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/config/R2dbcDatabaseConfig.java",
-      "line": 16,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/config/R2dbcDatabaseConfig.java",
-      "line": 19,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
-      "line": 51,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
       "line": 56,
       "effort": "5min",
       "type": "CODE_SMELL"
@@ -566,80 +611,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
-      "line": 56,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
       "line": 57,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
-      "line": 59,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
-      "line": 60,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
-      "line": 61,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 109,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 154,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 168,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 170,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -649,6 +622,33 @@
       "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
       "line": 67,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
+      "line": 68,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
+      "line": 69,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
+      "line": 71,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -918,97 +918,43 @@
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
+      "line": 169,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
       "line": 179,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
     {
-      "rule": "creedengo-java:GCI82",
+      "rule": "creedengo-java:GCI76",
       "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/BaselineApplication.java",
-      "line": 8,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/api/BookController.java",
-      "line": 19,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
-      "line": 4,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
-      "line": 5,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
-      "line": 6,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
-      "line": 8,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/domain/Book.java",
-      "line": 9,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/repo/BookRepository.java",
-      "line": 31,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-baseline/src/main/java/com/example/baseline/repo/BookRepository.java",
-      "line": 31,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/OptimizedApplication.java",
+      "message": "Avoid usage of static collections.",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
       "line": 12,
+      "effort": "20min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI76",
+      "severity": "MINOR",
+      "message": "Avoid usage of static collections.",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
+      "line": 16,
+      "effort": "20min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
+      "line": 20,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -1016,8 +962,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 49,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
+      "line": 24,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -1025,8 +971,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 50,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
+      "line": 26,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -1034,8 +980,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 51,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
+      "line": 34,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -1043,8 +989,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 69,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
+      "line": 35,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -1052,8 +998,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 74,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/config/R2dbcDatabaseConfig.java",
+      "line": 15,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -1061,8 +1007,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 76,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/config/R2dbcDatabaseConfig.java",
+      "line": 16,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -1070,161 +1016,8 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 91,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 92,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 93,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 95,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 97,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 104,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 105,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 107,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 110,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 111,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 118,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 119,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 124,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 135,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 137,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 145,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 145,
-      "effort": "5min",
-      "type": "CODE_SMELL"
-    },
-    {
-      "rule": "creedengo-java:GCI82",
-      "severity": "MINOR",
-      "message": "The variable is never reassigned and can be 'final'",
-      "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
-      "line": 146,
+      "file": "green-api-optimized/src/main/java/com/example/optimized/config/R2dbcDatabaseConfig.java",
+      "line": 19,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -1314,6 +1107,33 @@
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 18,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 19,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 20,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
       "line": 21,
       "effort": "5min",
       "type": "CODE_SMELL"
@@ -1333,6 +1153,15 @@
       "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
       "line": 39,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 41,
       "effort": "5min",
       "type": "CODE_SMELL"
     },
@@ -1385,6 +1214,177 @@
       "rule": "creedengo-java:GCI82",
       "severity": "MINOR",
       "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 51,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 56,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 56,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 57,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 59,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 60,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java",
+      "line": 61,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
+      "line": 6,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
+      "line": 7,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
+      "line": 8,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
+      "line": 9,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java",
+      "line": 10,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
+      "line": 24,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
+      "line": 29,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
+      "line": 34,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
+      "line": 38,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
+      "line": 38,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
+      "line": 38,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
+      "file": "green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java",
+      "line": 39,
+      "effort": "5min",
+      "type": "CODE_SMELL"
+    },
+    {
+      "rule": "creedengo-java:GCI82",
+      "severity": "MINOR",
+      "message": "The variable is never reassigned and can be 'final'",
       "file": "green-api-optimized/src/main/java/com/example/optimized/web/RateLimitFilter.java",
       "line": 23,
       "effort": "5min",
@@ -1430,16 +1430,16 @@
   "all_creedengo_rules": 17,
   "rules_violated": 2,
   "sonar_issues": {
-    "issues_count": 13,
+    "issues_count": 10,
     "severity_breakdown": {
       "BLOCKER": 0,
       "CRITICAL": 2,
       "MAJOR": 2,
-      "MINOR": 8,
+      "MINOR": 5,
       "INFO": 1
     },
-    "total_effort": "1h08min",
-    "total_effort_minutes": 68,
+    "total_effort": "1h02min",
+    "total_effort_minutes": 62,
     "rules_summary": [
       {
         "key": "java:S1192",
@@ -1451,6 +1451,18 @@
         "count": 2,
         "files": [
           "green-api-optimized/src/main/java/com/example/optimized/api/BookController.java",
+          "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java"
+        ]
+      },
+      {
+        "key": "java:S108",
+        "name": "S108",
+        "severity": "MAJOR",
+        "type": "CODE_SMELL",
+        "description": "",
+        "category": "general",
+        "count": 1,
+        "files": [
           "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java"
         ]
       },
@@ -1467,18 +1479,6 @@
         ]
       },
       {
-        "key": "java:S108",
-        "name": "S108",
-        "severity": "MAJOR",
-        "type": "CODE_SMELL",
-        "description": "",
-        "category": "general",
-        "count": 1,
-        "files": [
-          "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java"
-        ]
-      },
-      {
         "key": "java:S1170",
         "name": "S1170",
         "severity": "MINOR",
@@ -1488,42 +1488,6 @@
         "count": 2,
         "files": [
           "green-api-optimized/src/main/java/com/example/optimized/web/RateLimitFilter.java"
-        ]
-      },
-      {
-        "key": "java:S1319",
-        "name": "S1319",
-        "severity": "MINOR",
-        "type": "CODE_SMELL",
-        "description": "",
-        "category": "general",
-        "count": 1,
-        "files": [
-          "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java"
-        ]
-      },
-      {
-        "key": "java:S116",
-        "name": "S116",
-        "severity": "MINOR",
-        "type": "CODE_SMELL",
-        "description": "",
-        "category": "general",
-        "count": 1,
-        "files": [
-          "green-api-optimized/src/main/java/com/example/optimized/domain/Book.java"
-        ]
-      },
-      {
-        "key": "java:S117",
-        "name": "S117",
-        "severity": "MINOR",
-        "type": "CODE_SMELL",
-        "description": "",
-        "category": "general",
-        "count": 1,
-        "files": [
-          "green-api-optimized/src/main/java/com/example/optimized/domain/Book.java"
         ]
       },
       {
@@ -1551,15 +1515,15 @@
         ]
       },
       {
-        "key": "java:S1659",
-        "name": "S1659",
+        "key": "java:S1319",
+        "name": "S1319",
         "severity": "MINOR",
         "type": "CODE_SMELL",
         "description": "",
         "category": "general",
         "count": 1,
         "files": [
-          "green-api-optimized/src/main/java/com/example/optimized/web/RateLimitFilter.java"
+          "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java"
         ]
       },
       {
@@ -1577,15 +1541,7 @@
     ],
     "top_files": [
       {
-        "file": "green-api-optimized/src/main/java/com/example/optimized/domain/Book.java",
-        "count": 3
-      },
-      {
         "file": "green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java",
-        "count": 3
-      },
-      {
-        "file": "green-api-optimized/src/main/java/com/example/optimized/web/RateLimitFilter.java",
         "count": 3
       },
       {
@@ -1593,7 +1549,15 @@
         "count": 2
       },
       {
+        "file": "green-api-optimized/src/main/java/com/example/optimized/web/RateLimitFilter.java",
+        "count": 2
+      },
+      {
         "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
+        "count": 1
+      },
+      {
+        "file": "green-api-optimized/src/main/java/com/example/optimized/domain/Book.java",
         "count": 1
       },
       {
@@ -1602,51 +1566,6 @@
       }
     ],
     "issues": [
-      {
-        "rule": "java:S1319",
-        "severity": "MINOR",
-        "message": "The return type of this method should be an interface such as \"Set\" rather than the implementation \"LinkedHashSet\".",
-        "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
-        "line": 20,
-        "effort": "10min",
-        "type": "CODE_SMELL"
-      },
-      {
-        "rule": "java:S116",
-        "severity": "MINOR",
-        "message": "Rename this field \"published_date\" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.",
-        "file": "green-api-optimized/src/main/java/com/example/optimized/domain/Book.java",
-        "line": 15,
-        "effort": "2min",
-        "type": "CODE_SMELL"
-      },
-      {
-        "rule": "java:S117",
-        "severity": "MINOR",
-        "message": "Rename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.",
-        "file": "green-api-optimized/src/main/java/com/example/optimized/domain/Book.java",
-        "line": 23,
-        "effort": "2min",
-        "type": "CODE_SMELL"
-      },
-      {
-        "rule": "java:S107",
-        "severity": "MAJOR",
-        "message": "Constructor has 8 parameters, which is greater than 7 authorized.",
-        "file": "green-api-optimized/src/main/java/com/example/optimized/domain/Book.java",
-        "line": 23,
-        "effort": "20min",
-        "type": "CODE_SMELL"
-      },
-      {
-        "rule": "java:S1135",
-        "severity": "INFO",
-        "message": "Complete the task associated to this TODO comment.",
-        "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookReactiveRepository.java",
-        "line": 12,
-        "effort": "0min",
-        "type": "CODE_SMELL"
-      },
       {
         "rule": "java:S1192",
         "severity": "CRITICAL",
@@ -1693,12 +1612,30 @@
         "type": "CODE_SMELL"
       },
       {
-        "rule": "java:S1659",
+        "rule": "java:S1319",
         "severity": "MINOR",
-        "message": "Declare \"windowStart\" on a separate line.",
-        "file": "green-api-optimized/src/main/java/com/example/optimized/web/RateLimitFilter.java",
-        "line": 17,
-        "effort": "2min",
+        "message": "The return type of this method should be an interface such as \"Set\" rather than the implementation \"LinkedHashSet\".",
+        "file": "green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java",
+        "line": 20,
+        "effort": "10min",
+        "type": "CODE_SMELL"
+      },
+      {
+        "rule": "java:S107",
+        "severity": "MAJOR",
+        "message": "Constructor has 8 parameters, which is greater than 7 authorized.",
+        "file": "green-api-optimized/src/main/java/com/example/optimized/domain/Book.java",
+        "line": 23,
+        "effort": "20min",
+        "type": "CODE_SMELL"
+      },
+      {
+        "rule": "java:S1135",
+        "severity": "INFO",
+        "message": "Complete the task associated to this TODO comment.",
+        "file": "green-api-optimized/src/main/java/com/example/optimized/repo/BookReactiveRepository.java",
+        "line": 12,
+        "effort": "0min",
         "type": "CODE_SMELL"
       },
       {

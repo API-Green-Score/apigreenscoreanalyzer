@@ -1,7 +1,7 @@
 {
   "appname": "multitarget",
   "report": {
-    "timestamp": "2026-04-25T10:08:53Z",
+    "timestamp": "2026-04-25T10:55:17Z",
     "green_score": {
       "total": 11,
       "max": 100,
@@ -1487,32 +1487,32 @@
         "range_206": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.007478,
+          "time_total": 0.005185,
           "speed_download": 0
         },
         "fields_filter": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.004291,
+          "time_total": 0.005965,
           "speed_download": 0
         },
         "delta_changes": {
           "http_code": 400,
           "size_download": 207,
-          "time_total": 0.001068,
-          "speed_download": 193827
+          "time_total": 0.001615,
+          "speed_download": 128187
         },
         "cbor_format": {
           "http_code": 429,
           "size_download": 13,
-          "time_total": 0.002726,
-          "speed_download": 4890
+          "time_total": 0.007759,
+          "speed_download": 1718
         },
         "full_payload": {
           "http_code": 400,
           "size_download": 389,
-          "time_total": 0.002426,
-          "speed_download": 160368
+          "time_total": 0.001637,
+          "speed_download": 237684
         }
       }
     },
@@ -1524,121 +1524,121 @@
         "get:/books": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000666,
+          "time_total": 0.000874,
           "speed_download": 20000
         },
         "get:/books/{id}": {
           "http_code": 200,
           "size_download": 184,
-          "time_total": 0.008418,
-          "speed_download": 21858
+          "time_total": 0.004262,
+          "speed_download": 43174
         },
         "put:/books/{id}": {
           "http_code": 400,
           "size_download": 316,
-          "time_total": 0.003464,
-          "speed_download": 91237
+          "time_total": 0.00218,
+          "speed_download": 144970
         },
         "get:/reactive/books/{id}/summary": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.007478,
+          "time_total": 0.005185,
           "speed_download": 0
         },
         "post:/reactive/books/{id}/summary": {
           "http_code": 400,
           "size_download": 389,
-          "time_total": 0.002426,
-          "speed_download": 160368
+          "time_total": 0.001637,
+          "speed_download": 237684
         },
         "get:/books/{id}/summary": {
           "http_code": 200,
           "size_download": 34,
-          "time_total": 0.002006,
-          "speed_download": 16951
+          "time_total": 0.001494,
+          "speed_download": 22750
         },
         "post:/books/{id}/summary": {
           "http_code": 400,
           "size_download": 343,
-          "time_total": 0.002186,
-          "speed_download": 156898
+          "time_total": 0.002985,
+          "speed_download": 114903
         },
         "get:/reactive/books": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.010116,
+          "time_total": 0.017721,
           "speed_download": 0
         },
         "get:/reactive/books/{id}": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.00573,
+          "time_total": 0.004524,
           "speed_download": 0
         },
         "get:/reactive/books/select": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.004291,
+          "time_total": 0.005965,
           "speed_download": 0
         },
         "get:/reactive/books/changes": {
           "http_code": 400,
           "size_download": 207,
-          "time_total": 0.001068,
-          "speed_download": 193827
+          "time_total": 0.001615,
+          "speed_download": 128187
         },
         "get:/reactive/books/cbor": {
           "http_code": 429,
           "size_download": 13,
-          "time_total": 0.002726,
-          "speed_download": 4890
+          "time_total": 0.007759,
+          "speed_download": 1718
         },
         "get:/reactive/books/cacheable": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.00066,
+          "time_total": 0.000681,
           "speed_download": 20000
         },
         "get:/books/select": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000698,
+          "time_total": 0.000694,
           "speed_download": 20000
         },
         "get:/books/noCache/{id}": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000922,
+          "time_total": 0.000737,
           "speed_download": 20000
         },
         "get:/books/changes": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000692,
+          "time_total": 0.000784,
           "speed_download": 20000
         },
         "get:/books/cbor": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000803,
+          "time_total": 0.000862,
           "speed_download": 20000
         },
         "get:/books/batch": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000722,
+          "time_total": 0.000559,
           "speed_download": 20000
         },
         "get:/books/async": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000568,
+          "time_total": 0.000774,
           "speed_download": 20000
         },
         "get:/books/async/{id}": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000545,
+          "time_total": 0.000777,
           "speed_download": 20000
         }
       },
@@ -1653,7 +1653,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000666,
+          "time_total": 0.000874,
           "speed_download": 20000
         },
         {
@@ -1666,8 +1666,8 @@
           ],
           "http_code": 200,
           "size_download": 184,
-          "time_total": 0.008418,
-          "speed_download": 21858
+          "time_total": 0.004262,
+          "speed_download": 43174
         },
         {
           "method": "GET",
@@ -1679,8 +1679,8 @@
           ],
           "http_code": 200,
           "size_download": 184,
-          "time_total": 0.008418,
-          "speed_download": 21858
+          "time_total": 0.004262,
+          "speed_download": 43174
         },
         {
           "method": "PUT",
@@ -1692,8 +1692,8 @@
           ],
           "http_code": 400,
           "size_download": 316,
-          "time_total": 0.003464,
-          "speed_download": 91237
+          "time_total": 0.00218,
+          "speed_download": 144970
         },
         {
           "method": "GET",
@@ -1705,7 +1705,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.007478,
+          "time_total": 0.005185,
           "speed_download": 0
         },
         {
@@ -1718,8 +1718,8 @@
           ],
           "http_code": 400,
           "size_download": 389,
-          "time_total": 0.002426,
-          "speed_download": 160368
+          "time_total": 0.001637,
+          "speed_download": 237684
         },
         {
           "method": "GET",
@@ -1731,8 +1731,8 @@
           ],
           "http_code": 200,
           "size_download": 34,
-          "time_total": 0.002006,
-          "speed_download": 16951
+          "time_total": 0.001494,
+          "speed_download": 22750
         },
         {
           "method": "POST",
@@ -1744,8 +1744,8 @@
           ],
           "http_code": 400,
           "size_download": 343,
-          "time_total": 0.002186,
-          "speed_download": 156898
+          "time_total": 0.002985,
+          "speed_download": 114903
         },
         {
           "method": "GET",
@@ -1757,7 +1757,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.010116,
+          "time_total": 0.017721,
           "speed_download": 0
         },
         {
@@ -1770,7 +1770,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.00573,
+          "time_total": 0.004524,
           "speed_download": 0
         },
         {
@@ -1783,7 +1783,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.004291,
+          "time_total": 0.005965,
           "speed_download": 0
         },
         {
@@ -1796,8 +1796,8 @@
           ],
           "http_code": 400,
           "size_download": 207,
-          "time_total": 0.001068,
-          "speed_download": 193827
+          "time_total": 0.001615,
+          "speed_download": 128187
         },
         {
           "method": "GET",
@@ -1809,8 +1809,8 @@
           ],
           "http_code": 429,
           "size_download": 13,
-          "time_total": 0.002726,
-          "speed_download": 4890
+          "time_total": 0.007759,
+          "speed_download": 1718
         },
         {
           "method": "GET",
@@ -1822,7 +1822,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.00066,
+          "time_total": 0.000681,
           "speed_download": 20000
         },
         {
@@ -1835,7 +1835,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000666,
+          "time_total": 0.000874,
           "speed_download": 20000
         },
         {
@@ -1848,7 +1848,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000698,
+          "time_total": 0.000694,
           "speed_download": 20000
         },
         {
@@ -1861,7 +1861,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000922,
+          "time_total": 0.000737,
           "speed_download": 20000
         },
         {
@@ -1874,7 +1874,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000692,
+          "time_total": 0.000784,
           "speed_download": 20000
         },
         {
@@ -1887,7 +1887,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000803,
+          "time_total": 0.000862,
           "speed_download": 20000
         },
         {
@@ -1900,7 +1900,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000722,
+          "time_total": 0.000559,
           "speed_download": 20000
         },
         {
@@ -1913,7 +1913,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000568,
+          "time_total": 0.000774,
           "speed_download": 20000
         },
         {
@@ -1926,7 +1926,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000545,
+          "time_total": 0.000777,
           "speed_download": 20000
         }
       ]

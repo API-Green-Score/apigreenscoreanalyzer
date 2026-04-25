@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-25T10:08:53Z",
+  "timestamp": "2026-04-25T10:55:17Z",
   "service_base_url": "http://localhost:8081",
   "endpoint": {
     "method": "get",
@@ -7,10 +7,10 @@
     "url": "http://localhost:8081/reactive/books/cbor",
     "http_code": 429,
     "size_download": 13,
-    "time_total": 0.002726,
-    "speed_download": 4890,
+    "time_total": 0.007759,
+    "speed_download": 1718,
     "energy_network_wh": 7.264316082000732e-07,
-    "energy_server_wh": 1.8930555555555556e-05,
-    "energy_total_wh": 1.965698716375563e-05
+    "energy_server_wh": 5.3881944444444446e-05,
+    "energy_total_wh": 5.460837605264452e-05
   }
 }

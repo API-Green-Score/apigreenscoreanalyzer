@@ -10,6 +10,11 @@
 #    --debug            Enable debug output in the analyzer
 #    --appname <name>   Override the application name in reports
 #    --creedengo        Also run Creedengo eco-design code analysis
+#    --git-repo <url>   Clone a remote Git repo, run Creedengo analysis on it,
+#                       then return to the parent folder. Implies --creedengo.
+#    --git-branch <b>   Branch/tag to checkout (default: repo default).
+#    --git-subdir <p>   Analyze a sub-folder of the cloned repo.
+#    --git-keep         Keep the cloned working copy after analysis.
 #    --target  <url>          One API base URL to analyze. Repeat the flag to
 #                              add several APIs.
 #    --targets <csv>           Same as --target but accepts a comma-separated
@@ -39,6 +44,7 @@ BEARER_TOKEN="${BEARER_TOKEN:-}"
 RUN_CREEDENGO=false
 TARGETS=()      # one or many --target <url>  (or comma-separated)
 SWAGGERS=()     # one or many --swagger <url|file>
+CREEDENGO_EXTRA=()   # forwarded as-is to creedengo-analyzer.sh
 args=("$@")
 i=0
 while [ $i -lt ${#args[@]} ]; do
@@ -52,6 +58,23 @@ while [ $i -lt ${#args[@]} ]; do
     --bearer)
       i=$((i + 1))
       BEARER_TOKEN="${args[$i]:-}"
+      ;;
+    --git-repo|--git-branch|--git-subdir)
+      flag="${args[$i]}"
+      i=$((i + 1))
+      val="${args[$i]:-}"
+      CREEDENGO_EXTRA+=("$flag" "$val")
+      RUN_CREEDENGO=true   # implicit: --git-repo only makes sense for creedengo
+      ;;
+    --git-keep)
+      CREEDENGO_EXTRA+=("--git-keep")
+      RUN_CREEDENGO=true
+      ;;
+    --root)
+      # Explicit project folder for Creedengo (defaults to CWD otherwise).
+      i=$((i + 1))
+      val="${args[$i]:-}"
+      CREEDENGO_EXTRA+=("--root" "$val")
       ;;
     --target|--targets)
       # Consume every following token until the next --flag, then split by
@@ -234,7 +257,7 @@ fi
 if [ "$RUN_CREEDENGO" = true ]; then
   echo ""
   echo "Running Creedengo eco-design code analyzer..."
-  bash "$ROOT/scripts/creedengo-analyzer.sh" $DEBUG_FLAG --skip-build --no-cleanup --skip-dashboard || true
+  bash "$ROOT/scripts/creedengo-analyzer.sh" $DEBUG_FLAG --skip-build --no-cleanup --skip-dashboard ${CREEDENGO_EXTRA[@]+"${CREEDENGO_EXTRA[@]}"} || true
 else
   echo ""
   echo "💡 Tip: run with --creedengo to also run Creedengo eco-design code analysis"
@@ -254,7 +277,7 @@ if [ -f "$ROOT/scripts/generate-dashboard.sh" ] && [ -f "$LATEST_REPORT" ]; then
     DASHBOARD_ARGS+=("$CREEDENGO_REPORT")
   fi
   bash "$ROOT/scripts/generate-dashboard.sh" "${DASHBOARD_ARGS[@]}" || true
-  echo "✅ Dashboard generated: greenanalyzer/dashboard/index.html"
+  echo "✅ Dashboard generated: $ROOT/dashboard/index.html"
 else
   echo "⚠️  No report found — dashboard not generated"
 fi

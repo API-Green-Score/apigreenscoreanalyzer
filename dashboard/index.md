@@ -4,7 +4,7 @@
 >
 > **Devoxx France 2026 — Green Architecture : moins de gras, plus d'impact !**
 
-📅 *Dernière analyse : 2026-04-25T10:08:53Z*
+📅 *Dernière analyse : 2026-04-25T10:55:17Z*
 
 ---
 
@@ -29,18 +29,18 @@
 | Méthode | Endpoint | Taille | Temps | HTTP |
 |:-------:|----------|-------:|------:|-----:|
 | GET | `/books` | 20 B | 0.001s | 429 |
-| GET | `/books/{id}` | 184 B | 0.008s | 200 |
-| GET | `/books/{id}` | 184 B | 0.008s | 200 |
-| PUT | `/books/{id}` | 316 B | 0.003s | 400 |
-| GET | `/reactive/books/{id}/summary` | 0 B | 0.007s | 200 |
+| GET | `/books/{id}` | 184 B | 0.004s | 200 |
+| GET | `/books/{id}` | 184 B | 0.004s | 200 |
+| PUT | `/books/{id}` | 316 B | 0.002s | 400 |
+| GET | `/reactive/books/{id}/summary` | 0 B | 0.005s | 200 |
 | POST | `/reactive/books/{id}/summary` | 389 B | 0.002s | 400 |
-| GET | `/books/{id}/summary` | 34 B | 0.002s | 200 |
-| POST | `/books/{id}/summary` | 343 B | 0.002s | 400 |
-| GET | `/reactive/books` | 0 B | 0.010s | 200 |
-| GET | `/reactive/books/{id}` | 0 B | 0.006s | 200 |
-| GET | `/reactive/books/select` | 0 B | 0.004s | 200 |
-| GET | `/reactive/books/changes` | 207 B | 0.001s | 400 |
-| GET | `/reactive/books/cbor` | 13 B | 0.003s | 429 |
+| GET | `/books/{id}/summary` | 34 B | 0.001s | 200 |
+| POST | `/books/{id}/summary` | 343 B | 0.003s | 400 |
+| GET | `/reactive/books` | 0 B | 0.018s | 200 |
+| GET | `/reactive/books/{id}` | 0 B | 0.005s | 200 |
+| GET | `/reactive/books/select` | 0 B | 0.006s | 200 |
+| GET | `/reactive/books/changes` | 207 B | 0.002s | 400 |
+| GET | `/reactive/books/cbor` | 13 B | 0.008s | 429 |
 | GET | `/reactive/books/cacheable` | 20 B | 0.001s | 429 |
 | GET | `/books` | 20 B | 0.001s | 429 |
 | GET | `/books/select` | 20 B | 0.001s | 429 |
@@ -369,7 +369,7 @@ Add dependency: spring-boot-starter-actuator (likely already present).
 
 ---
 
-### 🔧 Issues SonarQube générales (hors écodesign) — 13 issues
+### 🔧 Issues SonarQube générales (hors écodesign) — 10 issues
 
 > Ces issues proviennent des règles SonarQube standard (qualité de code, bugs, sécurité). Elles ne sont **pas** comptabilisées dans le score Creedengo.
 
@@ -377,27 +377,24 @@ Add dependency: spring-boot-starter-actuator (likely already present).
 |:--------:|-------:|
 | 🟠 Critique | 2 |
 | 🟡 Majeur | 2 |
-| ⚪ Mineur | 8 |
+| ⚪ Mineur | 5 |
 | 🔵 Info | 1 |
-| **Total** | **13** |
+| **Total** | **10** |
 
 | Sévérité | Règle | Issues |
 |:--------:|-------|-------:|
 | 🟠 CRITICAL | **S1192** — S1192 | 2 |
-| 🟡 MAJOR | **S107** — S107 | 1 |
 | 🟡 MAJOR | **S108** — S108 | 1 |
+| 🟡 MAJOR | **S107** — S107 | 1 |
 | ⚪ MINOR | **S1170** — S1170 | 2 |
-| ⚪ MINOR | **S1319** — S1319 | 1 |
-| ⚪ MINOR | **S116** — S116 | 1 |
-| ⚪ MINOR | **S117** — S117 | 1 |
 | ⚪ MINOR | **S1612** — S1612 | 1 |
 | ⚪ MINOR | **S1602** — S1602 | 1 |
-| ⚪ MINOR | **S1659** — S1659 | 1 |
+| ⚪ MINOR | **S1319** — S1319 | 1 |
 | 🔵 INFO | **S1135** — S1135 | 1 |
 
-- **Effort de remédiation SonarQube** : 1h08min
+- **Effort de remédiation SonarQube** : 1h02min
 
-📅 *2026-04-16T13:24:15Z*
+📅 *2026-04-25T11:00:08Z*
 
 ---
 

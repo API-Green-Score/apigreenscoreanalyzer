@@ -20,12 +20,71 @@ on:
           the targets above. Leave empty to auto-discover.
         required: false
         default: ""
+      appname:
+        description: "Override the application name in reports (default: repo name)"
+        required: false
+        default: ""
+      bearer_token:
+        description: >-
+          Optional Bearer token for authenticated API endpoints.
+          ⚠️ Prefer the BEARER_TOKEN repository secret when possible —
+          values typed here are visible in workflow logs.
+        required: false
+        default: ""
+      debug:
+        description: "Enable debug output in the analyzer"
+        type: boolean
+        required: false
+        default: false
+      run_creedengo:
+        description: "Run Creedengo eco-design code analysis"
+        type: boolean
+        required: false
+        default: true
+      run_spectral:
+        description: "Run Spectral OpenAPI lint"
+        type: boolean
+        required: false
+        default: true
+      run_auto_discover:
+        description: "Run additional auto-discover analysis job"
+        type: boolean
+        required: false
+        default: true
+      git_repo:
+        description: "Clone a remote Git repo and run Creedengo on it (implies run_creedengo)"
+        required: false
+        default: ""
+      git_branch:
+        description: "Branch/tag to checkout for --git-repo"
+        required: false
+        default: ""
+      git_subdir:
+        description: "Sub-folder of the cloned repo to analyze"
+        required: false
+        default: ""
+      git_keep:
+        description: "Keep the cloned working copy after analysis"
+        type: boolean
+        required: false
+        default: false
 
 env:
   JAVA_VERSION: '21'
-  # Defaults used when the workflow is triggered by push/PR (no inputs).
+  # ── Defaults used when the workflow is triggered by push/PR (no inputs). ──
+  # Override at runtime via the "Run workflow" form (workflow_dispatch inputs)
+  # or by editing these values for the push/PR triggers.
   DEFAULT_TARGETS: "http://localhost:8080"
   DEFAULT_SWAGGERS: "http://localhost:8080/api/v3/api-docs"
+  DEFAULT_APPNAME: ""              # empty → falls back to ${{ github.event.repository.name }}
+  DEFAULT_DEBUG: "false"
+  DEFAULT_RUN_CREEDENGO: "true"
+  DEFAULT_RUN_SPECTRAL: "true"
+  DEFAULT_RUN_AUTO_DISCOVER: "true"
+  DEFAULT_GIT_REPO: ""
+  DEFAULT_GIT_BRANCH: ""
+  DEFAULT_GIT_SUBDIR: ""
+  DEFAULT_GIT_KEEP: "false"
 
 permissions:
   contents: read
@@ -61,6 +120,14 @@ jobs:
     name: "🌿 Green Score Analysis"
     needs: build
     runs-on: ubuntu-latest
+    env:
+      # Resolved once per job: workflow_dispatch input wins, else default env.
+      TARGETS:    ${{ github.event.inputs.targets    || env.DEFAULT_TARGETS }}
+      SWAGGERS:   ${{ github.event.inputs.swaggers   || env.DEFAULT_SWAGGERS }}
+      APPNAME:    ${{ github.event.inputs.appname    || env.DEFAULT_APPNAME    || github.event.repository.name }}
+      DEBUG:      ${{ github.event.inputs.debug      || env.DEFAULT_DEBUG }}
+      # Bearer: prefer secret, fallback to manual input (logs may show value).
+      BEARER_TOKEN: ${{ secrets.BEARER_TOKEN || github.event.inputs.bearer_token }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup JDK ${{ env.JAVA_VERSION }}
@@ -85,8 +152,6 @@ jobs:
             > backend.log 2>&1 &
           echo $! > backend.pid
       - name: Wait for targets
-        env:
-          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
         run: |
           # Probe every URL in $TARGETS (comma-separated) instead of a hardcoded
           # localhost:8080. Try several common health paths so the workflow
@@ -131,9 +196,6 @@ jobs:
             exit 1
           fi
       - name: Verify Swagger is exposed
-        env:
-          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
-          SWAGGERS: ${{ github.event.inputs.swaggers || env.DEFAULT_SWAGGERS }}
         run: |
           # Pick the first target/swagger pair for the verification probe.
           IFS=',' read -r -a T_ARR <<< "$TARGETS"
@@ -162,9 +224,6 @@ jobs:
           fi
 
       - name: Run Green API Auto-Discover Analyzer
-        env:
-          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
-          SWAGGERS: ${{ github.event.inputs.swaggers || env.DEFAULT_SWAGGERS }}
         run: |
           # Build --target / --swagger flags from the comma-separated lists
           # (one or several APIs analyzed in a single run; specs are merged
@@ -182,7 +241,16 @@ jobs:
               [ -n "$s_trim" ] && ARGS+=(--swagger "$s_trim")
             done
           fi
-          echo "🌿 Analyzing ${#T_ARR[@]} target(s): $TARGETS"
+          # Optional bearer token (passed via secrets.BEARER_TOKEN or manual input)
+          if [ -n "${BEARER_TOKEN:-}" ]; then
+            echo "🔐 Bearer token provided — protected endpoints will be authenticated"
+            ARGS+=(--bearer "$BEARER_TOKEN")
+          fi
+          # Optional debug
+          if [ "${DEBUG:-false}" = "true" ]; then
+            ARGS+=(--debug)
+          fi
+          echo "🌿 Analyzing ${#T_ARR[@]} target(s): $TARGETS  (appname=$APPNAME)"
           python3 greenanalyzer/scripts/green-api-auto-discover.py \
             "${ARGS[@]}" \
             --repeat 3 \
@@ -294,7 +362,16 @@ jobs:
   creedengo:
     name: "🌱 Creedengo Eco-Design Analysis"
     needs: build
+    if: ${{ (github.event.inputs.run_creedengo || env.DEFAULT_RUN_CREEDENGO) != 'false' }}
     runs-on: ubuntu-latest
+    env:
+      APPNAME:    ${{ github.event.inputs.appname    || env.DEFAULT_APPNAME    || github.event.repository.name }}
+      DEBUG:      ${{ github.event.inputs.debug      || env.DEFAULT_DEBUG }}
+      GIT_REPO:   ${{ github.event.inputs.git_repo   || env.DEFAULT_GIT_REPO }}
+      GIT_BRANCH: ${{ github.event.inputs.git_branch || env.DEFAULT_GIT_BRANCH }}
+      GIT_SUBDIR: ${{ github.event.inputs.git_subdir || env.DEFAULT_GIT_SUBDIR }}
+      GIT_KEEP:   ${{ github.event.inputs.git_keep   || env.DEFAULT_GIT_KEEP }}
+      SONAR_PORT: "9100"
     steps:
       - uses: actions/checkout@v4
       - name: Setup JDK ${{ env.JAVA_VERSION }}
@@ -317,11 +394,24 @@ jobs:
 
       - name: Run Creedengo Analyzer (same script as local)
         env:
-          SONAR_PORT: "9100"
-          APPNAME: ${{ github.event.repository.name || 'esignpayment' }}
+          # APPNAME / SONAR_PORT inherited from job-level env above
+          # but set explicitly so the override is visible in the step.
+          APPNAME: ${{ env.APPNAME }}
+          SONAR_PORT: ${{ env.SONAR_PORT }}
         run: |
           chmod +x greenanalyzer/scripts/creedengo-analyzer.sh greenanalyzer/scripts/_container-runtime.sh
-          bash greenanalyzer/scripts/creedengo-analyzer.sh --skip-build --force-cleanup
+          EXTRA=()
+          [ "${DEBUG:-false}" = "true" ] && EXTRA+=(--debug)
+          if [ -n "${GIT_REPO:-}" ]; then
+            EXTRA+=(--git-repo "$GIT_REPO")
+            [ -n "${GIT_BRANCH:-}" ] && EXTRA+=(--git-branch "$GIT_BRANCH")
+            [ -n "${GIT_SUBDIR:-}" ] && EXTRA+=(--git-subdir "$GIT_SUBDIR")
+            [ "${GIT_KEEP:-false}" = "true" ] && EXTRA+=(--git-keep)
+          fi
+          echo "🌱 Creedengo extra args: ${EXTRA[*]:-(none)}"
+          bash greenanalyzer/scripts/creedengo-analyzer.sh \
+            --skip-build --force-cleanup \
+            "${EXTRA[@]}"
 
       - name: Assertions — Creedengo
         run: |
@@ -381,7 +471,11 @@ jobs:
   spectral-lint:
     name: "🔬 Spectral OpenAPI Lint"
     needs: build
+    if: ${{ (github.event.inputs.run_spectral || env.DEFAULT_RUN_SPECTRAL) != 'false' }}
     runs-on: ubuntu-latest
+    env:
+      TARGETS:  ${{ github.event.inputs.targets  || env.DEFAULT_TARGETS }}
+      SWAGGERS: ${{ github.event.inputs.swaggers || env.DEFAULT_SWAGGERS }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup JDK ${{ env.JAVA_VERSION }}
@@ -402,8 +496,6 @@ jobs:
             > backend.log 2>&1 &
           echo $! > backend.pid
       - name: Wait for targets (spectral)
-        env:
-          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
         run: |
           IFS=',' read -r -a T_ARR <<< "$TARGETS"
           HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
@@ -420,9 +512,6 @@ jobs:
             done
           done
       - name: Fetch OpenAPI spec
-        env:
-          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
-          SWAGGERS: ${{ github.event.inputs.swaggers || env.DEFAULT_SWAGGERS }}
         run: |
           IFS=',' read -r -a T_ARR <<< "$TARGETS"
           IFS=',' read -r -a S_ARR <<< "$SWAGGERS"
@@ -448,7 +537,14 @@ jobs:
   auto-discover:
     name: "🔍 Auto-Discover Analysis"
     needs: build
+    if: ${{ (github.event.inputs.run_auto_discover || env.DEFAULT_RUN_AUTO_DISCOVER) != 'false' }}
     runs-on: ubuntu-latest
+    env:
+      TARGETS:    ${{ github.event.inputs.targets    || env.DEFAULT_TARGETS }}
+      SWAGGERS:   ${{ github.event.inputs.swaggers   || env.DEFAULT_SWAGGERS }}
+      APPNAME:    ${{ github.event.inputs.appname    || env.DEFAULT_APPNAME    || github.event.repository.name }}
+      DEBUG:      ${{ github.event.inputs.debug      || env.DEFAULT_DEBUG }}
+      BEARER_TOKEN: ${{ secrets.BEARER_TOKEN || github.event.inputs.bearer_token }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup JDK ${{ env.JAVA_VERSION }}
@@ -473,8 +569,6 @@ jobs:
             > backend.log 2>&1 &
           echo $! > backend.pid
       - name: Wait for targets (auto-discover)
-        env:
-          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
         run: |
           IFS=',' read -r -a T_ARR <<< "$TARGETS"
           HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
@@ -491,9 +585,6 @@ jobs:
             done
           done
       - name: Run Auto-Discover Analyzer
-        env:
-          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
-          SWAGGERS: ${{ github.event.inputs.swaggers || env.DEFAULT_SWAGGERS }}
         run: |
           ARGS=()
           IFS=',' read -r -a T_ARR <<< "$TARGETS"
@@ -507,6 +598,12 @@ jobs:
               s_trim="$(echo "$s" | xargs)"
               [ -n "$s_trim" ] && ARGS+=(--swagger "$s_trim")
             done
+          fi
+          if [ -n "${BEARER_TOKEN:-}" ]; then
+            ARGS+=(--bearer "$BEARER_TOKEN")
+          fi
+          if [ "${DEBUG:-false}" = "true" ]; then
+            ARGS+=(--debug)
           fi
           python3 greenanalyzer/scripts/green-api-auto-discover.py \
             "${ARGS[@]}" \

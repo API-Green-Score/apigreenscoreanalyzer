@@ -275,8 +275,21 @@ for ep in disc.get('discovered_endpoints', [])[:20]:
 " "$LATEST_REPORT" 2>/dev/null || true
 fi
 
-cp "$LATEST_REPORT" "reports/last-report.json"
-cp -r greenanalyzer/dashboard/* "dashboard/" || true
-cp -r greenanalyzer/badges/* "badges/"
+# Canonical assets live under the analyzer's own folder ($GREEN_DIR).
+# When the analyzer is installed inside a host project (installer.sh layout:
+# <host>/greenanalyzer/...), we ALSO mirror the dashboard / badges / latest
+# report at the host project root for convenience. Otherwise (standalone use),
+# we only refresh the canonical copies.
+mkdir -p "$GREEN_DIR/reports"
+cp "$LATEST_REPORT" "$GREEN_DIR/reports/last-report.json" || true
 
-echo -e "Open the dashboard: ${YELLOW}open greenanalyzer/dashboard/index.html${NC}"
+DASHBOARD_PATH="$GREEN_DIR/dashboard/index.html"
+if [ -n "${ROOT_DIR:-}" ] && [ "$ROOT_DIR" != "$GREEN_DIR" ] && [ -d "$ROOT_DIR" ]; then
+  mkdir -p "$ROOT_DIR/dashboard" "$ROOT_DIR/badges" "$ROOT_DIR/reports"
+  cp -r "$GREEN_DIR/dashboard/." "$ROOT_DIR/dashboard/" 2>/dev/null || true
+  cp -r "$GREEN_DIR/badges/."    "$ROOT_DIR/badges/"    2>/dev/null || true
+  cp    "$LATEST_REPORT"         "$ROOT_DIR/reports/last-report.json" 2>/dev/null || true
+  DASHBOARD_PATH="$ROOT_DIR/dashboard/index.html"
+fi
+
+echo -e "Open the dashboard: ${YELLOW}open ${DASHBOARD_PATH}${NC}"

@@ -148,7 +148,7 @@ if [ -f "$GREEN_DIR/scripts/generate-dashboard.sh" ] && [ -f "$LATEST_REPORT" ];
     DASHBOARD_ARGS+=("$CREEDENGO_REPORT")
   fi
   bash "$GREEN_DIR/scripts/generate-dashboard.sh" "${DASHBOARD_ARGS[@]}" || true
-  echo "✅ Dashboard generated: greenanalyzer/dashboard/index.html"
+  echo "✅ Dashboard generated: $GREEN_DIR/dashboard/index.html"
 else
   echo "⚠️  No report found — dashboard not generated"
 fi

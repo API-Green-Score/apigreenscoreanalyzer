@@ -21,6 +21,11 @@
 #    bash scripts/creedengo-analyzer.sh --force-cleanup  # destroy containers/volumes/images post-build
 #    bash scripts/creedengo-analyzer.sh --lang java      # force language
 #    CREEDENGO_VERSION=1.7.0 bash scripts/creedengo-analyzer.sh
+#
+#  Analyze a remote Git repository (clone → analyze → cd back → cleanup):
+#    bash scripts/creedengo-analyzer.sh --git-repo https://github.com/owner/repo.git
+#    bash scripts/creedengo-analyzer.sh --git-repo git@github.com:owner/repo.git --git-branch develop
+#    bash scripts/creedengo-analyzer.sh --git-repo https://… --git-subdir backend --git-keep
 ###############################################################################
 set -uo pipefail
 
@@ -36,9 +41,24 @@ export MSYS2_ARG_CONV_EXCL="*"
 # encode Unicode characters like ✅ ⚠ 🌱 used in output messages.
 export PYTHONIOENCODING=utf-8
 
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 GREEN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# ── Default ROOT (project to analyze) ──
+# Resolution order, first match wins:
+#   1. --root <path>   (CLI flag, parsed below)
+#   2. --git-repo <url> (parsed below; ROOT becomes the cloned working copy)
+#   3. $CREEDENGO_ROOT (environment variable)
+#   4. $(pwd)           (current working directory — the most intuitive default
+#                        for both standalone and installer-style layouts)
+# We intentionally do NOT use "$SCRIPT_DIR/../.." anymore: that pointed at the
+# parent of the analyzer folder, which is wrong in standalone mode (it landed
+# on a random ancestor like /Users/<user>/greenscoreimpl).
+if [ -n "${CREEDENGO_ROOT:-}" ]; then
+  ROOT="$CREEDENGO_ROOT"
+else
+  ROOT="$(pwd)"
+fi
 
 # ── Convert MSYS paths to mixed Windows paths for non-MSYS tools (Python, etc.) ──
 # Git Bash's `pwd` returns /c/git/... which native Windows programs can't resolve.
@@ -102,6 +122,11 @@ FORCE_LANG=""
 NO_CLEANUP=false
 FORCE_CLEANUP=false
 SKIP_DASHBOARD=false
+GIT_REPO=""
+GIT_BRANCH=""
+GIT_SUBDIR=""
+GIT_KEEP=false
+GIT_CHECKOUTS_DIR="$GREEN_DIR/.creedengo/checkouts"
 ARGS=("$@")
 for ((i=0; i<${#ARGS[@]}; i++)); do
   case "${ARGS[$i]}" in
@@ -110,14 +135,105 @@ for ((i=0; i<${#ARGS[@]}; i++)); do
     --no-cleanup) NO_CLEANUP=true ;;
     --force-cleanup) FORCE_CLEANUP=true ;;
     --skip-dashboard) SKIP_DASHBOARD=true ;;
+    --git-keep) GIT_KEEP=true ;;
     --lang=*) FORCE_LANG="${ARGS[$i]#--lang=}" ;;
     --lang)
-      if [ $((i+1)) -lt ${#ARGS[@]} ]; then
-        FORCE_LANG="${ARGS[$((i+1))]}"
-      fi
+      [ $((i+1)) -lt ${#ARGS[@]} ] && FORCE_LANG="${ARGS[$((i+1))]}"
+      ;;
+    --git-repo=*)   GIT_REPO="${ARGS[$i]#--git-repo=}" ;;
+    --git-repo)
+      [ $((i+1)) -lt ${#ARGS[@]} ] && GIT_REPO="${ARGS[$((i+1))]}"
+      ;;
+    --git-branch=*) GIT_BRANCH="${ARGS[$i]#--git-branch=}" ;;
+    --git-branch)
+      [ $((i+1)) -lt ${#ARGS[@]} ] && GIT_BRANCH="${ARGS[$((i+1))]}"
+      ;;
+    --git-subdir=*) GIT_SUBDIR="${ARGS[$i]#--git-subdir=}" ;;
+    --git-subdir)
+      [ $((i+1)) -lt ${#ARGS[@]} ] && GIT_SUBDIR="${ARGS[$((i+1))]}"
+      ;;
+    --root=*) ROOT="${ARGS[$i]#--root=}" ;;
+    --root)
+      [ $((i+1)) -lt ${#ARGS[@]} ] && ROOT="${ARGS[$((i+1))]}"
       ;;
   esac
 done
+
+# Normalize ROOT to an absolute path (in case --root or $CREEDENGO_ROOT was a
+# relative path) and re-apply cygpath conversion under MSYS / Git Bash.
+if [ -n "$ROOT" ] && [ -d "$ROOT" ]; then
+  ROOT="$(cd "$ROOT" && pwd)"
+  if command -v cygpath &>/dev/null; then
+    ROOT="$(cygpath -m "$ROOT")"
+  fi
+fi
+
+###############################################################################
+# Optional: clone a remote Git repository, switch ROOT into the working copy,
+# and ensure we cd back to the original parent folder + cleanup on exit.
+###############################################################################
+ORIGINAL_ROOT="$ROOT"
+ORIGINAL_PWD="$(pwd)"
+GIT_CLONE_DIR=""
+
+return_to_parent() {
+  # Always return to the parent folder where the script was invoked from.
+  cd "$ORIGINAL_PWD" 2>/dev/null || true
+  if [ -n "$GIT_CLONE_DIR" ] && [ "$GIT_KEEP" = false ] && [ -d "$GIT_CLONE_DIR" ]; then
+    echo -e "${CYAN}🧹 Removing cloned working copy: ${GIT_CLONE_DIR}${NC}"
+    rm -rf "$GIT_CLONE_DIR" 2>/dev/null || true
+  elif [ -n "$GIT_CLONE_DIR" ] && [ "$GIT_KEEP" = true ]; then
+    echo -e "${CYAN}ℹ️  --git-keep: cloned copy preserved at ${GIT_CLONE_DIR}${NC}"
+  fi
+}
+
+if [ -n "$GIT_REPO" ]; then
+  command -v git >/dev/null 2>&1 || {
+    echo -e "${RED}❌ git is required for --git-repo but was not found${NC}"; exit 1;
+  }
+  mkdir -p "$GIT_CHECKOUTS_DIR"
+  # Derive a folder name from the repo URL: owner__repo (slugified)
+  repo_basename="$(basename "${GIT_REPO%.git}")"
+  repo_slug="$(echo "$repo_basename" | tr -c '[:alnum:]._-' '_' | sed 's/_\+/_/g')"
+  GIT_CLONE_DIR="$GIT_CHECKOUTS_DIR/${repo_slug}-$$"
+
+  echo -e "${YELLOW}━━━ ⬇️  Cloning Git repository ━━━${NC}"
+  echo -e "  Repo:   ${CYAN}${GIT_REPO}${NC}"
+  [ -n "$GIT_BRANCH" ] && echo -e "  Branch: ${CYAN}${GIT_BRANCH}${NC}"
+  [ -n "$GIT_SUBDIR" ] && echo -e "  Subdir: ${CYAN}${GIT_SUBDIR}${NC}"
+  echo -e "  Into:   ${CYAN}${GIT_CLONE_DIR}${NC}"
+
+  CLONE_ARGS=(--depth 1)
+  [ -n "$GIT_BRANCH" ] && CLONE_ARGS+=(--branch "$GIT_BRANCH")
+  if ! git clone "${CLONE_ARGS[@]}" "$GIT_REPO" "$GIT_CLONE_DIR"; then
+    echo -e "${RED}❌ git clone failed${NC}"
+    exit 1
+  fi
+
+  # Compute the new ROOT (optionally point at a subdirectory of the repo)
+  if [ -n "$GIT_SUBDIR" ]; then
+    NEW_ROOT="$GIT_CLONE_DIR/$GIT_SUBDIR"
+    if [ ! -d "$NEW_ROOT" ]; then
+      echo -e "${RED}❌ --git-subdir '$GIT_SUBDIR' not found in repository${NC}"
+      exit 1
+    fi
+  else
+    NEW_ROOT="$GIT_CLONE_DIR"
+  fi
+  if command -v cygpath &>/dev/null; then
+    NEW_ROOT="$(cygpath -m "$NEW_ROOT")"
+  fi
+  ROOT="$NEW_ROOT"
+  REPORTS_DIR="$GREEN_DIR/reports"   # reports stay in the parent project
+  APPNAME="${APPNAME:-$repo_slug}"
+  cd "$ROOT"
+  echo -e "  ${GREEN}✓ Working directory: $(pwd)${NC}"
+  echo ""
+
+  # Make sure we return to the parent and (optionally) clean up on exit
+  trap 'return_to_parent' EXIT
+fi
+
 
 echo -e "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║  🌱 Creedengo Green Code Analyzer — Auto-Detect            ║${NC}"
@@ -139,6 +255,13 @@ done
 # Step 1: Auto-detect project stack
 ###############################################################################
 echo -e "${YELLOW}━━━ 🔍 Detecting project stack ━━━${NC}"
+if [ -n "$GIT_CLONE_DIR" ]; then
+  echo -e "  Source:   ${CYAN}cloned git repo${NC} (${GIT_REPO}${GIT_BRANCH:+ @ $GIT_BRANCH})"
+elif [ -n "${CREEDENGO_ROOT:-}" ]; then
+  echo -e "  Source:   ${CYAN}\$CREEDENGO_ROOT${NC}"
+else
+  echo -e "  Source:   ${CYAN}current working directory${NC} (override with --root <path> or --git-repo <url>)"
+fi
 echo -e "  Scanning: ${CYAN}${ROOT}${NC}"
 
 DETECT_STDERR=$(mktemp 2>/dev/null || echo "/tmp/creedengo-detect-stderr.$$")
@@ -559,8 +682,15 @@ if [ "$NO_CLEANUP" = true ]; then
   echo -e "  ${CYAN}ℹ️  --no-cleanup : le container SonarQube ne sera PAS supprimé à la fin${NC}"
   # Export container name so the caller (start.sh) can clean up later
   echo "$CONTAINER_NAME" > "$GREEN_DIR/.creedengo/.sonar-container-name"
+  # Even with --no-cleanup, still chdir back to the parent if we cloned a repo
+  [ -n "$GIT_CLONE_DIR" ] && trap 'return_to_parent' EXIT
 else
-  trap cleanup EXIT
+  # Chain SonarQube cleanup with the git-clone return-to-parent (if any)
+  if [ -n "$GIT_CLONE_DIR" ]; then
+    trap 'cleanup; return_to_parent' EXIT
+  else
+    trap cleanup EXIT
+  fi
 fi
 
 ###############################################################################

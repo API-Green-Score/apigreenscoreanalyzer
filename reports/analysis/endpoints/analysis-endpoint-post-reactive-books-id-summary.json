@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-25T10:08:53Z",
+  "timestamp": "2026-04-25T10:55:17Z",
   "service_base_url": "http://localhost:8081",
   "endpoint": {
     "method": "post",
@@ -7,10 +7,10 @@
     "url": "http://localhost:8081/reactive/books/1/summary",
     "http_code": 400,
     "size_download": 389,
-    "time_total": 0.002426,
-    "speed_download": 160368,
+    "time_total": 0.001637,
+    "speed_download": 237684,
     "energy_network_wh": 2.173706889152527e-05,
-    "energy_server_wh": 1.684722222222222e-05,
-    "energy_total_wh": 3.858429111374749e-05
+    "energy_server_wh": 1.1368055555555555e-05,
+    "energy_total_wh": 3.310512444708082e-05
   }
 }

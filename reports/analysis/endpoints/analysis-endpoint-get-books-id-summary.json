@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-25T10:08:53Z",
+  "timestamp": "2026-04-25T10:55:17Z",
   "service_base_url": "http://localhost:8081",
   "endpoint": {
     "method": "get",
@@ -7,10 +7,10 @@
     "url": "http://localhost:8081/books/1/summary",
     "http_code": 200,
     "size_download": 34,
-    "time_total": 0.002006,
-    "speed_download": 16951,
+    "time_total": 0.001494,
+    "speed_download": 22750,
     "energy_network_wh": 1.8998980522155762e-06,
-    "energy_server_wh": 1.3930555555555554e-05,
-    "energy_total_wh": 1.5830453607771132e-05
+    "energy_server_wh": 1.0375e-05,
+    "energy_total_wh": 1.2274898052215576e-05
   }
 }
