@@ -1,4 +1,4 @@
-name: "🌿 Esign Green API Score CI"
+name: "🌿 Green API Score CI"
 
 on:
   push:
