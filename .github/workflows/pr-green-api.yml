@@ -54,11 +54,11 @@ on:
       git_repo:
         description: "Clone a remote Git repo and run Creedengo on it (implies run_creedengo)"
         required: false
-        default: ""
+        default: "https://github.com/thiernodialloAFA/green-api-workshop-final"
       git_branch:
         description: "Branch/tag to checkout for --git-repo"
         required: false
-        default: ""
+        default: "feat/devoxx-creedengo"
       git_subdir:
         description: "Sub-folder of the cloned repo to analyze"
         required: false
@@ -74,9 +74,9 @@ env:
   # ── Defaults used when the workflow is triggered by push/PR (no inputs). ──
   # Override at runtime via the "Run workflow" form (workflow_dispatch inputs)
   # or by editing these values for the push/PR triggers.
-  DEFAULT_TARGETS: "http://localhost:8080"
-  DEFAULT_SWAGGERS: "http://localhost:8080/api/v3/api-docs"
-  DEFAULT_APPNAME: ""              # empty → falls back to ${{ github.event.repository.name }}
+  DEFAULT_TARGETS: "http://localhost:8080,http://localhost:8081"
+  DEFAULT_SWAGGERS: "http://localhost:8080/api/v3/api-docs,http://localhost:8081/api/v3/api-docs"
+  DEFAULT_APPNAME: "appoptim"              # empty → falls back to ${{ github.event.repository.name }}
   DEFAULT_DEBUG: "false"
   DEFAULT_RUN_CREEDENGO: "true"
   DEFAULT_RUN_SPECTRAL: "true"
@@ -139,18 +139,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Download jar
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-jar
-          path: backend/target/
-      - name: Start backend (H2 in-memory, no Keycloak)
-        run: |
-          nohup java -jar backend/target/*.jar \
-            --spring.profiles.active=test \
-            --server.port=8080 \
-            > backend.log 2>&1 &
-          echo $! > backend.pid
       - name: Wait for targets
         run: |
           # Probe every URL in $TARGETS (comma-separated) instead of a hardcoded
@@ -227,7 +215,7 @@ jobs:
         run: |
           # Build --target / --swagger flags from the comma-separated lists
           # (one or several APIs analyzed in a single run; specs are merged
-          # into greenanalyzer/reports/discovered-openapi.json).
+          # into reports/discovered-openapi.json).
           ARGS=()
           IFS=',' read -r -a T_ARR <<< "$TARGETS"
           for t in "${T_ARR[@]}"; do
@@ -251,31 +239,31 @@ jobs:
             ARGS+=(--debug)
           fi
           echo "🌿 Analyzing ${#T_ARR[@]} target(s): $TARGETS  (appname=$APPNAME)"
-          python3 greenanalyzer/scripts/green-api-auto-discover.py \
+          python3 scripts/green-api-auto-discover.py \
             "${ARGS[@]}" \
             --repeat 3 \
             --skip-spectral \
-            --output-dir greenanalyzer/reports
+            --output-dir reports
 
       - name: Generate Green Score badge
         run: |
-          chmod +x greenanalyzer/scripts/generate-badge.sh
-          bash greenanalyzer/scripts/generate-badge.sh greenanalyzer/reports/latest-report.json greenanalyzer/badges/green-score.svg || true
+          chmod +x scripts/generate-badge.sh
+          bash scripts/generate-badge.sh reports/latest-report.json badges/green-score.svg || true
 
       - name: Generate Dashboard
         run: |
-          chmod +x greenanalyzer/scripts/generate-dashboard.sh
-          bash greenanalyzer/scripts/generate-dashboard.sh greenanalyzer/reports/latest-report.json greenanalyzer/dashboard/index.save.html greenanalyzer/dashboard/index.html || true
+          chmod +x scripts/generate-dashboard.sh
+          bash scripts/generate-dashboard.sh reports/latest-report.json dashboard/index.save.html dashboard/index.html || true
 
       - name: Assertions — Green Score
         shell: bash
         run: |
           set -e
-          REPORT="greenanalyzer/reports/latest-report.json"
+          REPORT="reports/latest-report.json"
 
           if [ ! -f "$REPORT" ]; then
             echo "❌ ERROR: Report file not found: $REPORT"
-            ls -la greenanalyzer/reports/ || true
+            ls -la reports/ || true
             exit 1
           fi
           if [ ! -s "$REPORT" ]; then
@@ -319,8 +307,8 @@ jobs:
           "
 
           # Regression gate (optional)
-          if [ -f greenanalyzer/green-score-threshold.json ]; then
-            MIN_SCORE=$(python3 -c "import json;print(json.load(open('greenanalyzer/green-score-threshold.json'))['minScore'])")
+          if [ -f green-score-threshold.json ]; then
+            MIN_SCORE=$(python3 -c "import json;print(json.load(open('green-score-threshold.json'))['minScore'])")
             echo "Min score threshold: ${MIN_SCORE}" >> $GITHUB_STEP_SUMMARY
             python3 -c "total=$TOTAL; minimum=$MIN_SCORE; assert total >= minimum, f'FAIL: Green Score {total} < threshold {minimum}'; print('✅ Green Score threshold PASSED')"
           fi
@@ -330,14 +318,14 @@ jobs:
         if: always()
         with:
           name: green-score-report
-          path: greenanalyzer/reports/
+          path: reports/
 
       - name: Upload badge
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: green-score-badge
-          path: greenanalyzer/badges/
+          path: badges/
 
       - name: Upload dashboard
         uses: actions/upload-artifact@v4
@@ -345,8 +333,8 @@ jobs:
         with:
           name: green-score-dashboard
           path: |
-            greenanalyzer/dashboard/index.html
-            greenanalyzer/dashboard/index.md
+            dashboard/index.html
+            dashboard/index.md
 
       - name: Upload logs (on failure)
         if: failure()
@@ -399,7 +387,7 @@ jobs:
           APPNAME: ${{ env.APPNAME }}
           SONAR_PORT: ${{ env.SONAR_PORT }}
         run: |
-          chmod +x greenanalyzer/scripts/creedengo-analyzer.sh greenanalyzer/scripts/_container-runtime.sh
+          chmod +x scripts/creedengo-analyzer.sh scripts/_container-runtime.sh
           EXTRA=()
           [ "${DEBUG:-false}" = "true" ] && EXTRA+=(--debug)
           if [ -n "${GIT_REPO:-}" ]; then
@@ -409,14 +397,14 @@ jobs:
             [ "${GIT_KEEP:-false}" = "true" ] && EXTRA+=(--git-keep)
           fi
           echo "🌱 Creedengo extra args: ${EXTRA[*]:-(none)}"
-          bash greenanalyzer/scripts/creedengo-analyzer.sh \
+          bash scripts/creedengo-analyzer.sh \
             --skip-build --force-cleanup \
             "${EXTRA[@]}"
 
       - name: Assertions — Creedengo
         run: |
           set -e
-          REPORT="greenanalyzer/reports/creedengo-report.json"
+          REPORT="reports/creedengo-report.json"
           if [ ! -f "$REPORT" ]; then
             echo "❌ Creedengo report not found"
             exit 1
@@ -449,7 +437,7 @@ jobs:
         if: always()
         with:
           name: creedengo-report
-          path: greenanalyzer/reports/creedengo-report.json
+          path: reports/creedengo-report.json
 
       - name: Cleanup SonarQube (safety net — force destroy all)
         if: always()
@@ -524,10 +512,10 @@ jobs:
         run: npm install -g @stoplight/spectral-cli
       - name: Run Spectral
         run: |
-          if [ -f greenanalyzer/.spectral.yml ]; then
-            spectral lint openapi.json --ruleset greenanalyzer/.spectral.yml --format stylish || true
+          if [ -f .spectral.yml ]; then
+            spectral lint openapi.json --ruleset .spectral.yml --format stylish || true
           else
-            echo "No greenanalyzer/.spectral.yml found — running with default rules"
+            echo "No .spectral.yml found — running with default rules"
             spectral lint openapi.json --format stylish || true
           fi
       - name: Stop backend
@@ -605,16 +593,16 @@ jobs:
           if [ "${DEBUG:-false}" = "true" ]; then
             ARGS+=(--debug)
           fi
-          python3 greenanalyzer/scripts/green-api-auto-discover.py \
+          python3 scripts/green-api-auto-discover.py \
             "${ARGS[@]}" \
             --repeat 3 \
-            --output-dir greenanalyzer/reports
+            --output-dir reports
       - name: Upload reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: auto-discover-report
-          path: greenanalyzer/reports/
+          path: reports/
       - name: Stop backend
         if: always()
         run: kill $(cat backend.pid) 2>/dev/null || true
@@ -630,13 +618,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: green-score-report
-          path: greenanalyzer/reports/
+          path: reports/
         continue-on-error: true
       - name: Download Creedengo report
         uses: actions/download-artifact@v4
         with:
           name: creedengo-report
-          path: greenanalyzer/reports/
+          path: reports/
         continue-on-error: true
       - name: Generate combined summary
         run: |
@@ -644,10 +632,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Green Score
-          if [ -f greenanalyzer/reports/latest-report.json ]; then
+          if [ -f reports/latest-report.json ]; then
             python3 -c "
           import json
-          raw = json.load(open('greenanalyzer/reports/latest-report.json'))
+          raw = json.load(open('reports/latest-report.json'))
           rpt = raw.get('report', raw)
           gs = rpt.get('green_score', {})
           total = gs.get('total', 0)
@@ -680,10 +668,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Creedengo
-          if [ -f greenanalyzer/reports/creedengo-report.json ]; then
+          if [ -f reports/creedengo-report.json ]; then
             python3 -c "
           import json
-          r = json.load(open('greenanalyzer/reports/creedengo-report.json'))
+          r = json.load(open('reports/creedengo-report.json'))
           s = r.get('creedengo_score', {})
           total = s.get('total', 0)
           grade = s.get('grade', '?')
@@ -732,8 +720,8 @@ jobs:
             let body = '## 🌿 Green API — Combined Report\n\n';
 
             // Green Score
-            if (fs.existsSync('greenanalyzer/reports/latest-report.json')) {
-              const raw = JSON.parse(fs.readFileSync('greenanalyzer/reports/latest-report.json', 'utf8'));
+            if (fs.existsSync('reports/latest-report.json')) {
+              const raw = JSON.parse(fs.readFileSync('reports/latest-report.json', 'utf8'));
               const rpt = raw.report || raw;
               const gs = rpt.green_score || {};
               const disc = rpt.auto_discovery || {};
@@ -743,8 +731,8 @@ jobs:
             }
 
             // Creedengo
-            if (fs.existsSync('greenanalyzer/reports/creedengo-report.json')) {
-              const cr = JSON.parse(fs.readFileSync('greenanalyzer/reports/creedengo-report.json', 'utf8'));
+            if (fs.existsSync('reports/creedengo-report.json')) {
+              const cr = JSON.parse(fs.readFileSync('reports/creedengo-report.json', 'utf8'));
               const cs = cr.creedengo_score || {};
               const emoji2 = cs.total >= 85 ? '🟢' : cs.total >= 70 ? '🟡' : '🔴';
               body += `### ${emoji2} 🌱 Creedengo Éco-Design: **${cs.total}/100** (Grade: **${cs.grade}**)\n`;
@@ -791,37 +779,37 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: green-score-dashboard
-          path: greenanalyzer/dashboard/
+          path: dashboard/
 
       - name: Download badge artifact
         uses: actions/download-artifact@v4
         with:
           name: green-score-badge
-          path: greenanalyzer/badges/
+          path: badges/
 
       - name: Download report artifact
         uses: actions/download-artifact@v4
         with:
           name: green-score-report
-          path: greenanalyzer/reports/
+          path: reports/
 
       - name: Download Creedengo report
         uses: actions/download-artifact@v4
         with:
           name: creedengo-report
-          path: greenanalyzer/reports/
+          path: reports/
         continue-on-error: true
 
       - name: Regenerate dashboard with Creedengo data
         run: |
-          if [ -f greenanalyzer/reports/creedengo-report.json ]; then
+          if [ -f reports/creedengo-report.json ]; then
             echo "🌱 Creedengo report found — regenerating dashboard with eco-design data"
-            chmod +x greenanalyzer/scripts/generate-dashboard.sh
-            bash greenanalyzer/scripts/generate-dashboard.sh \
-              greenanalyzer/reports/latest-report.json \
-              greenanalyzer/dashboard/index.save.html \
-              greenanalyzer/dashboard/index.html \
-              greenanalyzer/reports/creedengo-report.json || true
+            chmod +x scripts/generate-dashboard.sh
+            bash scripts/generate-dashboard.sh \
+              reports/latest-report.json \
+              dashboard/index.save.html \
+              dashboard/index.html \
+              reports/creedengo-report.json || true
           else
             echo "ℹ️ No Creedengo report found — dashboard without eco-design tab"
           fi
@@ -829,9 +817,9 @@ jobs:
       - name: Prepare Pages content
         run: |
           mkdir -p _site
-          cp -r greenanalyzer/dashboard/* _site/
-          cp -r greenanalyzer/badges _site/badges
-          cp -r greenanalyzer/reports _site/reports
+          cp -r dashboard/* _site/
+          cp -r badges _site/badges
+          cp -r reports _site/reports
           touch _site/.nojekyll
 
       - name: Upload Pages artifact
