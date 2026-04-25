@@ -71,20 +71,11 @@ on:
 
 env:
   JAVA_VERSION: '21'
-  # ── Defaults used when the workflow is triggered by push/PR (no inputs). ──
-  # Override at runtime via the "Run workflow" form (workflow_dispatch inputs)
-  # or by editing these values for the push/PR triggers.
-  DEFAULT_TARGETS: "http://localhost:8080,http://localhost:8081"
-  DEFAULT_SWAGGERS: "http://localhost:8080/api/v3/api-docs,http://localhost:8081/api/v3/api-docs"
-  DEFAULT_APPNAME: "appoptim"              # empty → falls back to ${{ github.event.repository.name }}
-  DEFAULT_DEBUG: "false"
-  DEFAULT_RUN_CREEDENGO: "true"
-  DEFAULT_RUN_SPECTRAL: "true"
-  DEFAULT_RUN_AUTO_DISCOVER: "true"
-  DEFAULT_GIT_REPO: ""
-  DEFAULT_GIT_BRANCH: ""
-  DEFAULT_GIT_SUBDIR: ""
-  DEFAULT_GIT_KEEP: "false"
+  # NOTE: GitHub Actions does NOT allow `env.*` references inside `jobs.<id>.if`
+  # nor reliably inside `jobs.<id>.env`. Defaults for the push/PR triggers are
+  # therefore inlined as literal fallbacks `${{ inputs.foo || 'literal' }}`
+  # in each job's env block. Edit the values directly there if you need to
+  # change defaults for push/PR (workflow_dispatch keeps its own input defaults).
 
 permissions:
   contents: read
@@ -121,11 +112,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     env:
-      # Resolved once per job: workflow_dispatch input wins, else default env.
-      TARGETS:    ${{ github.event.inputs.targets    || env.DEFAULT_TARGETS }}
-      SWAGGERS:   ${{ github.event.inputs.swaggers   || env.DEFAULT_SWAGGERS }}
-      APPNAME:    ${{ github.event.inputs.appname    || env.DEFAULT_APPNAME    || github.event.repository.name }}
-      DEBUG:      ${{ github.event.inputs.debug      || env.DEFAULT_DEBUG }}
+      # Resolved once per job: workflow_dispatch input wins, else literal default.
+      TARGETS:    ${{ github.event.inputs.targets    || 'http://localhost:8080,http://localhost:8081' }}
+      SWAGGERS:   ${{ github.event.inputs.swaggers   || 'http://localhost:8080/api/v3/api-docs,http://localhost:8081/api/v3/api-docs' }}
+      APPNAME:    ${{ github.event.inputs.appname    || 'appoptim' }}
+      DEBUG:      ${{ github.event.inputs.debug      || 'false' }}
       # Bearer: prefer secret, fallback to manual input (logs may show value).
       BEARER_TOKEN: ${{ secrets.BEARER_TOKEN || github.event.inputs.bearer_token }}
     steps:
@@ -350,15 +341,15 @@ jobs:
   creedengo:
     name: "🌱 Creedengo Eco-Design Analysis"
     needs: build
-    if: ${{ (github.event.inputs.run_creedengo || env.DEFAULT_RUN_CREEDENGO) != 'false' }}
+    if: ${{ github.event.inputs.run_creedengo != 'false' }}
     runs-on: ubuntu-latest
     env:
-      APPNAME:    ${{ github.event.inputs.appname    || env.DEFAULT_APPNAME    || github.event.repository.name }}
-      DEBUG:      ${{ github.event.inputs.debug      || env.DEFAULT_DEBUG }}
-      GIT_REPO:   ${{ github.event.inputs.git_repo   || env.DEFAULT_GIT_REPO }}
-      GIT_BRANCH: ${{ github.event.inputs.git_branch || env.DEFAULT_GIT_BRANCH }}
-      GIT_SUBDIR: ${{ github.event.inputs.git_subdir || env.DEFAULT_GIT_SUBDIR }}
-      GIT_KEEP:   ${{ github.event.inputs.git_keep   || env.DEFAULT_GIT_KEEP }}
+      APPNAME:    ${{ github.event.inputs.appname    || 'appoptim' }}
+      DEBUG:      ${{ github.event.inputs.debug      || 'false' }}
+      GIT_REPO:   ${{ github.event.inputs.git_repo   || 'https://github.com/thiernodialloAFA/green-api-workshop-final' }}
+      GIT_BRANCH: ${{ github.event.inputs.git_branch || 'feat/devoxx-creedengo' }}
+      GIT_SUBDIR: ${{ github.event.inputs.git_subdir || '' }}
+      GIT_KEEP:   ${{ github.event.inputs.git_keep   || 'false' }}
       SONAR_PORT: "9100"
     steps:
       - uses: actions/checkout@v4
@@ -459,11 +450,11 @@ jobs:
   spectral-lint:
     name: "🔬 Spectral OpenAPI Lint"
     needs: build
-    if: ${{ (github.event.inputs.run_spectral || env.DEFAULT_RUN_SPECTRAL) != 'false' }}
+    if: ${{ github.event.inputs.run_spectral != 'false' }}
     runs-on: ubuntu-latest
     env:
-      TARGETS:  ${{ github.event.inputs.targets  || env.DEFAULT_TARGETS }}
-      SWAGGERS: ${{ github.event.inputs.swaggers || env.DEFAULT_SWAGGERS }}
+      TARGETS:  ${{ github.event.inputs.targets  || 'http://localhost:8080,http://localhost:8081' }}
+      SWAGGERS: ${{ github.event.inputs.swaggers || 'http://localhost:8080/api/v3/api-docs,http://localhost:8081/api/v3/api-docs' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup JDK ${{ env.JAVA_VERSION }}
@@ -525,13 +516,13 @@ jobs:
   auto-discover:
     name: "🔍 Auto-Discover Analysis"
     needs: build
-    if: ${{ (github.event.inputs.run_auto_discover || env.DEFAULT_RUN_AUTO_DISCOVER) != 'false' }}
+    if: ${{ github.event.inputs.run_auto_discover != 'false' }}
     runs-on: ubuntu-latest
     env:
-      TARGETS:    ${{ github.event.inputs.targets    || env.DEFAULT_TARGETS }}
-      SWAGGERS:   ${{ github.event.inputs.swaggers   || env.DEFAULT_SWAGGERS }}
-      APPNAME:    ${{ github.event.inputs.appname    || env.DEFAULT_APPNAME    || github.event.repository.name }}
-      DEBUG:      ${{ github.event.inputs.debug      || env.DEFAULT_DEBUG }}
+      TARGETS:    ${{ github.event.inputs.targets    || 'http://localhost:8080,http://localhost:8081' }}
+      SWAGGERS:   ${{ github.event.inputs.swaggers   || 'http://localhost:8080/api/v3/api-docs,http://localhost:8081/api/v3/api-docs' }}
+      APPNAME:    ${{ github.event.inputs.appname    || 'appoptim' }}
+      DEBUG:      ${{ github.event.inputs.debug      || 'false' }}
       BEARER_TOKEN: ${{ secrets.BEARER_TOKEN || github.event.inputs.bearer_token }}
     steps:
       - uses: actions/checkout@v4
