@@ -1,76 +1,78 @@
 # 🌿 Green API Score Dashboard
 
-> 📦 **Application : greenscoreoptimized**
+> 📦 **Application : multitarget**
 >
 > **Devoxx France 2026 — Green Architecture : moins de gras, plus d'impact !**
 
-📅 *Dernière analyse : 2026-04-16T13:20:16Z*
+📅 *Dernière analyse : 2026-04-25T10:08:53Z*
 
 ---
 
-## 🔴 Green Score : **9/100** — Grade **E** 📉
+## 🔴 Green Score : **11/100** — Grade **E** 📉
 
 ### 📋 Détail par règle
 
 | Statut | Règle | Score | Max | Endpoints | Détail |
 |:------:|-------|------:|----:|:---------:|--------|
-| ⚠️ | DE11 Pagination | 5 | 15 | 4/11 | Pagination on 4/11 collection endpoint(s) |
-| ⚠️ | DE08 Filtrage champs | 2 | 15 | 2/17 | Field filtering on 2 endpoint(s) |
-| ❌ | DE01 Compression | 0 | 15 | 0/20 | Gzip not detected |
-| ❌ | DE02/03 Cache ETag | 0 | 15 | 0/6 | ETag/304 not detected |
-| ⚠️ | DE06 Delta | 1 | 10 | 2/17 | Delta endpoint(s) found: 2 |
-| ❌ | 206 Range | 0 | 10 | 0/17 | Range not supported |
-| ❌ | LO01 Observabilité | 0 | 5 | 0/5 | No health endpoint |
-| ❌ | US07 Rate Limit | 0 | 5 | 0/20 | Assumed present (API running, no explicit headers) |
-| ⚠️ | AR02 CBOR | 1 | 10 | 2/20 | Binary format on 2 endpoint(s) |
+| ⚠️ | DE11 Pagination | 5 | 15 | 4/12 | Pagination on 4/12 collection endpoint(s) |
+| ⚠️ | DE08 Filtrage champs | 2 | 15 | 2/19 | Field filtering on 2 endpoint(s) |
+| ❌ | DE01 Compression | 0 | 15 | 0/22 | Gzip not detected |
+| ❌ | DE02/03 Cache ETag | 0 | 15 | 0/7 | ETag/304 not detected |
+| ⚠️ | DE06 Delta | 1 | 10 | 2/19 | Delta endpoint(s) found: 2 |
+| ❌ | 206 Range | 0 | 10 | 0/19 | Range not supported |
+| ⚠️ | LO01 Observabilité | 2 | 5 | 4/10 | Actuator/health detected |
+| ❌ | US07 Rate Limit | 0 | 5 | 0/22 | Assumed present (API running, no explicit headers) |
+| ⚠️ | AR02 CBOR | 1 | 10 | 2/22 | Binary format on 2 endpoint(s) |
 
 ### 📊 Mesures par endpoint (API découverte)
 
 | Méthode | Endpoint | Taille | Temps | HTTP |
 |:-------:|----------|-------:|------:|-----:|
-| GET | `/books/{id}` | 187 B | 0.042s | 200 |
-| PUT | `/books/{id}` | 319 B | 0.012s | 400 |
-| GET | `/reactive/books/{id}/summary` | 0 B | 0.078s | 200 |
-| POST | `/reactive/books/{id}/summary` | 392 B | 0.012s | 400 |
-| GET | `/books/{id}/summary` | 34 B | 0.016s | 200 |
-| POST | `/books/{id}/summary` | 346 B | 0.012s | 400 |
-| GET | `/reactive/books` | 0 B | 0.053s | 200 |
-| GET | `/reactive/books/{id}` | 0 B | 0.023s | 200 |
-| GET | `/reactive/books/select` | 0 B | 0.028s | 200 |
-| GET | `/reactive/books/changes` | 210 B | 0.016s | 400 |
-| GET | `/reactive/books/cbor` | 13 B | 0.017s | 429 |
-| GET | `/reactive/books/cacheable` | 20 B | 0.006s | 429 |
-| GET | `/books` | 20 B | 0.009s | 429 |
-| GET | `/books/select` | 20 B | 0.009s | 429 |
-| GET | `/books/noCache/{id}` | 20 B | 0.009s | 429 |
-| GET | `/books/changes` | 20 B | 0.008s | 429 |
-| GET | `/books/cbor` | 20 B | 0.008s | 429 |
-| GET | `/books/batch` | 20 B | 0.009s | 429 |
-| GET | `/books/async` | 20 B | 0.008s | 429 |
-| GET | `/books/async/{id}` | 20 B | 0.008s | 429 |
+| GET | `/books` | 20 B | 0.001s | 429 |
+| GET | `/books/{id}` | 184 B | 0.008s | 200 |
+| GET | `/books/{id}` | 184 B | 0.008s | 200 |
+| PUT | `/books/{id}` | 316 B | 0.003s | 400 |
+| GET | `/reactive/books/{id}/summary` | 0 B | 0.007s | 200 |
+| POST | `/reactive/books/{id}/summary` | 389 B | 0.002s | 400 |
+| GET | `/books/{id}/summary` | 34 B | 0.002s | 200 |
+| POST | `/books/{id}/summary` | 343 B | 0.002s | 400 |
+| GET | `/reactive/books` | 0 B | 0.010s | 200 |
+| GET | `/reactive/books/{id}` | 0 B | 0.006s | 200 |
+| GET | `/reactive/books/select` | 0 B | 0.004s | 200 |
+| GET | `/reactive/books/changes` | 207 B | 0.001s | 400 |
+| GET | `/reactive/books/cbor` | 13 B | 0.003s | 429 |
+| GET | `/reactive/books/cacheable` | 20 B | 0.001s | 429 |
+| GET | `/books` | 20 B | 0.001s | 429 |
+| GET | `/books/select` | 20 B | 0.001s | 429 |
+| GET | `/books/noCache/{id}` | 20 B | 0.001s | 429 |
+| GET | `/books/changes` | 20 B | 0.001s | 429 |
+| GET | `/books/cbor` | 20 B | 0.001s | 429 |
+| GET | `/books/batch` | 20 B | 0.001s | 429 |
+| GET | `/books/async` | 20 B | 0.001s | 429 |
+| GET | `/books/async/{id}` | 20 B | 0.001s | 429 |
 
 ### 🔑 Métriques clés
 
-- **Endpoints mesurés** : 20
-- **Transfert total** : 1.7 KB
-- **Transfert moyen / endpoint** : 84 B
-- **Temps moyen** : 0.019s
-- **⚡ Énergie totale / appel** : 0.0028 Wh
-- **🌍 CO₂ / appel** : 0.00015 g (France — 53 gCO₂/kWh)
+- **Endpoints mesurés** : 22
+- **Transfert total** : 1.9 KB
+- **Transfert moyen / endpoint** : 85 B
+- **Temps moyen** : 0.003s
+- **⚡ Énergie totale / appel** : 0.0006 Wh
+- **🌍 CO₂ / appel** : 0.00003 g (France — 53 gCO₂/kWh)
 
 ### 💡 Suggestions d'amélioration
 
-> **Score actuel : 9/100** — Score potentiel avec toutes les suggestions : **100/100** (+91 pts possibles)
+> **Score actuel : 11/100** — Score potentiel avec toutes les suggestions : **100/100** (+89 pts possibles)
 
 🔴 Haute priorité : 13 | 🟡 Moyenne : 8 | ⚪ Basse : 4 | **Total : 25 suggestions**
 
 #### 🗜️ DE01 — Compression Gzip (❌ Non validé — +15 pts possibles)
 
-> Le serveur doit supporter Accept-Encoding: gzip. (0/20 endpoints validés)
+> Le serveur doit supporter Accept-Encoding: gzip. (0/22 endpoints validés)
 
 | Priorité | Cible | Action | Impact |
 |:--------:|-------|--------|--------|
-| 🔴 Haute | `ALL endpoints (server-level)` | Enable gzip compression on the server | +0.8 pts/endpoint (total gap: 15 pts) — typically 60-80% payload reduction |
+| 🔴 Haute | `ALL endpoints (server-level)` | Enable gzip compression on the server | +0.7 pts/endpoint (total gap: 15 pts) — typically 60-80% payload reduction |
 
 <details><summary>🔧 Comment implémenter</summary>
 
@@ -94,15 +96,15 @@ Both options apply to ALL endpoints automatically.
 
 #### 💾 DE02/03 — Cache ETag/304 (❌ Non validé — +15 pts possibles)
 
-> Les ressources unitaires doivent supporter ETag + If-None-Match -> 304. (0/6 endpoints validés)
+> Les ressources unitaires doivent supporter ETag + If-None-Match -> 304. (0/7 endpoints validés)
 
 | Priorité | Cible | Action | Impact |
 |:--------:|-------|--------|--------|
-| 🔴 Haute | `GET /books/{id}` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
-| 🔴 Haute | `GET /reactive/books/{id}/summary` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
-| 🔴 Haute | `GET /books/{id}/summary` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
-| 🔴 Haute | `GET /reactive/books/{id}` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
-| 🔴 Haute | `GET /books/noCache/{id}` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
+| 🔴 Haute | `GET /books/{id}` | Add ETag support and If-None-Match → 304 Not Modified | +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
+| 🔴 Haute | `GET /books/{id}` | Add ETag support and If-None-Match → 304 Not Modified | +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
+| 🔴 Haute | `GET /reactive/books/{id}/summary` | Add ETag support and If-None-Match → 304 Not Modified | +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
+| 🔴 Haute | `GET /books/{id}/summary` | Add ETag support and If-None-Match → 304 Not Modified | +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
+| 🔴 Haute | `GET /reactive/books/{id}` | Add ETag support and If-None-Match → 304 Not Modified | +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
 
 <details><summary>🔧 Comment implémenter</summary>
 
@@ -127,12 +129,12 @@ Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:
 
 #### ✂️ 206 — Range / Partial Content (❌ Non validé — +10 pts possibles)
 
-> Supporter le header Range pour les gros payloads. (0/17 endpoints validés)
+> Supporter le header Range pour les gros payloads. (0/19 endpoints validés)
 
 | Priorité | Cible | Action | Impact |
 |:--------:|-------|--------|--------|
 | ⚪ Basse | `GET /books/{id}` | Support HTTP Range header for partial content (206) | +10 pts — enables resumable downloads and partial fetches |
-| ⚪ Basse | `GET /reactive/books/{id}/summary` | Support HTTP Range header for partial content (206) | +10 pts — enables resumable downloads and partial fetches |
+| ⚪ Basse | `GET /books/{id}` | Support HTTP Range header for partial content (206) | +10 pts — enables resumable downloads and partial fetches |
 
 <details><summary>🔧 Comment implémenter</summary>
 
@@ -142,34 +144,9 @@ Focus on the file download endpoint(s) instead.
 ```
 </details>
 
-#### 👁️ LO01 — Observabilité (❌ Non validé — +5 pts possibles)
-
-> Actuator / health / metrics doit etre expose. (0/5 endpoints validés)
-
-| Priorité | Cible | Action | Impact |
-|:--------:|-------|--------|--------|
-| 🔴 Haute | `/actuator/health, /actuator/metrics` | Expose Spring Boot Actuator endpoints | +5 pts — essential for production monitoring |
-
-<details><summary>🔧 Comment implémenter</summary>
-
-```
-Spring Boot application.yml:
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: health,info,metrics
-    endpoint:
-      health:
-        show-details: when-authorized
-
-Add dependency: spring-boot-starter-actuator (likely already present).
-```
-</details>
-
 #### 🚦 US07 — Rate Limiting (❌ Non validé — +5 pts possibles)
 
-> Un mecanisme de rate limiting doit etre present. (0/20 endpoints validés)
+> Un mecanisme de rate limiting doit etre present. (0/22 endpoints validés)
 
 | Priorité | Cible | Action | Impact |
 |:--------:|-------|--------|--------|
@@ -195,17 +172,17 @@ Option 3 — Nginx:
 ```
 </details>
 
-#### 🔍 DE08 — Filtrage de champs (⚠️ Partiel (2/17) — +13 pts possibles)
+#### 🔍 DE08 — Filtrage de champs (⚠️ Partiel (2/19) — +13 pts possibles)
 
-> Supporter un parametre 'fields' pour reduire le payload. (2/17 endpoints validés)
+> Supporter un parametre 'fields' pour reduire le payload. (2/19 endpoints validés)
 
 | Priorité | Cible | Action | Impact |
 |:--------:|-------|--------|--------|
-| 🟡 Moyenne | `GET /books/{id}` | Add a 'fields' query parameter for sparse fieldsets | +0.9 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
-| 🟡 Moyenne | `GET /reactive/books/{id}/summary` | Add a 'fields' query parameter for sparse fieldsets | +0.9 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
-| 🟡 Moyenne | `GET /books/{id}/summary` | Add a 'fields' query parameter for sparse fieldsets | +0.9 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
-| 🔴 Haute | `GET /reactive/books` | Add a 'fields' query parameter for sparse fieldsets | +0.9 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
-| 🟡 Moyenne | `GET /reactive/books/{id}` | Add a 'fields' query parameter for sparse fieldsets | +0.9 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
+| 🔴 Haute | `GET /books` | Add a 'fields' query parameter for sparse fieldsets | +0.8 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
+| 🟡 Moyenne | `GET /books/{id}` | Add a 'fields' query parameter for sparse fieldsets | +0.8 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
+| 🟡 Moyenne | `GET /books/{id}` | Add a 'fields' query parameter for sparse fieldsets | +0.8 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
+| 🟡 Moyenne | `GET /reactive/books/{id}/summary` | Add a 'fields' query parameter for sparse fieldsets | +0.8 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
+| 🟡 Moyenne | `GET /books/{id}/summary` | Add a 'fields' query parameter for sparse fieldsets | +0.8 pts/endpoint (total gap: 13 pts) — lets clients request only needed fields, reducing payload |
 
 <details><summary>🔧 Comment implémenter</summary>
 
@@ -223,17 +200,17 @@ OpenAPI: The 'fields' param will appear automatically.
 ```
 </details>
 
-#### 📄 DE11 — Pagination (⚠️ Partiel (4/11) — +10 pts possibles)
+#### 📄 DE11 — Pagination (⚠️ Partiel (4/12) — +10 pts possibles)
 
-> Les endpoints de collection doivent supporter la pagination (page/size ou limit/offset). (4/11 endpoints validés)
+> Les endpoints de collection doivent supporter la pagination (page/size ou limit/offset). (4/12 endpoints validés)
 
 | Priorité | Cible | Action | Impact |
 |:--------:|-------|--------|--------|
-| 🔴 Haute | `GET /reactive/books/changes` | Add pagination parameters (page & size) | +1.4 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
-| 🔴 Haute | `GET /reactive/books/cbor` | Add pagination parameters (page & size) | +1.4 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
-| 🔴 Haute | `GET /reactive/books/cacheable` | Add pagination parameters (page & size) | +1.4 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
-| 🔴 Haute | `GET /books/changes` | Add pagination parameters (page & size) | +1.4 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
-| 🔴 Haute | `GET /books/cbor` | Add pagination parameters (page & size) | +1.4 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
+| 🔴 Haute | `GET /books` | Add pagination parameters (page & size) | +1.2 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
+| 🔴 Haute | `GET /reactive/books/changes` | Add pagination parameters (page & size) | +1.2 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
+| 🔴 Haute | `GET /reactive/books/cbor` | Add pagination parameters (page & size) | +1.2 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
+| 🔴 Haute | `GET /reactive/books/cacheable` | Add pagination parameters (page & size) | +1.2 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
+| 🔴 Haute | `GET /books/changes` | Add pagination parameters (page & size) | +1.2 pts/endpoint (total gap: 10 pts) — reduces payload size for large collections |
 
 <details><summary>🔧 Comment implémenter</summary>
 
@@ -249,15 +226,15 @@ OpenAPI: params 'page' and 'size' will appear automatically via springdoc.
 ```
 </details>
 
-#### 🔄 DE06 — Delta / Changes (⚠️ Partiel (2/17) — +9 pts possibles)
+#### 🔄 DE06 — Delta / Changes (⚠️ Partiel (2/19) — +9 pts possibles)
 
-> Un endpoint /changes?since= ou equivalent doit exister. (2/17 endpoints validés)
+> Un endpoint /changes?since= ou equivalent doit exister. (2/19 endpoints validés)
 
 | Priorité | Cible | Action | Impact |
 |:--------:|-------|--------|--------|
-| 🟡 Moyenne | `GET /reactive/books/changes  (new endpoint)` | Add a delta/changes endpoint with a 'since' parameter | +0.6 pts/endpoint (total gap: 9 pts) — clients fetch only what changed since last sync |
-| 🟡 Moyenne | `GET /reactive/books/select/changes  (new endpoint)` | Add a delta/changes endpoint with a 'since' parameter | +0.6 pts/endpoint (total gap: 9 pts) — clients fetch only what changed since last sync |
-| 🟡 Moyenne | `GET /reactive/books/changes/changes  (new endpoint)` | Add a delta/changes endpoint with a 'since' parameter | +0.6 pts/endpoint (total gap: 9 pts) — clients fetch only what changed since last sync |
+| 🟡 Moyenne | `GET /books/changes  (new endpoint)` | Add a delta/changes endpoint with a 'since' parameter | +0.5 pts/endpoint (total gap: 9 pts) — clients fetch only what changed since last sync |
+| 🟡 Moyenne | `GET /reactive/books/changes  (new endpoint)` | Add a delta/changes endpoint with a 'since' parameter | +0.5 pts/endpoint (total gap: 9 pts) — clients fetch only what changed since last sync |
+| 🟡 Moyenne | `GET /reactive/books/select/changes  (new endpoint)` | Add a delta/changes endpoint with a 'since' parameter | +0.5 pts/endpoint (total gap: 9 pts) — clients fetch only what changed since last sync |
 
 <details><summary>🔧 Comment implémenter</summary>
 
@@ -272,18 +249,18 @@ Spring Boot: Add a new endpoint that filters by updatedAt:
 
 Prerequisite: Add an 'updatedAt' column with @UpdateTimestamp
 to your entity, and a repository method findByUpdatedAtAfter().
-Alternative: Add @RequestParam 'since' to existing /reactive/books.
+Alternative: Add @RequestParam 'since' to existing /books.
 ```
 </details>
 
-#### 📦 AR02 — Format binaire (CBOR) (⚠️ Partiel (2/20) — +9 pts possibles)
+#### 📦 AR02 — Format binaire (CBOR) (⚠️ Partiel (2/22) — +9 pts possibles)
 
-> Un endpoint en format binaire (CBOR, protobuf...) doit exister. (2/20 endpoints validés)
+> Un endpoint en format binaire (CBOR, protobuf...) doit exister. (2/22 endpoints validés)
 
 | Priorité | Cible | Action | Impact |
 |:--------:|-------|--------|--------|
+| ⚪ Basse | `GET /books  (add CBOR variant)` | Add a binary format alternative (CBOR or Protobuf) | +10 pts — binary formats are 30-50% smaller than JSON |
 | ⚪ Basse | `GET /reactive/books  (add CBOR variant)` | Add a binary format alternative (CBOR or Protobuf) | +10 pts — binary formats are 30-50% smaller than JSON |
-| ⚪ Basse | `GET /reactive/books/select  (add CBOR variant)` | Add a binary format alternative (CBOR or Protobuf) | +10 pts — binary formats are 30-50% smaller than JSON |
 
 <details><summary>🔧 Comment implémenter</summary>
 
@@ -301,6 +278,31 @@ Spring Boot + CBOR:
 Alternative (Protobuf):
   Add spring-boot-starter-protobuf and define .proto schemas.
   Register ProtobufHttpMessageConverter.
+```
+</details>
+
+#### 👁️ LO01 — Observabilité (⚠️ Partiel (4/10) — +3 pts possibles)
+
+> Actuator / health / metrics doit etre expose. (4/10 endpoints validés)
+
+| Priorité | Cible | Action | Impact |
+|:--------:|-------|--------|--------|
+| 🔴 Haute | `/actuator/health, /actuator/metrics` | Expose Spring Boot Actuator endpoints | +5 pts — essential for production monitoring |
+
+<details><summary>🔧 Comment implémenter</summary>
+
+```
+Spring Boot application.yml:
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info,metrics
+    endpoint:
+      health:
+        show-details: when-authorized
+
+Add dependency: spring-boot-starter-actuator (likely already present).
 ```
 </details>
 

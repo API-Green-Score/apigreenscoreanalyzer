@@ -102,22 +102,22 @@ export PODMAN_COMPOSE_WARNING_LOGS=false
 # Force kill + remove all existing containers
 # Use test profile overlay: H2 in-memory DB, stubs for Stripe/Twilio/Email,
 # GreenScoreTestController provides scenario data for the analyzer.
-COMPOSE_CMD="$CONTAINER_COMPOSE -f ../docker-compose.yml"
+#COMPOSE_CMD="$CONTAINER_COMPOSE -f ../docker-compose.yml"
 
-$COMPOSE_CMD down --remove-orphans --timeout 5 2>/dev/null || true
-$CONTAINER_RT rm -f $($CONTAINER_RT ps -aq) 2>/dev/null || true
+#$COMPOSE_CMD down --remove-orphans --timeout 5 2>/dev/null || true
+#$CONTAINER_RT rm -f $($CONTAINER_RT ps -aq) 2>/dev/null || true
 
-echo "⏳ Attente de 15s pour laisser les ports se libérer..."
-sleep 15
-echo "⏳ Attention nous allons ouvrir un terminal à coté pour lancer le compose, ne fermez pas ce terminal sauf à la fin en faisant Ctrl + C!"
+#echo "⏳ Attente de 15s pour laisser les ports se libérer..."
+#sleep 15
+#echo "⏳ Attention nous allons ouvrir un terminal à coté pour lancer le compose, ne fermez pas ce terminal sauf à la fin en faisant Ctrl + C!"
 
-if [[ "$(uname -s)" == Darwin ]]; then
+#if [[ "$(uname -s)" == Darwin ]]; then
   # macOS : ouvrir un nouveau Terminal.app via osascript
-  osascript -e "tell application \"Terminal\" to do script \"cd '$ROOT' && $COMPOSE_CMD up --build --force-recreate\""
-else
+ # osascript -e "tell application \"Terminal\" to do script \"cd '$ROOT' && $COMPOSE_CMD up --build --force-recreate\""
+#else
   # Windows (Git Bash / mintty) : ouvrir un nouveau terminal mintty
-  mintty --title "Container Compose" -e bash -c "cd '$ROOT' && $COMPOSE_CMD up --build --force-recreate; read -p 'Appuyez sur Entrée pour fermer...'" &
-fi
+ # mintty --title "Container Compose" -e bash -c "cd '$ROOT' && $COMPOSE_CMD up --build --force-recreate; read -p 'Appuyez sur Entrée pour fermer...'" &
+#fi
 
 echo "⏳ Attente du démarrage des services 20s..."
 sleep 20
@@ -127,43 +127,71 @@ if [[ "${1:-}" == "--analyze" ]] || [[ "${2:-}" == "--analyze" ]]; then
   ANALYZE=true
 fi
 
-# --- Attente du démarrage des 2 services (max 30s) ---
+# --- Attente du démarrage des services (max TIMEOUT s) ---
 echo ""
-echo "⏳ Attente du démarrage des services (max 30s)..."
+
+# Si l'utilisateur a passé --targets, on attend exactement ces URL.
+# Sinon, on retombe sur les ports historiques (8080 et/ou 8081).
+WAIT_URLS=()
+if [ ${#TARGETS[@]} -gt 0 ]; then
+  WAIT_URLS=("${TARGETS[@]}")
+else
+  WAIT_URLS=("http://localhost:8080" "http://localhost:8081")
+fi
+
+echo "⏳ Attente du démarrage des services (max ${TIMEOUT:-120}s) — ${#WAIT_URLS[@]} cible(s):"
+for u in "${WAIT_URLS[@]}"; do echo "    • $u"; done
+echo ""
+
+# Tableau parallèle des états « prêt » par cible
+READY_FLAGS=()
+for _u in "${WAIT_URLS[@]}"; do READY_FLAGS+=("false"); done
+
 TIMEOUT=120
 ELAPSED=0
-BASE_READY=false
-OPT_READY=false
+ALL_READY=false
+
+# Endpoints de health-check à essayer (ordre de préférence)
+HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
+
+probe_url() {
+  local base="$1"
+  for p in "${HEALTH_PATHS[@]}"; do
+    if curl -sf -o /dev/null --max-time 3 "${base%/}${p}" 2>/dev/null; then
+      return 0
+    fi
+  done
+  return 1
+}
 
 while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
-  # Vérifier que les processus tournent encore
-
-  if ! $BASE_READY; then
-    if curl -sf http://localhost:8080/actuator/health >/dev/null 2>&1; then
-      BASE_READY=true
-      echo "  ✅ Baseline (8080) prêt après ${ELAPSED}s"
+  ALL_READY=true
+  for idx in "${!WAIT_URLS[@]}"; do
+    if [ "${READY_FLAGS[$idx]}" = "false" ]; then
+      if probe_url "${WAIT_URLS[$idx]}"; then
+        READY_FLAGS[$idx]="true"
+        echo "  ✅ ${WAIT_URLS[$idx]} prêt après ${ELAPSED}s"
+      else
+        ALL_READY=false
+      fi
     fi
-    if curl -sf http://localhost:8081/actuator/health >/dev/null 2>&1; then
-          BASE_READY=true
-          echo "  ✅ Baseline (8081) prêt après ${ELAPSED}s"
-    else
-          BASE_READY=false
-    fi
-  fi
-
-  if $BASE_READY; then
-    echo "🚀 Les 2 services sont démarrés !"
+  done
+  if $ALL_READY; then
+    echo "🚀 Toutes les cibles sont démarrées !"
     break
   fi
   sleep 5
-  ELAPSED=$((ELAPSED + 1))
+  ELAPSED=$((ELAPSED + 5))
 done
 
-if ! $BASE_READY; then
+if ! $ALL_READY; then
   echo ""
-  echo "⚠️  Timeout (${TIMEOUT}s) — services non prêts :"
-  $BASE_READY || echo "    ❌ Baseline (8080) non disponible"
-  $OPT_READY || echo "    ❌ Optimized (8081) non disponible"
+  echo "⚠️  Timeout (${TIMEOUT}s) — cibles non prêtes :"
+  for idx in "${!WAIT_URLS[@]}"; do
+    if [ "${READY_FLAGS[$idx]}" = "false" ]; then
+      echo "    ❌ ${WAIT_URLS[$idx]} non disponible"
+    fi
+  done
   echo ""
   echo "🛑 Arrêt — l'analyse ne sera pas lancée."
   exit 1

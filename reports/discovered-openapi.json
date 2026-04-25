@@ -3,74 +3,881 @@
   "info": {
     "title": "Merged Green Analyzer discovery",
     "version": "1.0.0",
-    "description": "Aggregated OpenAPI specs discovered from 2 target(s): http://api-a.local, http://api-b.local"
+    "description": "Aggregated OpenAPI specs discovered from 2 target(s): http://localhost:8080, http://localhost:8081"
   },
   "servers": [
     {
-      "url": "http://api-a.local"
+      "url": "http://localhost:8080"
     },
     {
-      "url": "http://api-b.local"
+      "url": "http://localhost:8081"
     }
   ],
   "paths": {
-    "/users": {
+    "/books": {
       "get": {
-        "operationId": "listUsers",
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "all",
         "responses": {
           "200": {
-            "description": "ok"
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
           }
         }
       },
-      "x-source-base-url": "http://api-a.local",
-      "x-source-original-path": "/users"
+      "x-source-base-url": "http://localhost:8080",
+      "x-source-original-path": "/books"
     },
-    "/items/{id}": {
+    "/books/{id}": {
       "get": {
-        "operationId": "getItem",
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "byId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "ok"
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
           }
         }
       },
-      "x-source-base-url": "http://api-a.local",
-      "x-source-original-path": "/items/{id}"
+      "x-source-base-url": "http://localhost:8080",
+      "x-source-original-path": "/books/{id}"
     },
-    "/__t1__/users": {
+    "/__t1__/books/{id}": {
       "get": {
-        "operationId": "listUsersB",
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "byId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "ok"
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
           }
         }
       },
-      "x-source-base-url": "http://api-b.local",
-      "x-source-original-path": "/users"
+      "put": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "updateBook",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Book"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books/{id}"
     },
-    "/orders": {
+    "/reactive/books/{id}/summary": {
       "get": {
-        "operationId": "listOrders",
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "operationId": "summaryRange",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "ok"
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
           }
         }
       },
-      "x-source-base-url": "http://api-b.local",
-      "x-source-original-path": "/orders"
+      "post": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "operationId": "updateSummary",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/reactive/books/{id}/summary"
+    },
+    "/books/{id}/summary": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "summaryRange_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "updateSummary_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books/{id}/summary"
+    },
+    "/reactive/books": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "operationId": "allBooksWithoutCache",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/reactive/books"
+    },
+    "/reactive/books/{id}": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "operationId": "byId_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/reactive/books/{id}"
+    },
+    "/reactive/books/select": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "operationId": "select",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "id,title,author"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/reactive/books/select"
+    },
+    "/reactive/books/changes": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "operationId": "changes",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/reactive/books/changes"
+    },
+    "/reactive/books/cbor": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "operationId": "getBooksCbor",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/cbor": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/reactive/books/cbor"
+    },
+    "/reactive/books/cacheable": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "operationId": "allBooks",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/reactive/books/cacheable"
+    },
+    "/__t1__/books": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "all",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books"
+    },
+    "/books/select": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "select_1",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "id,title,author"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books/select"
+    },
+    "/books/noCache/{id}": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "byId_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books/noCache/{id}"
+    },
+    "/books/changes": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "changes_1",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books/changes"
+    },
+    "/books/cbor": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "getBooksCbor_1",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/cbor": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books/cbor"
+    },
+    "/books/batch": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "batch",
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "maxItems": 100,
+              "minItems": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books/batch"
+    },
+    "/books/async": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "getBooksAsync",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books/async"
+    },
+    "/books/async/{id}": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "getBookByIdAsync",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8081",
+      "x-source-original-path": "/books/async/{id}"
     }
   },
   "x-discovery-sources": [
     {
-      "base_url": "http://api-a.local",
-      "swagger_source": "/tmp/spec_a.json"
+      "base_url": "http://localhost:8080",
+      "swagger_source": "http://localhost:8080/v3/api-docs"
     },
     {
-      "base_url": "http://api-b.local",
-      "swagger_source": "/tmp/spec_b.json"
+      "base_url": "http://localhost:8081",
+      "swagger_source": "http://localhost:8081/v3/api-docs"
     }
   ]
 }

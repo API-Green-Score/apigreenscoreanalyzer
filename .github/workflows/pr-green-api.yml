@@ -84,28 +84,68 @@ jobs:
             --server.port=8080 \
             > backend.log 2>&1 &
           echo $! > backend.pid
-      - name: Wait for backend
+      - name: Wait for targets
+        env:
+          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
         run: |
-          echo "Waiting for backend to start..."
-          for i in $(seq 1 90); do
-            if curl -sSf http://localhost:8080/actuator/health >/dev/null 2>&1; then
-              echo "✅ Backend is up"
-              break
+          # Probe every URL in $TARGETS (comma-separated) instead of a hardcoded
+          # localhost:8080. Try several common health paths so the workflow
+          # works against any stack (Spring Boot, /healthz, plain HTTP, …).
+          set -u
+          IFS=',' read -r -a T_ARR <<< "$TARGETS"
+          HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
+          probe() {
+            local base="$1" p
+            for p in "${HEALTH_PATHS[@]}"; do
+              if curl -s -o /dev/null --max-time 3 "${base%/}${p}" 2>/dev/null; then
+                return 0
+              fi
+            done
+            return 1
+          }
+
+          all_ready=true
+          for raw in "${T_ARR[@]}"; do
+            url="$(echo "$raw" | xargs)"
+            [ -z "$url" ] && continue
+            echo "⏳ Waiting for $url ..."
+            ready=false
+            for i in $(seq 1 90); do
+              if probe "$url"; then
+                echo "  ✅ $url is up after ${i}s"
+                ready=true
+                break
+              fi
+              sleep 2
+            done
+            if [ "$ready" = false ]; then
+              echo "  ❌ $url did not respond within 180s"
+              all_ready=false
             fi
-            if [ $i -eq 90 ]; then
-              echo "❌ Backend failed to start"
-              cat backend.log
-              exit 1
-            fi
-            sleep 2
           done
+
+          if [ "$all_ready" = false ]; then
+            echo ""
+            echo "Last 80 lines of backend.log (if any):"
+            [ -f backend.log ] && tail -80 backend.log || echo "(no backend.log)"
+            exit 1
+          fi
       - name: Verify Swagger is exposed
+        env:
+          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
+          SWAGGERS: ${{ github.event.inputs.swaggers || env.DEFAULT_SWAGGERS }}
         run: |
-          echo "Checking Swagger endpoint..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/v3/api-docs)
+          # Pick the first target/swagger pair for the verification probe.
+          IFS=',' read -r -a T_ARR <<< "$TARGETS"
+          IFS=',' read -r -a S_ARR <<< "$SWAGGERS"
+          BASE="$(echo "${T_ARR[0]:-}" | xargs)"
+          SWAGGER_URL="$(echo "${S_ARR[0]:-}" | xargs)"
+          [ -z "$SWAGGER_URL" ] && SWAGGER_URL="${BASE%/}/api/v3/api-docs"
+          echo "Checking Swagger at: $SWAGGER_URL"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$SWAGGER_URL")
           if [ "$STATUS" = "200" ]; then
-            echo "✅ Swagger spec available at /api/v3/api-docs"
-            curl -s http://localhost:8080/api/v3/api-docs | python3 -c "
+            echo "✅ Swagger spec available at $SWAGGER_URL"
+            curl -s "$SWAGGER_URL" | python3 -c "
           import sys, json
           spec = json.load(sys.stdin)
           paths = list(spec.get('paths', {}).keys())
@@ -118,9 +158,7 @@ jobs:
               print(f'    ... and {len(paths) - 10} more')
           "
           else
-            echo "❌ Swagger not available (HTTP $STATUS)"
-            cat backend.log | tail -50
-            exit 1
+            echo "⚠️ Swagger not available at $SWAGGER_URL (HTTP $STATUS) — relying on auto-discovery"
           fi
 
       - name: Run Green API Auto-Discover Analyzer
@@ -363,12 +401,36 @@ jobs:
             --server.port=8080 \
             > backend.log 2>&1 &
           echo $! > backend.pid
-          for i in $(seq 1 90); do
-            curl -sSf http://localhost:8080/actuator/health >/dev/null 2>&1 && echo "Backend up" && break
-            sleep 2
+      - name: Wait for targets (spectral)
+        env:
+          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
+        run: |
+          IFS=',' read -r -a T_ARR <<< "$TARGETS"
+          HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
+          for raw in "${T_ARR[@]}"; do
+            url="$(echo "$raw" | xargs)"
+            [ -z "$url" ] && continue
+            for i in $(seq 1 90); do
+              ok=0
+              for p in "${HEALTH_PATHS[@]}"; do
+                if curl -s -o /dev/null --max-time 3 "${url%/}${p}" 2>/dev/null; then ok=1; break; fi
+              done
+              [ $ok -eq 1 ] && echo "✅ $url up after ${i}s" && break
+              sleep 2
+            done
           done
       - name: Fetch OpenAPI spec
-        run: curl -s http://localhost:8080/api/v3/api-docs -o openapi.json
+        env:
+          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
+          SWAGGERS: ${{ github.event.inputs.swaggers || env.DEFAULT_SWAGGERS }}
+        run: |
+          IFS=',' read -r -a T_ARR <<< "$TARGETS"
+          IFS=',' read -r -a S_ARR <<< "$SWAGGERS"
+          BASE="$(echo "${T_ARR[0]:-}" | xargs)"
+          SWAGGER_URL="$(echo "${S_ARR[0]:-}" | xargs)"
+          [ -z "$SWAGGER_URL" ] && SWAGGER_URL="${BASE%/}/api/v3/api-docs"
+          echo "Fetching OpenAPI from $SWAGGER_URL"
+          curl -s "$SWAGGER_URL" -o openapi.json
       - name: Install Spectral
         run: npm install -g @stoplight/spectral-cli
       - name: Run Spectral
@@ -410,9 +472,23 @@ jobs:
             --server.port=8080 \
             > backend.log 2>&1 &
           echo $! > backend.pid
-          for i in $(seq 1 90); do
-            curl -sSf http://localhost:8080/actuator/health >/dev/null 2>&1 && echo "API ready" && break
-            sleep 2
+      - name: Wait for targets (auto-discover)
+        env:
+          TARGETS: ${{ github.event.inputs.targets || env.DEFAULT_TARGETS }}
+        run: |
+          IFS=',' read -r -a T_ARR <<< "$TARGETS"
+          HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
+          for raw in "${T_ARR[@]}"; do
+            url="$(echo "$raw" | xargs)"
+            [ -z "$url" ] && continue
+            for i in $(seq 1 90); do
+              ok=0
+              for p in "${HEALTH_PATHS[@]}"; do
+                if curl -s -o /dev/null --max-time 3 "${url%/}${p}" 2>/dev/null; then ok=1; break; fi
+              done
+              [ $ok -eq 1 ] && echo "✅ $url ready after ${i}s" && break
+              sleep 2
+            done
           done
       - name: Run Auto-Discover Analyzer
         env:

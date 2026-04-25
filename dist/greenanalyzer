@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────
+#  greenanalyzer — CLI to analyze API eco-design (Green Score)
+#
+#  Usage:
+#    ./greenanalyzer --target http://your-api:8080
+#    ./greenanalyzer --target http://your-api:8080 --swagger http://your-api:8080/v3/api-docs
+#    ./greenanalyzer --target http://your-api:8080 --bearer "token" --repeat 5
+#    ./greenanalyzer --swagger ./my-spec.yaml --dry-run
+#    ./greenanalyzer --help
+#
+#  All reports, badges, and dashboard are written to ./greenanalyzer-output/
+# ─────────────────────────────────────────────────────────────
+set -euo pipefail
+
+IMAGE_NAME="greenanalyzer:latest"
+OUTPUT_DIR="${GREEN_OUTPUT_DIR:-$(pwd)/greenanalyzer-output}"
+
+# ── Detect container runtime ──
+if command -v docker &>/dev/null; then
+    RUNTIME="docker"
+elif command -v podman &>/dev/null; then
+    RUNTIME="podman"
+else
+    echo "❌  Error: Docker or Podman is required but not found."
+    echo "   Install Docker: https://docs.docker.com/get-docker/"
+    exit 1
+fi
+
+# ── Show help ──
+show_help() {
+    cat <<'HELP'
+
+  ╔══════════════════════════════════════════════════════════╗
+  ║          🌿  Green Analyzer — API Eco-Scoring           ║
+  ╚══════════════════════════════════════════════════════════╝
+
+  Measures the eco-design quality of any REST API and produces
+  a Green Score out of 100.
+
+  USAGE:
+    ./greenanalyzer [OPTIONS]
+
+  OPTIONS:
+    --target URL        Base URL of the API to analyze (required unless --dry-run)
+    --swagger URL|FILE  Explicit OpenAPI/Swagger spec URL or local file path
+    --bearer TOKEN      Bearer token for authenticated APIs
+    --repeat N          Number of measurement repetitions (default: 3)
+    --dry-run           Lint spec only, no HTTP calls to the API
+    --help              Show this help message
+
+  EXAMPLES:
+    ./greenanalyzer --target http://localhost:8080
+    ./greenanalyzer --target http://my-api:8080 --swagger http://my-api:8080/v3/api-docs
+    ./greenanalyzer --target http://my-api:8080 --bearer "eyJhb..." --repeat 5
+    ./greenanalyzer --swagger ./openapi.yaml --dry-run
+
+  OUTPUT:
+    Reports, dashboard, and badges are written to:
+      ./greenanalyzer-output/
+        ├── reports/          JSON reports (timestamped + latest-report.json)
+        ├── dashboard/        HTML dashboard (open index.html in browser)
+        └── badges/           SVG score badge
+
+  SCORING RULES (100 points):
+    ┌────────┬──────────────────┬────────┐
+    │ Rule   │ Description      │ Points │
+    ├────────┼──────────────────┼────────┤
+    │ DE11   │ Pagination       │   15   │
+    │ DE08   │ Field filtering  │   15   │
+    │ DE01   │ Compression      │   15   │
+    │ DE02/03│ Cache (ETag)     │   15   │
+    │ DE06   │ Delta            │   10   │
+    │ —      │ Range (206)      │   10   │
+    │ LO01   │ Observability    │    5   │
+    │ US07   │ Rate Limit       │    5   │
+    │ AR02   │ CBOR             │   10   │
+    └────────┴──────────────────┴────────┘
+
+  ENVIRONMENT VARIABLES:
+    GREEN_OUTPUT_DIR    Output directory (default: ./greenanalyzer-output)
+
+HELP
+    exit 0
+}
+
+# ── Parse arguments ──
+ARGS=()
+LOCAL_SWAGGER=""
+for arg in "$@"; do
+    if [[ "$arg" == "--help" || "$arg" == "-h" ]]; then
+        show_help
+    fi
+    ARGS+=("$arg")
+done
+
+# Check if a local swagger file is referenced
+i=0
+while [ $i -lt ${#ARGS[@]} ]; do
+    if [[ "${ARGS[$i]}" == "--swagger" ]] && [ $((i+1)) -lt ${#ARGS[@]} ]; then
+        next="${ARGS[$((i+1))]}"
+        # If it's a local file (not a URL), mount it
+        if [[ "$next" != http* ]] && [[ -f "$next" ]]; then
+            LOCAL_SWAGGER="$(cd "$(dirname "$next")" && pwd)/$(basename "$next")"
+            ARGS[$((i+1))]="/tmp/spec/$(basename "$next")"
+        fi
+    fi
+    i=$((i+1))
+done
+
+# ── Prepare output directories ──
+mkdir -p "$OUTPUT_DIR/reports" "$OUTPUT_DIR/dashboard" "$OUTPUT_DIR/badges"
+
+# ── Build volume mounts ──
+VOLUMES=(
+    -v "$OUTPUT_DIR/reports:/opt/greenanalyzer/reports"
+    -v "$OUTPUT_DIR/dashboard:/opt/greenanalyzer/output-dashboard"
+    -v "$OUTPUT_DIR/badges:/opt/greenanalyzer/badges"
+)
+
+if [[ -n "$LOCAL_SWAGGER" ]]; then
+    VOLUMES+=(-v "$(dirname "$LOCAL_SWAGGER"):/tmp/spec:ro")
+fi
+
+# ── Use host network so the container can reach localhost APIs ──
+NETWORK_OPT="--network=host"
+
+echo ""
+echo "  🌿  Green Analyzer — Starting analysis..."
+echo "  ─────────────────────────────────────────"
+echo "  Runtime:  $RUNTIME"
+echo "  Output:   $OUTPUT_DIR"
+echo ""
+
+$RUNTIME run --rm \
+    $NETWORK_OPT \
+    "${VOLUMES[@]}" \
+    "$IMAGE_NAME" \
+    "${ARGS[@]}"
+
+echo ""
+echo "  ✅  Analysis complete!"
+echo "  ─────────────────────"
+echo "  📊  Report:    $OUTPUT_DIR/reports/latest-report.json"
+echo "  🌐  Dashboard: $OUTPUT_DIR/dashboard/index.html"
+echo "  🏷️   Badge:     $OUTPUT_DIR/badges/green-score.svg"
+echo ""
+

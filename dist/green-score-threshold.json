@@ -1,0 +1,4 @@
+{
+  "minScore": 5,
+  "note": "Seuil de Green Score minimum pour éviter les régressions en CI"
+}

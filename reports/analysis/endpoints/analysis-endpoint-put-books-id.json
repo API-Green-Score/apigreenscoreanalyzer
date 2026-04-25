@@ -1,16 +1,16 @@
 {
-  "timestamp": "2026-04-16T13:20:16Z",
+  "timestamp": "2026-04-25T10:08:53Z",
   "service_base_url": "http://localhost:8081",
   "endpoint": {
     "method": "put",
     "path": "/books/{id}",
     "url": "http://localhost:8081/books/1",
     "http_code": 400,
-    "size_download": 319,
-    "time_total": 0.012126,
-    "speed_download": 26306,
-    "energy_network_wh": 1.782551407814026e-05,
-    "energy_server_wh": 8.420833333333332e-05,
-    "energy_total_wh": 0.00010203384741147358
+    "size_download": 316,
+    "time_total": 0.003464,
+    "speed_download": 91237,
+    "energy_network_wh": 1.7657876014709473e-05,
+    "energy_server_wh": 2.4055555555555555e-05,
+    "energy_total_wh": 4.1713431570265024e-05
   }
 }

@@ -96,17 +96,35 @@ if [ ! -f "$AUTODISCOVER_PY" ]; then
   exit 1
 fi
 
-# Wait for the target API(s) to be available — supports comma-separated list
+# Wait for the target API(s) to be available — supports comma-separated list.
+# Tries several common health paths so the script is portable across stacks
+# (Spring Boot, plain HTTP, /healthz, etc.) instead of assuming /actuator/health.
 echo -e "${YELLOW}━━━ ⏳ Waiting for API(s): ${TARGET_URL} ━━━${NC}"
 MAX_WAIT=90
+HEALTH_PATHS=("/actuator/health" "/health" "/healthz" "/ping" "/")
 IFS=',' read -r -a TARGET_LIST <<< "$TARGET_URL"
+
+probe_target() {
+  local base="$1"
+  local p
+  for p in "${HEALTH_PATHS[@]}"; do
+    if curl -s -o /dev/null -w '' --max-time 3 "${base%/}${p}" 2>/dev/null; then
+      # curl with -w '' returns 0 if the server responded at all; that's enough
+      # to consider the target reachable. We don't require 200 since some APIs
+      # return 401/403 on / when auth is required.
+      return 0
+    fi
+  done
+  return 1
+}
+
 for raw_url in "${TARGET_LIST[@]}"; do
   url="$(echo "$raw_url" | xargs)"   # trim
   [ -z "$url" ] && continue
   echo -e "  → checking ${url}..."
   ready=false
   for i in $(seq 1 $MAX_WAIT); do
-    if curl -s -o /dev/null -w '' "${url}/actuator/health" 2>/dev/null; then
+    if probe_target "$url"; then
       echo -e "  ${GREEN}✓ ${url} is up${NC}"
       ready=true
       break
@@ -114,7 +132,7 @@ for raw_url in "${TARGET_LIST[@]}"; do
     sleep 1
   done
   if [ "$ready" = false ]; then
-    echo -e "  ${YELLOW}⚠ ${url} did not respond on /actuator/health within ${MAX_WAIT}s — will still try${NC}"
+    echo -e "  ${YELLOW}⚠ ${url} did not respond within ${MAX_WAIT}s — will still try${NC}"
   fi
 done
 echo ""
