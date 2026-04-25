@@ -103,15 +103,10 @@ jobs:
       build_status: ${{ steps.mvnbuild.outcome }}
       jar_found:    ${{ steps.locatejar.outputs.found }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          path: analyzer
-      - name: Setup JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
+      # NOTE: We do NOT checkout the analyzer repo here — this job only needs
+      # to build the cloned target repo. We also clone BEFORE setup-java so
+      # that setup-java's Maven cache can resolve a real pom.xml path
+      # (otherwise: "No file matched **/pom.xml").
 
       - name: Clone target repository
         id: clone
@@ -150,10 +145,30 @@ jobs:
             echo "::warning::No pom.xml found in cloned repo — skipping build"
             echo "found=false" >> "$GITHUB_OUTPUT"
           else
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "pom=$POM"   >> "$GITHUB_OUTPUT"
+            POM_DIR="$(dirname "$POM")"
+            echo "found=true"        >> "$GITHUB_OUTPUT"
+            echo "pom=$POM"          >> "$GITHUB_OUTPUT"
+            echo "pom_dir=$POM_DIR"  >> "$GITHUB_OUTPUT"
             echo "📦 Will build: $POM"
           fi
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }} (with Maven cache)
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+          # Point cache key resolution at the cloned project's poms — the
+          # analyzer repo has no pom.xml at its root, only the clone does.
+          cache-dependency-path: ${{ steps.detect.outputs.pom_dir }}/**/pom.xml
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }} (no cache fallback)
+        if: steps.detect.outputs.found != 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Build with Maven (best-effort)
         id: mvnbuild
@@ -168,21 +183,74 @@ jobs:
           fi
           exit $rc
 
-      - name: Locate produced jar
+      - name: Locate produced jars (multi-module, recursive)
         id: locatejar
         if: always() && steps.detect.outputs.found == 'true'
         run: |
-          POM_DIR="$(dirname "${{ steps.detect.outputs.pom }}")"
-          JAR="$(ls -1 "$POM_DIR"/target/*.jar 2>/dev/null | grep -v -- '-sources\|-javadoc' | head -1 || true)"
-          if [ -n "$JAR" ] && [ -f "$JAR" ]; then
-            mkdir -p backend/target
-            cp "$JAR" backend/target/
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "✅ Jar uploaded: $(basename "$JAR")"
-          else
+          set -u
+          BUILD_DIR="${{ steps.clone.outputs.build_dir }}"
+          mkdir -p apps
+
+          # Find every Spring-Boot / runnable jar produced anywhere under the
+          # cloned repo (recursively into ALL `target/` folders), excluding
+          # sources/javadoc/original/tests classifiers. Output is sorted so
+          # the numbering is reproducible across runs.
+          mapfile -t JARS < <(
+            find "$BUILD_DIR" -type f -name '*.jar' -path '*/target/*' \
+              ! -name '*-sources.jar' \
+              ! -name '*-javadoc.jar' \
+              ! -name '*-tests.jar' \
+              ! -name 'original-*.jar' 2>/dev/null | sort
+          )
+
+          COUNT=${#JARS[@]}
+          echo "🔎 Found $COUNT runnable jar(s):"
+          if [ "$COUNT" -eq 0 ]; then
             echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::No jar produced — downstream jobs that need it will skip backend startup"
+            echo "count=0"     >> "$GITHUB_OUTPUT"
+            echo "::warning::No runnable jar produced — downstream jobs that need a backend will skip startup"
+            exit 0
           fi
+
+          # Renumber jars to app1.jar, app2.jar, ... (no module name hardcoded)
+          # and write a manifest mapping app{N}.jar → original module info.
+          {
+            echo "{"
+            echo "  \"count\": $COUNT,"
+            echo "  \"apps\": ["
+          } > apps/manifest.json
+
+          i=0
+          for src in "${JARS[@]}"; do
+            i=$((i+1))
+            dest="apps/app${i}.jar"
+            cp "$src" "$dest"
+            orig_name="$(basename "$src")"
+            # Module dir = <something>/<module>/target/foo.jar → "<module>"
+            module_dir="$(basename "$(dirname "$(dirname "$src")")")"
+            sep=","
+            [ "$i" -eq "$COUNT" ] && sep=""
+            printf '    {"index": %d, "alias": "app%d.jar", "original": "%s", "module": "%s", "port": %d, "size_bytes": %s}%s\n' \
+              "$i" "$i" "$orig_name" "$module_dir" "$((8079 + i))" "$(stat -c%s "$dest" 2>/dev/null || stat -f%z "$dest")" "$sep" \
+              >> apps/manifest.json
+            echo "  • $orig_name → $dest  (module=$module_dir, port=$((8079 + i)))"
+          done
+          echo "  ]" >> apps/manifest.json
+          echo "}"   >> apps/manifest.json
+
+          echo "found=true"        >> "$GITHUB_OUTPUT"
+          echo "count=$COUNT"      >> "$GITHUB_OUTPUT"
+
+          echo ""
+          echo "📋 apps/manifest.json:"
+          cat apps/manifest.json
+
+      - name: Upload backend jars (dynamic — all modules)
+        if: steps.locatejar.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jars
+          path: apps/
 
   green-score:
     name: "🌿 Green Score Analysis"
@@ -440,16 +508,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Download jar
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: backend-jar
-          path: backend/target/
-      - name: Compile backend (for sonar binaries)
-        if: hashFiles('backend/target/*.jar') != ''
-        run: mvn -q -DskipTests -f backend/pom.xml compile
-        continue-on-error: true
+      # NOTE: Creedengo clones its own working copy via --git-repo, so it does
+      # not need the produced backend jar. The previous Download/Compile steps
+      # were removed: they hardcoded `backend/pom.xml` (which doesn't exist in
+      # this analyzer repo) and provided no value to the SonarQube scan.
 
       - name: Run Creedengo Analyzer (same script as local)
         env:
@@ -546,16 +608,31 @@ jobs:
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          name: backend-jar
-          path: backend/target/
-      - name: Start backend
-        if: hashFiles('backend/target/*.jar') != ''
+          name: backend-jars
+          path: apps/
+      - name: Start backends (dynamic — all app*.jar)
+        if: hashFiles('apps/app*.jar') != ''
         run: |
-          nohup java -jar backend/target/*.jar \
-            --spring.profiles.active=test \
-            --server.port=8080 \
-            > backend.log 2>&1 &
-          echo $! > backend.pid
+          set -u
+          # Iterate every app{N}.jar, start it on port 8079+N. Pids are stored
+          # in apps/*.pid for the cleanup step. The number of jars and the
+          # module names are NOT hardcoded — driven by the manifest produced
+          # by the build job.
+          mkdir -p logs
+          shopt -s nullglob
+          i=0
+          for jar in $(ls apps/app*.jar | sort -V); do
+            i=$((i+1))
+            port=$((8079 + i))
+            name="$(basename "$jar" .jar)"
+            echo "🚀 Starting $jar on port $port"
+            nohup java -jar "$jar" \
+              --spring.profiles.active=test \
+              --server.port="$port" \
+              > "logs/${name}.log" 2>&1 &
+            echo $! > "apps/${name}.pid"
+          done
+          echo "✅ Started $i backend(s)"
       - name: Wait for targets (spectral)
         run: |
           IFS=',' read -r -a T_ARR <<< "$TARGETS"
@@ -591,9 +668,19 @@ jobs:
             echo "No .spectral.yml found — running with default rules"
             spectral lint openapi.json --format stylish || true
           fi
-      - name: Stop backend
+      - name: Stop backends (spectral)
         if: always()
-        run: kill $(cat backend.pid) 2>/dev/null || true
+        run: |
+          shopt -s nullglob
+          for pid_file in apps/*.pid; do
+            pid="$(cat "$pid_file" 2>/dev/null || true)"
+            [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+          done
+          # Print last lines of each backend log for debugging on failure
+          for log in logs/*.log; do
+            echo "── $log ──"
+            tail -n 20 "$log" 2>/dev/null || true
+          done
 
   auto-discover:
     name: "🔍 Auto-Discover Analysis"
@@ -621,16 +708,27 @@ jobs:
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          name: backend-jar
-          path: backend/target/
-      - name: Start backend
-        if: hashFiles('backend/target/*.jar') != ''
+          name: backend-jars
+          path: apps/
+      - name: Start backends (dynamic — all app*.jar)
+        if: hashFiles('apps/app*.jar') != ''
         run: |
-          nohup java -jar backend/target/*.jar \
-            --spring.profiles.active=test \
-            --server.port=8080 \
-            > backend.log 2>&1 &
-          echo $! > backend.pid
+          set -u
+          mkdir -p logs
+          shopt -s nullglob
+          i=0
+          for jar in $(ls apps/app*.jar | sort -V); do
+            i=$((i+1))
+            port=$((8079 + i))
+            name="$(basename "$jar" .jar)"
+            echo "🚀 Starting $jar on port $port"
+            nohup java -jar "$jar" \
+              --spring.profiles.active=test \
+              --server.port="$port" \
+              > "logs/${name}.log" 2>&1 &
+            echo $! > "apps/${name}.pid"
+          done
+          echo "✅ Started $i backend(s)"
       - name: Wait for targets (auto-discover)
         run: |
           IFS=',' read -r -a T_ARR <<< "$TARGETS"
@@ -678,9 +776,18 @@ jobs:
         with:
           name: auto-discover-report
           path: reports/
-      - name: Stop backend
+      - name: Stop backends (auto-discover)
         if: always()
-        run: kill $(cat backend.pid) 2>/dev/null || true
+        run: |
+          shopt -s nullglob
+          for pid_file in apps/*.pid; do
+            pid="$(cat "$pid_file" 2>/dev/null || true)"
+            [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+          done
+          for log in logs/*.log; do
+            echo "── $log ──"
+            tail -n 20 "$log" 2>/dev/null || true
+          done
 
   summary:
     name: "📊 Combined Green Summary"
