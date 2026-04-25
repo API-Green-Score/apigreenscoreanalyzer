@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "get",
+    "path": "/api/payments/changes",
+    "url": "http://localhost:8080/api/payments/changes",
+    "http_code": 200,
+    "size_download": 1337,
+    "time_total": 0.011302,
+    "speed_download": 118294,
+    "energy_network_wh": 7.471069693565369e-05,
+    "energy_server_wh": 7.848611111111111e-05,
+    "energy_total_wh": 0.00015319680804676478
+  }
+}

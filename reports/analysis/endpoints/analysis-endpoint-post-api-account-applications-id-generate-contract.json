@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/account-applications/{id}/generate-contract",
+    "url": "http://localhost:8080/api/account-applications/fb0961bc-2223-4cf3-9084-20fbf9529064/generate-contract",
+    "http_code": 200,
+    "size_download": 1149,
+    "time_total": 0.029514,
+    "speed_download": 38930,
+    "energy_network_wh": 6.420537829399109e-05,
+    "energy_server_wh": 0.0002049583333333333,
+    "energy_total_wh": 0.0002691637116273244
+  }
+}

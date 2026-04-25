@@ -1,0 +1,7 @@
+reports/
+badges/
+.github/
+installer.sh
+Dockerfile
+.dockerignore
+README-USER.md

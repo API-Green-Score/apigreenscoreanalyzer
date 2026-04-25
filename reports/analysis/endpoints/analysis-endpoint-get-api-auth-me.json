@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "get",
+    "path": "/api/auth/me",
+    "url": "http://localhost:8080/api/auth/me",
+    "http_code": 200,
+    "size_download": 209,
+    "time_total": 0.00801,
+    "speed_download": 26092,
+    "energy_network_wh": 1.16787850856781e-05,
+    "energy_server_wh": 5.5625e-05,
+    "energy_total_wh": 6.73037850856781e-05
+  }
+}

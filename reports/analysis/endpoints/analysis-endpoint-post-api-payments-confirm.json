@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/payments/confirm",
+    "url": "http://localhost:8080/api/payments/confirm",
+    "http_code": 200,
+    "size_download": 384,
+    "time_total": 0.013316,
+    "speed_download": 28838,
+    "energy_network_wh": 2.1457672119140625e-05,
+    "energy_server_wh": 9.247222222222221e-05,
+    "energy_total_wh": 0.00011392989434136283
+  }
+}

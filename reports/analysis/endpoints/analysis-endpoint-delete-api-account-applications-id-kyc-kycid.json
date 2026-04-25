@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "delete",
+    "path": "/api/account-applications/{id}/kyc/{kycId}",
+    "url": "http://localhost:8080/api/account-applications/166632aa-31a8-4d99-b1d5-44d64b893624/kyc/23c21b61-6a0a-4cca-9224-ede2565bcff1",
+    "http_code": 200,
+    "size_download": 61,
+    "time_total": 0.009052,
+    "speed_download": 6738,
+    "energy_network_wh": 3.408640623092651e-06,
+    "energy_server_wh": 6.286111111111111e-05,
+    "energy_total_wh": 6.626975173420376e-05
+  }
+}

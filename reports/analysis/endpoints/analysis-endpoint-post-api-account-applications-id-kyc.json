@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/account-applications/{id}/kyc",
+    "url": "http://localhost:8080/api/account-applications/c9ff9edb-b4a7-41a3-a694-8e6d0fb25f2a/kyc",
+    "http_code": 201,
+    "size_download": 365,
+    "time_total": 0.015163,
+    "speed_download": 24071,
+    "energy_network_wh": 2.039596438407898e-05,
+    "energy_server_wh": 0.0001052986111111111,
+    "energy_total_wh": 0.00012569457549519008
+  }
+}

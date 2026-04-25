@@ -1,0 +1,76 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Merged Green Analyzer discovery",
+    "version": "1.0.0",
+    "description": "Aggregated OpenAPI specs discovered from 2 target(s): http://api-a.local, http://api-b.local"
+  },
+  "servers": [
+    {
+      "url": "http://api-a.local"
+    },
+    {
+      "url": "http://api-b.local"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "get": {
+        "operationId": "listUsers",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      },
+      "x-source-base-url": "http://api-a.local",
+      "x-source-original-path": "/users"
+    },
+    "/items/{id}": {
+      "get": {
+        "operationId": "getItem",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      },
+      "x-source-base-url": "http://api-a.local",
+      "x-source-original-path": "/items/{id}"
+    },
+    "/__t1__/users": {
+      "get": {
+        "operationId": "listUsersB",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      },
+      "x-source-base-url": "http://api-b.local",
+      "x-source-original-path": "/users"
+    },
+    "/orders": {
+      "get": {
+        "operationId": "listOrders",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      },
+      "x-source-base-url": "http://api-b.local",
+      "x-source-original-path": "/orders"
+    }
+  },
+  "x-discovery-sources": [
+    {
+      "base_url": "http://api-a.local",
+      "swagger_source": "/tmp/spec_a.json"
+    },
+    {
+      "base_url": "http://api-b.local",
+      "swagger_source": "/tmp/spec_b.json"
+    }
+  ]
+}

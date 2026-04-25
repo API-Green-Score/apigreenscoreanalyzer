@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/sign/{token}",
+    "url": "http://localhost:8080/api/sign/test-token-sign",
+    "http_code": 200,
+    "size_download": 1347,
+    "time_total": 0.057904,
+    "speed_download": 23262,
+    "energy_network_wh": 7.526949048042297e-05,
+    "energy_server_wh": 0.00040211111111111106,
+    "energy_total_wh": 0.00047738060159153403
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "get",
+    "path": "/api/account-types",
+    "url": "http://localhost:8080/api/account-types",
+    "http_code": 200,
+    "size_download": 559,
+    "time_total": 0.0068,
+    "speed_download": 82209,
+    "energy_network_wh": 3.123655915260315e-05,
+    "energy_server_wh": 4.7222222222222214e-05,
+    "energy_total_wh": 7.845878137482536e-05
+  }
+}

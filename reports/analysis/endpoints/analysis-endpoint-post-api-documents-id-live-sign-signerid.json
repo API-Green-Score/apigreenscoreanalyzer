@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/documents/{id}/live-sign/{signerId}",
+    "url": "http://localhost:8080/api/documents/9b7c3762-d9d4-4c12-80c4-d969b006ee71/live-sign/dbe0b5bc-51e1-4a97-aea9-1d4b8f1f986e",
+    "http_code": 200,
+    "size_download": 774,
+    "time_total": 0.402257,
+    "speed_download": 1924,
+    "energy_network_wh": 4.325062036514282e-05,
+    "energy_server_wh": 0.0027934513888888887,
+    "energy_total_wh": 0.0028367020092540315
+  }
+}

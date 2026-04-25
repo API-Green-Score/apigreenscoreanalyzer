@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/account-applications/{id}/regenerate-contract",
+    "url": "http://localhost:8080/api/account-applications/5fd0968e-ecea-40e4-b3bd-6931924e3e7d/regenerate-contract",
+    "http_code": 200,
+    "size_download": 1327,
+    "time_total": 0.043086,
+    "speed_download": 30799,
+    "energy_network_wh": 7.415190339088439e-05,
+    "energy_server_wh": 0.0002992083333333333,
+    "energy_total_wh": 0.0003733602367242177
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-16T13:20:16Z",
+  "service_base_url": "http://localhost:8081",
+  "endpoint": {
+    "method": "get",
+    "path": "/reactive/books/changes",
+    "url": "http://localhost:8081/reactive/books/changes",
+    "http_code": 400,
+    "size_download": 210,
+    "time_total": 0.015612,
+    "speed_download": 13450,
+    "energy_network_wh": 1.173466444015503e-05,
+    "energy_server_wh": 0.00010841666666666665,
+    "energy_total_wh": 0.00012015133110682168
+  }
+}

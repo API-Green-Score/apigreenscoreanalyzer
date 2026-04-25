@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/sign/{token}/verify-otp",
+    "url": "http://localhost:8080/api/sign/test-token-verify-otp/verify-otp",
+    "http_code": 200,
+    "size_download": 117,
+    "time_total": 0.012627,
+    "speed_download": 9266,
+    "energy_network_wh": 6.537884473800659e-06,
+    "energy_server_wh": 8.76875e-05,
+    "energy_total_wh": 9.422538447380066e-05
+  }
+}

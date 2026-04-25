@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-16T13:20:16Z",
+  "service_base_url": "http://localhost:8081",
+  "endpoint": {
+    "method": "post",
+    "path": "/books/{id}/summary",
+    "url": "http://localhost:8081/books/1/summary",
+    "http_code": 400,
+    "size_download": 346,
+    "time_total": 0.011665,
+    "speed_download": 29662,
+    "energy_network_wh": 1.933425664901733e-05,
+    "energy_server_wh": 8.100694444444443e-05,
+    "energy_total_wh": 0.00010034120109346177
+  }
+}

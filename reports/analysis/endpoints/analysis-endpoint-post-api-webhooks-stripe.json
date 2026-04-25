@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T18:28:36Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/webhooks/stripe",
+    "url": "http://localhost:8080/api/webhooks/stripe",
+    "http_code": 500,
+    "size_download": 70,
+    "time_total": 0.010367,
+    "speed_download": 6752,
+    "energy_network_wh": 3.91155481338501e-06,
+    "energy_server_wh": 7.199305555555554e-05,
+    "energy_total_wh": 7.590461036894055e-05
+  }
+}

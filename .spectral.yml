@@ -1,0 +1,79 @@
+extends: [[spectral:oas, recommended]]
+
+rules:
+  # ═══════════════════════════════════════════════════════════
+  #  🌿 Green API Score — Spectral Rules
+  #  Règles de linting OpenAPI pour l'éco-conception d'API
+  # ═══════════════════════════════════════════════════════════
+
+  # DE11 — Pagination obligatoire sur les collections
+  green-api-pagination:
+    description: "DE11 — Les endpoints de collection GET doivent supporter la pagination (page/size ou limit/offset)"
+    severity: warn
+    given: "$.paths[*].get"
+    then:
+      - field: parameters
+        function: truthy
+    message: "{{description}} — Ajoutez des paramètres page/size sur les GET de collection."
+
+  # DE08 — Filtrage de champs
+  green-api-fields-filter:
+    description: "DE08 — Les endpoints GET devraient supporter un paramètre 'fields' pour le filtrage de champs"
+    severity: info
+    given: "$.paths[*].get.parameters[*]"
+    then:
+      field: name
+      function: pattern
+      functionOptions:
+        notMatch: "^$"
+    message: "Pensez à ajouter un paramètre 'fields' pour réduire le payload (DE08)."
+
+  # DE01 — Format de réponse
+  green-api-response-format:
+    description: "DE01 — Les réponses doivent utiliser application/json (ou application/cbor)"
+    severity: warn
+    given: "$.paths[*][*].responses[*].content"
+    then:
+      field: "application/json"
+      function: truthy
+    message: "{{description}}"
+
+  # DE02/DE03 — Cache headers
+  green-api-cache-headers:
+    description: "DE02/DE03 — Les réponses 200 devraient documenter les headers de cache (ETag, Cache-Control)"
+    severity: info
+    given: "$.paths[*].get.responses.200.headers"
+    then:
+      function: truthy
+    message: "Documentez les headers ETag et Cache-Control dans vos réponses 200 (DE02/DE03)."
+
+  # Pas de descriptions vides
+  green-api-operation-description:
+    description: "Chaque opération doit avoir une description"
+    severity: warn
+    given: "$.paths[*][get,post,put,patch,delete]"
+    then:
+      field: description
+      function: truthy
+    message: "Ajoutez une description à cette opération pour la documentation."
+
+  # Réponses d'erreur documentées
+  green-api-error-responses:
+    description: "US07 — Documentez les réponses d'erreur (400, 404, 500)"
+    severity: info
+    given: "$.paths[*][*].responses"
+    then:
+      field: "404"
+      function: truthy
+    message: "Documentez la réponse 404 pour améliorer l'observabilité (US07)."
+
+  # Pas de payload excessif dans les exemples
+  oas3-valid-media-example:
+    severity: warn
+
+  # Info obligatoire
+  info-contact:
+    severity: warn
+  info-description:
+    severity: warn
+

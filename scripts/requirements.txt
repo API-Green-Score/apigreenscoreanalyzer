@@ -1,0 +1,2 @@
+# Ce script utilise uniquement la bibliotheque standard Python.
+pyyaml>=6.0

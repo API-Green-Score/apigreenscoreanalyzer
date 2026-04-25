@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/account-applications",
+    "url": "http://localhost:8080/api/account-applications",
+    "http_code": 201,
+    "size_download": 940,
+    "time_total": 0.019228,
+    "speed_download": 48888,
+    "energy_network_wh": 5.252659320831299e-05,
+    "energy_server_wh": 0.00013352777777777777,
+    "energy_total_wh": 0.00018605437098609076
+  }
+}

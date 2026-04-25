@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-04-08T22:26:00Z",
+  "service_base_url": "http://localhost:8080",
+  "endpoint": {
+    "method": "post",
+    "path": "/api/payments/{id}/cancel",
+    "url": "http://localhost:8080/api/payments/03b95b94-43b6-4de1-962d-aa4555d4cec9/cancel",
+    "http_code": 200,
+    "size_download": 373,
+    "time_total": 0.009699,
+    "speed_download": 38456,
+    "energy_network_wh": 2.084299921989441e-05,
+    "energy_server_wh": 6.735416666666665e-05,
+    "energy_total_wh": 8.819716588656106e-05
+  }
+}
