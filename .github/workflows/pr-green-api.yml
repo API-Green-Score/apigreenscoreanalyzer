@@ -259,7 +259,7 @@ jobs:
     env:
       # Resolved once per job: workflow_dispatch input wins, else literal default.
       TARGETS:    ${{ github.event.inputs.targets    || 'http://localhost:8080,http://localhost:8081' }}
-      SWAGGERS:   ${{ github.event.inputs.swaggers   || 'http://localhost:8080/api/v3/api-docs,http://localhost:8081/api/v3/api-docs' }}
+      SWAGGERS:   ${{ github.event.inputs.swaggers   || 'http://localhost:8080/v3/api-docs,http://localhost:8081/v3/api-docs' }}
       APPNAME:    ${{ github.event.inputs.appname    || 'appoptim' }}
       DEBUG:      ${{ github.event.inputs.debug      || 'false' }}
       # Bearer: prefer secret, fallback to manual input (logs may show value).
@@ -275,6 +275,35 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Download backend jars (dynamic — all modules)
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: backend-jars
+          path: apps/
+
+      - name: Start backends (dynamic — all app*.jar)
+        if: hashFiles('apps/app*.jar') != ''
+        run: |
+          set -u
+          mkdir -p logs
+          shopt -s nullglob
+          i=0
+          for jar in $(ls apps/app*.jar | sort -V); do
+            i=$((i+1))
+            port=$((8079 + i))
+            name="$(basename "$jar" .jar)"
+            echo "🚀 Starting $jar on port $port"
+            nohup java -jar "$jar" \
+              --spring.profiles.active=test \
+              --server.port="$port" \
+              > "logs/${name}.log" 2>&1 &
+            echo $! > "apps/${name}.pid"
+          done
+          echo "✅ Started $i backend(s)"
+          [ -f apps/manifest.json ] && cat apps/manifest.json || true
+
       - name: Wait for targets
         run: |
           # Probe every URL in $TARGETS (comma-separated) instead of a hardcoded
@@ -326,7 +355,7 @@ jobs:
           IFS=',' read -r -a S_ARR <<< "$SWAGGERS"
           BASE="$(echo "${T_ARR[0]:-}" | xargs)"
           SWAGGER_URL="$(echo "${S_ARR[0]:-}" | xargs)"
-          [ -z "$SWAGGER_URL" ] && SWAGGER_URL="${BASE%/}/api/v3/api-docs"
+          [ -z "$SWAGGER_URL" ] && SWAGGER_URL="${BASE%/}/v3/api-docs"
           echo "Checking Swagger at: $SWAGGER_URL"
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$SWAGGER_URL")
           if [ "$STATUS" = "200" ]; then
@@ -477,11 +506,22 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: server-logs
-          path: backend.log
+          path: |
+            logs/*.log
+            backend.log
 
-      - name: Stop backend
+      - name: Stop backends (green-score)
         if: always()
-        run: kill $(cat backend.pid) 2>/dev/null || true
+        run: |
+          shopt -s nullglob
+          for pid_file in apps/*.pid; do
+            pid="$(cat "$pid_file" 2>/dev/null || true)"
+            [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+          done
+          for log in logs/*.log; do
+            echo "── $log ──"
+            tail -n 20 "$log" 2>/dev/null || true
+          done
 
   creedengo:
     name: "🌱 Creedengo Eco-Design Analysis"
@@ -503,7 +543,10 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
+          # No `cache: maven` here: this job does NOT build a Maven project at
+          # the analyzer repo root (no pom.xml), and creedengo-analyzer.sh
+          # clones its own target via --git-repo. Enabling the cache would
+          # fail with "No file matched **/pom.xml" on this checkout.
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -596,7 +639,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TARGETS:  ${{ github.event.inputs.targets  || 'http://localhost:8080,http://localhost:8081' }}
-      SWAGGERS: ${{ github.event.inputs.swaggers || 'http://localhost:8080/api/v3/api-docs,http://localhost:8081/api/v3/api-docs' }}
+      SWAGGERS: ${{ github.event.inputs.swaggers || 'http://localhost:8080/v3/api-docs,http://localhost:8081/v3/api-docs' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup JDK ${{ env.JAVA_VERSION }}
@@ -655,7 +698,7 @@ jobs:
           IFS=',' read -r -a S_ARR <<< "$SWAGGERS"
           BASE="$(echo "${T_ARR[0]:-}" | xargs)"
           SWAGGER_URL="$(echo "${S_ARR[0]:-}" | xargs)"
-          [ -z "$SWAGGER_URL" ] && SWAGGER_URL="${BASE%/}/api/v3/api-docs"
+          [ -z "$SWAGGER_URL" ] && SWAGGER_URL="${BASE%/}/v3/api-docs"
           echo "Fetching OpenAPI from $SWAGGER_URL"
           curl -s "$SWAGGER_URL" -o openapi.json
       - name: Install Spectral
@@ -689,7 +732,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TARGETS:    ${{ github.event.inputs.targets    || 'http://localhost:8080,http://localhost:8081' }}
-      SWAGGERS:   ${{ github.event.inputs.swaggers   || 'http://localhost:8080/api/v3/api-docs,http://localhost:8081/api/v3/api-docs' }}
+      SWAGGERS:   ${{ github.event.inputs.swaggers   || 'http://localhost:8080/v3/api-docs,http://localhost:8081/v3/api-docs' }}
       APPNAME:    ${{ github.event.inputs.appname    || 'appoptim' }}
       DEBUG:      ${{ github.event.inputs.debug      || 'false' }}
       BEARER_TOKEN: ${{ secrets.BEARER_TOKEN || github.event.inputs.bearer_token }}
