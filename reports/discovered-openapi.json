@@ -3,76 +3,18 @@
   "info": {
     "title": "Merged Green Analyzer discovery",
     "version": "1.0.0",
-    "description": "Aggregated OpenAPI specs discovered from 2 target(s): http://localhost:8080, http://localhost:8081"
+    "description": "Aggregated OpenAPI specs discovered from 2 target(s): http://localhost:8081, http://localhost:8080"
   },
   "servers": [
     {
-      "url": "http://localhost:8080"
+      "url": "http://localhost:8081"
     },
     {
-      "url": "http://localhost:8081"
+      "url": "http://localhost:8080"
     }
   ],
   "paths": {
-    "/books": {
-      "get": {
-        "tags": [
-          "book-controller"
-        ],
-        "operationId": "all",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Book"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "x-source-base-url": "http://localhost:8080",
-      "x-source-original-path": "/books"
-    },
     "/books/{id}": {
-      "get": {
-        "tags": [
-          "book-controller"
-        ],
-        "operationId": "byId",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Book"
-                }
-              }
-            }
-          }
-        }
-      },
-      "x-source-base-url": "http://localhost:8080",
-      "x-source-original-path": "/books/{id}"
-    },
-    "/__t1__/books/{id}": {
       "get": {
         "tags": [
           "book-controller"
@@ -568,7 +510,7 @@
       "x-source-base-url": "http://localhost:8081",
       "x-source-original-path": "/reactive/books/cacheable"
     },
-    "/__t1__/books": {
+    "/books": {
       "get": {
         "tags": [
           "book-controller"
@@ -868,16 +810,74 @@
       },
       "x-source-base-url": "http://localhost:8081",
       "x-source-original-path": "/books/async/{id}"
+    },
+    "/__t1__/books": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "all",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8080",
+      "x-source-original-path": "/books"
+    },
+    "/__t1__/books/{id}": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "operationId": "byId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                }
+              }
+            }
+          }
+        }
+      },
+      "x-source-base-url": "http://localhost:8080",
+      "x-source-original-path": "/books/{id}"
     }
   },
   "x-discovery-sources": [
     {
-      "base_url": "http://localhost:8080",
-      "swagger_source": "http://localhost:8080/v3/api-docs"
-    },
-    {
       "base_url": "http://localhost:8081",
       "swagger_source": "http://localhost:8081/v3/api-docs"
+    },
+    {
+      "base_url": "http://localhost:8080",
+      "swagger_source": "http://localhost:8080/v3/api-docs"
     }
   ]
 }
