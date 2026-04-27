@@ -456,10 +456,31 @@ http://localhost:8081"></textarea>
 
       <div class="row" style="margin-top:6px">
         <div>
+          <label for="loc-stack">Stack</label>
+          <select id="loc-stack" style="width:100%;padding:9px 10px;border-radius:8px;background:rgba(15,23,42,.6);color:var(--txt-1);border:1px solid var(--line)">
+            <option value="auto" selected>Auto-détection (depuis source-dir)</option>
+            <option value="java">Java (Maven / Gradle)</option>
+            <option value="dotnet">.NET 8+ (C#)</option>
+          </select>
+          <div class="hint">Auto = détecte <code>pom.xml</code> / <code>*.csproj</code> dans <code>--source-dir</code>.</div>
+        </div>
+        <div>
+          <label for="loc-source-dir">Dossier source local (optionnel)</label>
+          <input type="text" id="loc-source-dir" placeholder="/Users/me/projects/my-api">
+          <div class="hint">Utilisé pour <code>--build-and-run</code> et l'analyse Creedengo. Alternatif au dépôt Git.</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:6px">
+        <div>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
             <input type="checkbox" id="loc-creedengo" style="width:auto"> Lancer aussi <strong>Creedengo</strong> (analyse code source)
           </label>
           <div class="hint">Implique <code>--creedengo</code>. Activé automatiquement si un dépôt Git est fourni.</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+            <input type="checkbox" id="loc-build-and-run" style="width:auto"> <strong>Build &amp; run</strong> l'API depuis <code>--source-dir</code>
+          </label>
+          <div class="hint">Compile et démarre l'app (Spring Boot ou ASP.NET) avant l'analyse Green Score. Requiert <em>source-dir</em>.</div>
         </div>
         <div>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:0">
@@ -1134,8 +1155,19 @@ $("loc-console-clear")?.addEventListener("click", () => {
 });
 
 $("loc-btn-load-sample").addEventListener("click", () => {
-  $("loc-targets").value = "http://localhost:8080\nhttp://localhost:8081";
-  $("loc-appname").value = "demo-app";
+  // Toggle Java ↔ .NET sample on each click for quick demos.
+  const isDotnet = $("loc-stack")?.value === "dotnet";
+  if (isDotnet) {
+    // Switch back to Java sample
+    $("loc-stack").value = "java";
+    $("loc-targets").value = "http://localhost:8080\nhttp://localhost:8081";
+    $("loc-appname").value = "demo-app";
+  } else {
+    // Switch to .NET sample
+    $("loc-stack").value = "dotnet";
+    $("loc-targets").value = "http://localhost:5050";
+    $("loc-appname").value = "demo-aspnet";
+  }
   $("loc-creedengo").checked = true;
 });
 
@@ -1149,9 +1181,15 @@ $("loc-btn-analyze").addEventListener("click", async () => {
   const gitRepo   = $("loc-git-repo").value.trim();
   const gitBranch = $("loc-git-branch").value.trim();
   const gitSubdir = $("loc-git-subdir").value.trim();
+  const stack       = ($("loc-stack")?.value || "auto").trim();
+  const sourceDir   = ($("loc-source-dir")?.value || "").trim();
+  const buildAndRun = $("loc-build-and-run")?.checked || false;
 
-  if (targets.length === 0 && !gitRepo) {
-    return setStatus("loc-status","error","Veuillez fournir au moins une URL d'API <em>ou</em> un dépôt Git.");
+  if (targets.length === 0 && !gitRepo && !buildAndRun) {
+    return setStatus("loc-status","error","Veuillez fournir au moins une URL d'API, un dépôt Git, <em>ou</em> activer Build &amp; run.");
+  }
+  if (buildAndRun && !sourceDir) {
+    return setStatus("loc-status","error","Build &amp; run requiert un <em>dossier source local</em>.");
   }
 
   const launchedAt = Date.now();
@@ -1170,6 +1208,7 @@ $("loc-btn-analyze").addEventListener("click", async () => {
       targets, bearer, appname,
       creedengo, debug, gitKeep,
       gitRepo, gitBranch, gitSubdir,
+      stack, sourceDir, buildAndRun,
     }, { timeoutMs: 10 * 60 * 1000 });   // 10 min — match server timeout
     if (!ok || !data.ok) {
       const detail = data.log ? `<details class="log"><summary>📜 Logs start.sh</summary><pre>${escHtml(data.log)}</pre></details>` : "";

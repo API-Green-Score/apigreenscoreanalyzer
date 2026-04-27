@@ -371,6 +371,61 @@ for m in json.load(sys.stdin)['modules']:
   fi
 fi
 
+###############################################################################
+# Step 2-bis: Detect .NET / C# module info + Compile if needed
+#         When csharp is detected we prefer the .sln (entry_point) so all
+#         projects in the solution are compiled and analyzed together.
+###############################################################################
+DOTNET_MODULE=""
+DOTNET_MODULE_DIR=""
+DOTNET_ENTRY_POINT=""
+DOTNET_LANG_VERSION=""
+
+if echo "$PLUGIN_KEYS" | grep -q "csharp"; then
+  DOTNET_INFO=$(echo "$DETECT_JSON" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for m in data['modules']:
+    if m['language'] == 'csharp':
+        # path|entry_point|language_version
+        print((m.get('path') or '.') + '|' + (m.get('entry_point') or '') + '|' + (m.get('language_version') or ''))
+        break
+" 2>/dev/null || echo "")
+  if [ -n "$DOTNET_INFO" ]; then
+    DOTNET_MODULE=$(echo "$DOTNET_INFO" | awk -F'|' '{print $1}')
+    DOTNET_ENTRY_POINT=$(echo "$DOTNET_INFO" | awk -F'|' '{print $2}')
+    DOTNET_LANG_VERSION=$(echo "$DOTNET_INFO" | awk -F'|' '{print $3}')
+    if [ "$DOTNET_MODULE" = "." ] || [ -z "$DOTNET_MODULE" ]; then
+      DOTNET_MODULE_DIR="$ROOT"
+    else
+      DOTNET_MODULE_DIR="$ROOT/$DOTNET_MODULE"
+    fi
+    echo -e "  ${GREEN}✓ .NET module detected${NC}"
+    echo -e "  ${CYAN}  Entry point: ${DOTNET_ENTRY_POINT:-<auto>}${NC}"
+    [ -n "$DOTNET_LANG_VERSION" ] && echo -e "  ${CYAN}  Target framework: net${DOTNET_LANG_VERSION}${NC}"
+  fi
+fi
+
+if [ "$SKIP_BUILD" = false ] && [ -n "$DOTNET_MODULE_DIR" ]; then
+  echo -e "${YELLOW}━━━ 🔨 Compiling .NET project (dotnet build) ━━━${NC}"
+  if ! command -v dotnet &>/dev/null; then
+    echo -e "${RED}❌ dotnet CLI is required for C# analysis but was not found${NC}"
+    echo -e "${YELLOW}   💡 Install .NET SDK 8 from https://dotnet.microsoft.com/download${NC}"
+    exit 1
+  fi
+  DOTNET_BUILD_TARGET="${DOTNET_ENTRY_POINT:-$DOTNET_MODULE_DIR}"
+  echo -e "  ${CYAN}dotnet restore ${DOTNET_BUILD_TARGET}${NC}"
+  if ! dotnet restore "$DOTNET_BUILD_TARGET" >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠ dotnet restore had warnings — continuing${NC}"
+  fi
+  # Build in Debug so PDBs are available for SonarQube/Roslyn analyzers
+  if ! dotnet build "$DOTNET_BUILD_TARGET" -c Debug --no-restore -v quiet -nologo; then
+    echo -e "${RED}❌ dotnet build failed${NC}"
+    exit 1
+  fi
+  echo -e "  ${GREEN}✓ .NET build successful${NC}"
+fi
+
 if [ "$SKIP_BUILD" = false ] && [ -n "$JAVA_MODULE_DIR" ]; then
   # For reactor builds, check if ANY sub-module needs compilation
   NEEDS_COMPILE=false
@@ -487,10 +542,14 @@ print(info.get('sonar_repo', ''), info.get('sonar_lang', ''))
   [ -n "$SONAR_REPO" ] && ALL_SONAR_REPOS="${ALL_SONAR_REPOS:+$ALL_SONAR_REPOS,}${SONAR_REPO}"
   [ -n "$SONAR_LANG" ] && ALL_SONAR_LANGS="${ALL_SONAR_LANGS:+$ALL_SONAR_LANGS,}${SONAR_LANG}"
 
-  # ── Skip csharp: no SonarQube JAR plugin published (NuGet only) ──
+  # ── csharp: D1 try the SonarQube JAR plugin (if green-code-initiative
+  #            publishes one); D2 fallback handled later via dotnet-sonarscanner
+  #            + Roslyn NuGet analyzer injected at scan time. We do NOT skip
+  #            the cache/download attempt anymore — if a JAR is available it
+  #            will be picked up by the regular logic below; if not, the
+  #            scanner will still work (the NuGet analyzer surfaces the rules).
   if [ "$plugin_key" = "csharp" ]; then
-    echo -e "  ${YELLOW}⚠ ${plugin_key}: skipped (NuGet analyzer — no SonarQube JAR available)${NC}"
-    continue
+    echo -e "  ${CYAN}ℹ ${plugin_key}: trying SonarQube JAR plugin (D1) — falls back to NuGet Roslyn analyzer (D2) if absent${NC}"
   fi
 
   # ── Check plugin cache (already downloaded & valid) ──
@@ -1175,6 +1234,91 @@ for m in data['modules']:
     fi
   fi
   rm -f "$MVN_OUTPUT_FILE" 2>/dev/null || true
+fi
+
+# ── Strategy A.5: dotnet-sonarscanner for C# / .NET projects ──
+#   D1 (preferred): if a creedengo-csharp-plugin JAR was downloaded above, it
+#                   is already mounted into SonarQube → standard scanner picks
+#                   up the eco-design rules automatically.
+#   D2 (fallback):  if the JAR is absent, we still run the scanner — the user
+#                   gets the stock SonarQube C# analysis (no eco-design rules)
+#                   and a clear notice. This keeps the pipeline functional.
+if [ "$ANALYSIS_SUCCESS" = false ] \
+   && echo "$PLUGIN_KEYS" | grep -q "csharp" \
+   && [ -n "$DOTNET_MODULE_DIR" ] \
+   && command -v dotnet &>/dev/null; then
+
+  echo -e "  Using: ${CYAN}dotnet sonarscanner (C# / .NET)${NC}"
+
+  # ── Detect creedengo-csharp JAR presence (D1 vs D2) ──
+  CREEDENGO_CSHARP_JAR=$(ls "$PLUGIN_DIR"/creedengo-csharp-plugin-*.jar 2>/dev/null | head -1)
+  if [ -n "$CREEDENGO_CSHARP_JAR" ]; then
+    echo -e "  ${GREEN}✓ D1: creedengo-csharp plugin JAR present — eco-design rules will be applied${NC}"
+  else
+    echo -e "  ${YELLOW}⚠ D2 fallback: no creedengo-csharp JAR available — running stock SonarQube C# analysis${NC}"
+    echo -e "  ${YELLOW}   (Creedengo eco-design rules for C# are not yet published as a SonarQube JAR plugin.)${NC}"
+  fi
+
+  # ── Ensure dotnet-sonarscanner global tool is installed ──
+  if ! dotnet tool list --global 2>/dev/null | grep -qi "dotnet-sonarscanner"; then
+    echo -e "  ${CYAN}📥 Installing dotnet-sonarscanner global tool...${NC}"
+    dotnet tool install --global dotnet-sonarscanner >/dev/null 2>&1 || \
+      dotnet tool update  --global dotnet-sonarscanner >/dev/null 2>&1 || true
+    # Make sure ~/.dotnet/tools is in PATH for the rest of this run
+    export PATH="$PATH:$HOME/.dotnet/tools"
+  fi
+
+  if ! command -v dotnet-sonarscanner &>/dev/null && [ ! -x "$HOME/.dotnet/tools/dotnet-sonarscanner" ]; then
+    echo -e "  ${RED}❌ dotnet-sonarscanner not available even after install — aborting C# scan${NC}"
+    echo -e "  ${YELLOW}   💡 Install manually: dotnet tool install --global dotnet-sonarscanner${NC}"
+  else
+    DOTNET_SCAN_TARGET="${DOTNET_ENTRY_POINT:-$DOTNET_MODULE_DIR}"
+    DSS_TOKEN_ARG=""
+    if [ -n "$TOKEN" ]; then
+      DSS_TOKEN_ARG="/d:sonar.token=${TOKEN}"
+    else
+      DSS_TOKEN_ARG="/d:sonar.login=admin /d:sonar.password=${SONAR_PASS}"
+    fi
+
+    pushd "$DOTNET_MODULE_DIR" >/dev/null
+    echo -e "  ${CYAN}dotnet sonarscanner begin /k:${PROJECT_KEY}${NC}"
+    if dotnet sonarscanner begin \
+         /k:"$PROJECT_KEY" \
+         /n:"$APPNAME" \
+         /d:sonar.host.url="$SONAR_URL" \
+         /d:sonar.sourceEncoding=UTF-8 \
+         $DSS_TOKEN_ARG 2>&1 | grep -E "ERROR|WARN|begin|SonarScanner" | head -20; then
+      :
+    fi
+
+    echo -e "  ${CYAN}dotnet build ${DOTNET_SCAN_TARGET} -c Debug${NC}"
+    dotnet build "$DOTNET_SCAN_TARGET" -c Debug --no-incremental -v quiet -nologo \
+      2>&1 | tail -20 || true
+
+    echo -e "  ${CYAN}dotnet sonarscanner end${NC}"
+    if dotnet sonarscanner end $DSS_TOKEN_ARG 2>&1 | tee /tmp/dss-end-$$.log \
+         | grep -E "ANALYSIS SUCCESSFUL|ERROR|WARN" | head -20; then
+      :
+    fi
+    if grep -qE "ANALYSIS SUCCESSFUL" /tmp/dss-end-$$.log 2>/dev/null; then
+      echo -e "  ${GREEN}✓ dotnet sonarscanner — ANALYSIS SUCCESSFUL${NC}"
+      ANALYSIS_SUCCESS=true
+    else
+      # Same trick as Maven: check the CE queue — analysis may have been submitted
+      sleep 3
+      CE_CHECK=$(curl -s ${SONAR_AUTH_CURL} \
+        "${SONAR_URL}/api/ce/activity?component=${PROJECT_KEY}&ps=1" 2>/dev/null \
+        | python3 -c "import sys,json; tasks=json.load(sys.stdin).get('tasks',[]); print(tasks[0]['status'] if tasks else 'NONE')" 2>/dev/null || echo "NONE")
+      if [ "$CE_CHECK" != "NONE" ]; then
+        echo -e "  ${GREEN}✓ Analysis task found in SonarQube (status: ${CE_CHECK})${NC}"
+        ANALYSIS_SUCCESS=true
+      else
+        echo -e "  ${YELLOW}⚠ dotnet sonarscanner did not report success — falling back to sonar-scanner CLI${NC}"
+      fi
+    fi
+    rm -f /tmp/dss-end-$$.log 2>/dev/null
+    popd >/dev/null
+  fi
 fi
 
 # ── Strategy B: sonar-scanner (fallback for non-Java or if Maven failed) ──

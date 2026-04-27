@@ -45,6 +45,11 @@ RUN_CREEDENGO=false
 TARGETS=()      # one or many --target <url>  (or comma-separated)
 SWAGGERS=()     # one or many --swagger <url|file>
 CREEDENGO_EXTRA=()   # forwarded as-is to creedengo-analyzer.sh
+STACK="auto"          # auto | java | dotnet — drives build/run + creedengo --lang
+SOURCE_DIR=""         # local source folder for --build-and-run / --creedengo
+BUILD_AND_RUN=false   # if true: build + start the API locally before health-checks
+APP_PID=""            # PID of the locally-launched app (when --build-and-run)
+APP_LOG=""            # log file of the locally-launched app
 args=("$@")
 i=0
 while [ $i -lt ${#args[@]} ]; do
@@ -75,6 +80,23 @@ while [ $i -lt ${#args[@]} ]; do
       i=$((i + 1))
       val="${args[$i]:-}"
       CREEDENGO_EXTRA+=("--root" "$val")
+      ;;
+    --stack)
+      i=$((i + 1))
+      STACK="${args[$i]:-auto}"
+      ;;
+    --stack=*)
+      STACK="${args[$i]#--stack=}"
+      ;;
+    --source-dir)
+      i=$((i + 1))
+      SOURCE_DIR="${args[$i]:-}"
+      ;;
+    --source-dir=*)
+      SOURCE_DIR="${args[$i]#--source-dir=}"
+      ;;
+    --build-and-run)
+      BUILD_AND_RUN=true
       ;;
     --target|--targets)
       # Consume every following token until the next --flag, then split by
@@ -118,6 +140,160 @@ export APPNAME
 
 # Détection automatique : docker ou podman ?
 source "$ROOT/scripts/_container-runtime.sh"
+
+###############################################################################
+# Stack auto-detection (when --stack auto + --source-dir is set)
+###############################################################################
+detect_stack_from_dir() {
+  local dir="$1"
+  [ -z "$dir" ] || [ ! -d "$dir" ] && { echo "unknown"; return; }
+  if [ -f "$dir/pom.xml" ] || [ -f "$dir/build.gradle" ] || [ -f "$dir/build.gradle.kts" ]; then
+    echo "java"; return
+  fi
+  if ls "$dir"/*.sln "$dir"/*.csproj "$dir"/*/*.csproj 2>/dev/null | grep -q .; then
+    echo "dotnet"; return
+  fi
+  echo "unknown"
+}
+
+if [ "$STACK" = "auto" ] && [ -n "$SOURCE_DIR" ]; then
+  DETECTED_STACK=$(detect_stack_from_dir "$SOURCE_DIR")
+  if [ "$DETECTED_STACK" != "unknown" ]; then
+    STACK="$DETECTED_STACK"
+    echo "🔎 Stack auto-détecté: $STACK (depuis $SOURCE_DIR)"
+  fi
+fi
+
+# Validate STACK
+case "$STACK" in
+  auto|java|dotnet) ;;
+  *)
+    echo "❌ --stack invalide: '$STACK' (attendu: auto | java | dotnet)"
+    exit 1
+    ;;
+esac
+
+# When SOURCE_DIR is provided, forward it as --root to the Creedengo analyzer
+# and translate the stack into --lang for the analyzer's auto-detection override.
+if [ -n "$SOURCE_DIR" ]; then
+  if [ ! -d "$SOURCE_DIR" ]; then
+    echo "❌ --source-dir introuvable: $SOURCE_DIR"
+    exit 1
+  fi
+  SOURCE_DIR_ABS="$(cd "$SOURCE_DIR" && pwd)"
+  CREEDENGO_EXTRA+=("--root" "$SOURCE_DIR_ABS")
+fi
+case "$STACK" in
+  java)   CREEDENGO_EXTRA+=("--lang" "java") ;;
+  dotnet) CREEDENGO_EXTRA+=("--lang" "csharp") ;;
+esac
+
+###############################################################################
+# Build & run the API locally (--build-and-run)
+#   Java Maven  → mvn spring-boot:run -Dserver.port=$PORT (background)
+#   .NET 8+     → dotnet run --project <csproj> with ASPNETCORE_URLS=http://+:$PORT
+#   The first --target URL drives the port; default 8080 if no targets given.
+###############################################################################
+extract_port_from_url() {
+  local url="$1"
+  echo "$url" | sed -E 's|^[a-z]+://[^:/]+:?([0-9]+)?.*|\1|;t;s|.*||' | head -1
+}
+
+cleanup_app() {
+  if [ -n "${APP_PID:-}" ] && kill -0 "$APP_PID" 2>/dev/null; then
+    echo ""
+    echo "🧹 Arrêt de l'app locale (PID $APP_PID)..."
+    kill -TERM "$APP_PID" 2>/dev/null || true
+    sleep 2
+    kill -KILL "$APP_PID" 2>/dev/null || true
+  fi
+}
+
+if [ "$BUILD_AND_RUN" = true ]; then
+  if [ -z "$SOURCE_DIR" ]; then
+    echo "❌ --build-and-run requiert --source-dir <path>"
+    exit 1
+  fi
+  if [ "$STACK" = "auto" ]; then
+    DETECTED_STACK=$(detect_stack_from_dir "$SOURCE_DIR_ABS")
+    [ "$DETECTED_STACK" != "unknown" ] && STACK="$DETECTED_STACK"
+    if [ "$STACK" = "auto" ]; then
+      echo "❌ Impossible d'auto-détecter le stack pour --build-and-run — précisez --stack java|dotnet"
+      exit 1
+    fi
+  fi
+
+  # Determine the port the app must bind to.
+  APP_PORT=""
+  if [ ${#TARGETS[@]} -gt 0 ]; then
+    APP_PORT=$(extract_port_from_url "${TARGETS[0]}")
+  fi
+  APP_PORT="${APP_PORT:-8080}"
+
+  mkdir -p "$ROOT/reports"
+  APP_LOG="$ROOT/reports/.app-run.log"
+  : > "$APP_LOG"
+
+  echo ""
+  echo "🚀 Build & run local — stack=$STACK, source=$SOURCE_DIR_ABS, port=$APP_PORT"
+  echo "   Logs applicatifs: $APP_LOG"
+
+  case "$STACK" in
+    java)
+      command -v mvn >/dev/null 2>&1 || { echo "❌ mvn requis pour --build-and-run java"; exit 1; }
+      # Use spring-boot:run when a Spring Boot pom is detected; otherwise
+      # fallback to package + java -jar.
+      if grep -q "spring-boot-starter" "$SOURCE_DIR_ABS/pom.xml" 2>/dev/null; then
+        ( cd "$SOURCE_DIR_ABS" && \
+          nohup mvn -B -q spring-boot:run \
+            -Dspring-boot.run.jvmArguments="-Dserver.port=$APP_PORT" \
+            >>"$APP_LOG" 2>&1 ) &
+        APP_PID=$!
+      else
+        ( cd "$SOURCE_DIR_ABS" && mvn -B -q -DskipTests package >>"$APP_LOG" 2>&1 ) || {
+          echo "❌ mvn package a échoué — voir $APP_LOG"; exit 1; }
+        JAR=$(ls "$SOURCE_DIR_ABS"/target/*.jar 2>/dev/null | head -1)
+        if [ -z "$JAR" ]; then
+          echo "❌ Aucun .jar produit dans $SOURCE_DIR_ABS/target/"; exit 1
+        fi
+        ( nohup java -jar "$JAR" --server.port="$APP_PORT" >>"$APP_LOG" 2>&1 ) &
+        APP_PID=$!
+      fi
+      ;;
+    dotnet)
+      command -v dotnet >/dev/null 2>&1 || { echo "❌ dotnet SDK 8 requis pour --build-and-run dotnet"; exit 1; }
+      # Pick the first .csproj (or the .sln, dotnet handles both)
+      ENTRY=$(ls "$SOURCE_DIR_ABS"/*.sln 2>/dev/null | head -1)
+      if [ -z "$ENTRY" ]; then
+        ENTRY=$(ls "$SOURCE_DIR_ABS"/*.csproj 2>/dev/null | head -1)
+      fi
+      if [ -z "$ENTRY" ]; then
+        ENTRY=$(ls "$SOURCE_DIR_ABS"/*/*.csproj 2>/dev/null | head -1)
+      fi
+      if [ -z "$ENTRY" ]; then
+        echo "❌ Aucun .sln ou .csproj trouvé dans $SOURCE_DIR_ABS"; exit 1
+      fi
+      # Force HTTP-only binding to avoid the ASP.NET Core HTTPS dev cert prompt.
+      export ASPNETCORE_URLS="http://+:$APP_PORT"
+      export DOTNET_NOLOGO=1
+      ( cd "$SOURCE_DIR_ABS" && \
+        nohup dotnet run --project "$ENTRY" --no-launch-profile --urls "http://+:$APP_PORT" \
+          >>"$APP_LOG" 2>&1 ) &
+      APP_PID=$!
+      ;;
+  esac
+
+  # Make sure the app is killed when start.sh exits / is interrupted
+  trap cleanup_app EXIT INT TERM
+
+  # Auto-add the launched URL to TARGETS if the user didn't provide any
+  if [ ${#TARGETS[@]} -eq 0 ]; then
+    TARGETS+=("http://localhost:$APP_PORT")
+    echo "🎯 --target auto-renseigné: http://localhost:$APP_PORT"
+  fi
+  echo "   PID: $APP_PID"
+  echo ""
+fi
 
 # Suppress Podman "Executing external compose provider" warning (ignoré si docker)
 export PODMAN_COMPOSE_WARNING_LOGS=false

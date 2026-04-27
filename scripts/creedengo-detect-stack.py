@@ -82,6 +82,9 @@ class ModuleInfo:
     config_file: str = ""         # pom.xml, build.gradle, package.json, ...
     is_reactor: bool = False      # True if this is a Maven reactor/parent pom
     sub_modules: list[str] = field(default_factory=list)  # declared sub-module paths (reactor pom)
+    entry_point: str = ""         # main project file (.csproj/.sln/jar) for build/run
+    default_url: str = ""         # default app URL (e.g. ASP.NET launchSettings.json applicationUrl)
+    notes: str = ""               # free-form notes (e.g. "F# detected — Creedengo unsupported")
 
 
 @dataclass
@@ -381,43 +384,126 @@ def detect_javascript_typescript(root: Path) -> Optional[ModuleInfo]:
 
 
 def detect_csharp(root: Path) -> Optional[ModuleInfo]:
-    """Detect C# / .NET project (.csproj or .sln)."""
-    csproj_files = list(root.glob("*.csproj"))
-    sln_files = list(root.glob("*.sln"))
+    """Detect C# / .NET project (.csproj / .sln / global.json).
 
-    if not csproj_files and not sln_files:
-        # Check one level deep
-        csproj_files = list(root.glob("*/*.csproj"))
+    Also detects F# (*.fsproj) and VB.NET (*.vbproj) — emits a `notes` field
+    stating Creedengo only supports C#. Reads Properties/launchSettings.json
+    when present to pre-fill `default_url` for ASP.NET Core projects.
+    """
+    csproj_files = sorted(root.glob("*.csproj"))
+    fsproj_files = sorted(root.glob("*.fsproj"))
+    vbproj_files = sorted(root.glob("*.vbproj"))
+    sln_files    = sorted(root.glob("*.sln"))
+    global_json  = root / "global.json"
 
-    if not csproj_files and not sln_files:
-        return None
+    if not (csproj_files or fsproj_files or vbproj_files or sln_files or global_json.is_file()):
+        # Check one level deep (common for src/MyApi/MyApi.csproj layouts)
+        csproj_files = sorted(root.glob("*/*.csproj"))
+        fsproj_files = sorted(root.glob("*/*.fsproj"))
+        vbproj_files = sorted(root.glob("*/*.vbproj"))
+        if not (csproj_files or fsproj_files or vbproj_files):
+            return None
 
     config_file = ""
     framework, fw_version = "", ""
     lang_version = ""
+    entry_point = ""
+    default_url = ""
+    notes = ""
 
+    # Prefer .sln as the entry point (multi-project solutions)
+    if sln_files:
+        config_file = sln_files[0].name
+        entry_point = str(sln_files[0])
+
+    primary_proj = None
     if csproj_files:
-        csproj = csproj_files[0]
-        config_file = str(csproj.relative_to(root))
-        content = _read_text(csproj)
+        primary_proj = csproj_files[0]
+    elif fsproj_files:
+        primary_proj = fsproj_files[0]
+        notes = "F# project detected — Creedengo plugin only covers C#; analysis will be skipped."
+    elif vbproj_files:
+        primary_proj = vbproj_files[0]
+        notes = "VB.NET project detected — Creedengo plugin only covers C#; analysis will be skipped."
 
-        # Target framework
-        tf = _extract_xml_value(content, "TargetFramework")
+    if primary_proj is not None:
+        if not config_file:
+            try:
+                config_file = str(primary_proj.relative_to(root))
+            except ValueError:
+                config_file = primary_proj.name
+        if not entry_point:
+            entry_point = str(primary_proj)
+        content = _read_text(primary_proj)
+
+        # Target framework — handle both <TargetFramework> and <TargetFrameworks>
+        tf = _extract_xml_value(content, "TargetFramework") \
+             or _extract_xml_value(content, "TargetFrameworks")
         if tf:
-            m = re.search(r"net(\d+\.?\d*)", tf)
+            # Pick the first target if multiple are listed (e.g. "net8.0;net6.0")
+            first_tf = tf.split(";")[0].strip()
+            m = re.search(r"net(\d+\.?\d*)", first_tf)
             if m:
                 lang_version = m.group(1)
 
-        # ASP.NET detection
-        if "Microsoft.AspNetCore" in content or "Sdk=\"Microsoft.NET.Sdk.Web\"" in content:
+        # ASP.NET / Worker detection
+        if "Microsoft.AspNetCore" in content or 'Sdk="Microsoft.NET.Sdk.Web"' in content \
+                or "Microsoft.NET.Sdk.Web" in content:
             framework = "aspnet"
         elif "Microsoft.NET.Sdk.Worker" in content:
             framework = "worker"
-    elif sln_files:
-        config_file = sln_files[0].name
+
+        # Try to read launchSettings.json (Properties/launchSettings.json next to csproj)
+        ls_candidates = [
+            primary_proj.parent / "Properties" / "launchSettings.json",
+            root / "Properties" / "launchSettings.json",
+        ]
+        for ls in ls_candidates:
+            if ls.is_file():
+                try:
+                    ls_data = json.loads(_read_text(ls))
+                    profiles = ls_data.get("profiles", {}) or {}
+                    # Pick the first profile that defines applicationUrl
+                    for _name, prof in profiles.items():
+                        url = (prof or {}).get("applicationUrl", "")
+                        if url:
+                            # applicationUrl can be "http://localhost:5000;https://localhost:5001"
+                            # → keep the first http:// entry to avoid HTTPS dev-cert prompts
+                            for u in str(url).split(";"):
+                                u = u.strip()
+                                if u.startswith("http://"):
+                                    default_url = u
+                                    break
+                            if not default_url and url:
+                                default_url = str(url).split(";")[0].strip()
+                        if default_url:
+                            break
+                except Exception:
+                    pass
+                if default_url:
+                    break
+
+    # global.json may pin the SDK version
+    if not lang_version and global_json.is_file():
+        try:
+            gj = json.loads(_read_text(global_json))
+            sdk_ver = (gj.get("sdk", {}) or {}).get("version", "")
+            if sdk_ver:
+                m = re.match(r"(\d+\.?\d*)", sdk_ver)
+                if m:
+                    lang_version = m.group(1)
+        except Exception:
+            pass
+
+    # Determine binaries dir from the lang_version if known (Debug/net8.0)
+    binaries_dir = "bin"
+    if lang_version:
+        binaries_dir = f"bin/Debug/net{lang_version}"
+
+    name = primary_proj.stem if primary_proj else (sln_files[0].stem if sln_files else root.name)
 
     return ModuleInfo(
-        name=csproj_files[0].stem if csproj_files else root.name,
+        name=name,
         path=str(root),
         language="csharp",
         build_tool="dotnet",
@@ -425,8 +511,11 @@ def detect_csharp(root: Path) -> Optional[ModuleInfo]:
         framework_version=fw_version,
         language_version=lang_version,
         sources_dir=".",
-        binaries_dir="bin",
+        binaries_dir=binaries_dir,
         config_file=config_file,
+        entry_point=entry_point,
+        default_url=default_url,
+        notes=notes,
     )
 
 

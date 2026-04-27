@@ -374,11 +374,24 @@ class Handler(BaseHTTPRequestHandler):
         git_subdir = (payload.get("gitSubdir")  or "").strip()
         git_keep   = bool(payload.get("gitKeep"))
         debug      = bool(payload.get("debug"))
+        # New: stack selector + local source folder + build-and-run toggle
+        stack         = (payload.get("stack")     or "auto").strip().lower()
+        source_dir    = (payload.get("sourceDir") or "").strip()
+        build_and_run = bool(payload.get("buildAndRun"))
+
+        if stack not in ("auto", "java", "dotnet"):
+            return self._send_json(400, {"error": f"invalid stack: {stack!r} (expected auto|java|dotnet)"})
+        if source_dir:
+            sd = Path(source_dir)
+            if not sd.is_dir():
+                return self._send_json(400, {"error": f"sourceDir not found: {source_dir}"})
+        if build_and_run and not source_dir:
+            return self._send_json(400, {"error": "buildAndRun=true requires sourceDir"})
 
         targets = [t.strip().rstrip("/") for t in targets if t and t.strip()]
-        if not targets and not git_repo:
+        if not targets and not git_repo and not build_and_run:
             return self._send_json(400, {
-                "error": "either targets[] or gitRepo is required"
+                "error": "either targets[] or gitRepo or buildAndRun is required"
             })
 
         start_sh = SCRIPTS / "start.sh"
@@ -407,6 +420,13 @@ class Handler(BaseHTTPRequestHandler):
             cmd += ["--git-subdir", git_subdir]
         if git_keep:
             cmd.append("--git-keep")
+        # Stack + local source folder + build-and-run forwarding
+        if stack and stack != "auto":
+            cmd += ["--stack", stack]
+        if source_dir:
+            cmd += ["--source-dir", source_dir]
+        if build_and_run:
+            cmd.append("--build-and-run")
 
         REPORTS.mkdir(exist_ok=True)
         latest = REPORTS / "latest-report.json"
@@ -541,6 +561,9 @@ class Handler(BaseHTTPRequestHandler):
                 "git_repo": git_repo,
                 "git_branch": git_branch,
                 "git_subdir": git_subdir,
+                "stack": stack,
+                "source_dir": source_dir,
+                "build_and_run": build_and_run,
                 "source": "start.sh",
             },
         })
