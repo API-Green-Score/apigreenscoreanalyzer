@@ -284,6 +284,27 @@ fi
 
 # ── Attente de 10 minutes ou Ctrl+C avant nettoyage ──
 SONAR_CONTAINER_FILE="$ROOT/.creedengo/.sonar-container-name"
+# When driven by the interactive bridge (greenapianalyzer-server.py) we MUST
+# NOT block on the 5-minute Ctrl+C countdown — the bridge needs the script to
+# return so the dashboard can pick up the reports. Set INTERACTIVE_BRIDGE=1
+# in the environment to skip the trailing wait + cleanup containers cleanly.
+if [ "${INTERACTIVE_BRIDGE:-}" = "1" ]; then
+  echo ""
+  echo "ℹ️  INTERACTIVE_BRIDGE=1 → skipping the trailing SonarQube countdown."
+  if [ "$RUN_CREEDENGO" = true ] && [ -f "$SONAR_CONTAINER_FILE" ]; then
+    SONAR_CONTAINER=$(cat "$SONAR_CONTAINER_FILE" 2>/dev/null)
+    source "$ROOT/scripts/_container-runtime.sh"
+    if [ -n "${SONAR_CONTAINER:-}" ]; then
+      $CONTAINER_RT rm -f "$SONAR_CONTAINER" 2>/dev/null || true
+    fi
+    for cid in $($CONTAINER_RT ps -aq --filter "name=creedengo-sonar" 2>/dev/null); do
+      $CONTAINER_RT rm -f "$cid" 2>/dev/null || true
+    done
+    rm -f "$SONAR_CONTAINER_FILE" 2>/dev/null || true
+  fi
+  exit 0
+fi
+
 if [ "$RUN_CREEDENGO" = true ] && [ -f "$SONAR_CONTAINER_FILE" ]; then
   SONAR_CONTAINER=$(cat "$SONAR_CONTAINER_FILE" 2>/dev/null)
   SONAR_PORT=${SONAR_PORT:-9100}

@@ -699,14 +699,40 @@ fi
 ###############################################################################
 echo -e "${YELLOW}━━━ ⏳ Waiting for SonarQube to start (may take 60-120s) ━━━${NC}"
 TIMEOUT=180; ELAPSED=0
+SONAR_DEAD=false
 while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
+  # Bail out fast if the container died (Elasticsearch shard failure, OOM, …)
+  # — better a clear "SonarQube failed to start" than a 180s timeout.
+  if ! $CONTAINER_RT inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null | grep -q true; then
+    echo -e "  ${RED}❌ SonarQube container is no longer running (after ${ELAPSED}s)${NC}"
+    echo -e "  ${YELLOW}── Last 40 log lines ──${NC}"
+    $CONTAINER_RT logs --tail 40 "$CONTAINER_NAME" 2>&1 | sed 's/^/    /'
+    echo -e "  ${YELLOW}── End of logs ──${NC}"
+    SONAR_DEAD=true
+    break
+  fi
   STATUS=$(curl -s "http://localhost:${SONAR_PORT}/api/system/status" 2>/dev/null \
     | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
   if [ "$STATUS" = "UP" ]; then echo -e "  ${GREEN}✅ SonarQube ready (${ELAPSED}s)${NC}"; break; fi
-  if [ "$ELAPSED" -ge "$TIMEOUT" ]; then echo -e "  ${RED}❌ Timeout${NC}"; exit 1; fi
   sleep 2; ELAPSED=$((ELAPSED + 2))
   [ $((ELAPSED % 20)) -eq 0 ] && echo -e "  ... ${ELAPSED}s (${STATUS:-starting})"
 done
+
+if [ "$SONAR_DEAD" = true ]; then
+  echo -e "${RED}❌ SonarQube failed to start — Creedengo analysis aborted${NC}"
+  echo -e "${YELLOW}💡 Common causes:${NC}"
+  echo -e "   • Elasticsearch shard recovery race (try again, or run with --force-cleanup)"
+  echo -e "   • Insufficient Docker memory (give Docker ≥ 4 GB)"
+  echo -e "   • Stale ES indices in a reused container volume"
+  echo -e "${YELLOW}↩  start.sh will continue — Green Score report (if any) is still produced.${NC}"
+  exit 2
+fi
+if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
+  echo -e "  ${RED}❌ Timeout (${TIMEOUT}s) — SonarQube /api/system/status never returned UP${NC}"
+  echo -e "  ${YELLOW}── Last 30 log lines ──${NC}"
+  $CONTAINER_RT logs --tail 30 "$CONTAINER_NAME" 2>&1 | sed 's/^/    /'
+  exit 1
+fi
 echo ""
 
 ###############################################################################

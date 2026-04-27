@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "bash",
+    "/Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/scripts/start.sh",
+    "--appname",
+    "optcreedgreen3",
+    "--targets",
+    "http://localhost:8080,http://localhost:8081",
+    "--creedengo",
+    "--git-repo",
+    "https://github.com/thiernodialloAFA/green-api-workshop-final",
+    "--git-branch",
+    "feat/devoxx-creedengo"
+  ],
+  "request": {
+    "targets": [
+      "http://localhost:8080",
+      "http://localhost:8081"
+    ],
+    "bearer": "",
+    "appname": "optcreedgreen3",
+    "creedengo": true,
+    "debug": false,
+    "gitKeep": false,
+    "gitRepo": "https://github.com/thiernodialloAFA/green-api-workshop-final",
+    "gitBranch": "feat/devoxx-creedengo",
+    "gitSubdir": ""
+  }
+}

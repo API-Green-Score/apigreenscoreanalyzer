@@ -1,0 +1,872 @@
+$ bash /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/scripts/start.sh --appname optcreedgreen3 --targets http://localhost:8080,http://localhost:8081 --creedengo --git-repo https://github.com/thiernodialloAFA/green-api-workshop-final --git-branch feat/devoxx-creedengo
+🐳 Container runtime détecté : podman
+⏳ Attente du démarrage des services 20s...
+
+⏳ Attente du démarrage des services (max 120s) — 2 cible(s):
+    • http://localhost:8080
+    • http://localhost:8081
+
+  ✅ http://localhost:8080 prêt après 0s
+  ✅ http://localhost:8081 prêt après 0s
+🚀 Toutes les cibles sont démarrées !
+
+ℹ️  Aucun bearer token fourni (--bearer <token> ou BEARER_TOKEN=xxx)
+   Les endpoints protégés retourneront 401 si l'API requiert une authentification
+
+🎯 Cibles à analyser (2): http://localhost:8080,http://localhost:8081
+
+Running Green Score analyzer...
+[0;36m╔══════════════════════════════════════════════════════════════╗[0m
+[0;36m║  🌿 Green API Score Analyzer — Fully Dynamic Discovery     ║[0m
+[0;36m║  Devoxx France 2026 — Green Architecture                   ║[0m
+[0;36m╚══════════════════════════════════════════════════════════════╝[0m
+
+[1;33m━━━ ⏳ Waiting for API(s): http://localhost:8080,http://localhost:8081 ━━━[0m
+  → checking http://localhost:8080...
+  [0;32m✓ http://localhost:8080 is up[0m
+  → checking http://localhost:8081...
+  [0;32m✓ http://localhost:8081 is up[0m
+
+[1;33mℹ️  No bearer token — endpoints requiring auth will return 401[0m
+[1;33m   💡 Pass BEARER_TOKEN=xxx or use start.sh --bearer <token>[0m
+
+[1;33m━━━ 🔍 Running Auto-Discover Analyzer ━━━[0m
+  Target:   [0;36mhttp://localhost:8080,http://localhost:8081[0m
+  Repeat:   [0;36m3[0m
+
+[0;36m[INFO][0m ============================================================
+[0;36m[INFO][0m   Green API Auto-Discover & Analyzer
+[0;36m[INFO][0m   App: optcreedgreen3
+[0;36m[INFO][0m   Targets (2): http://localhost:8080, http://localhost:8081
+[0;36m[INFO][0m   Devoxx France 2026 — Green Architecture
+[0;36m[INFO][0m ============================================================
+[0;36m[INFO][0m Discovering OpenAPI spec on http://localhost:8080...
+[0;32m[OK][0m Found spec at http://localhost:8080/v3/api-docs
+[0;36m[INFO][0m Discovering OpenAPI spec on http://localhost:8081...
+[0;32m[OK][0m Found spec at http://localhost:8081/v3/api-docs
+[0;32m[OK][0m Merged 2 spec(s) into a single discovery resource
+[0;32m[OK][0m Spec saved to /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/discovered-openapi.json
+[0;36m[INFO][0m Discovered 22 total endpoints, 22 matching methods {'put', 'patch', 'get', 'post', 'delete'}
+[0;36m[INFO][0m Measuring 22 endpoints (3 repeats each)...
+[0;36m[INFO][0m   [1/22] GET /books
+[0;32m[OK][0m     -> 200  131.9 MB  1.853s  energy=7.742538 Wh
+[0;36m[INFO][0m   [2/22] GET /books/{id}
+[0;32m[OK][0m     -> 200  127 B  0.003s  energy=0.000028 Wh
+[0;36m[INFO][0m   [3/22] GET /books/{id}
+[0;32m[OK][0m     -> 200  184 B  0.010s  energy=0.000083 Wh
+[0;36m[INFO][0m   [4/22] PUT /books/{id}
+[0;32m[OK][0m     -> 400  316 B  0.005s  energy=0.000052 Wh
+[0;36m[INFO][0m   [5/22] GET /reactive/books/{id}/summary
+[0;32m[OK][0m     -> 200  0 B  0.012s  energy=0.000082 Wh
+[0;36m[INFO][0m   [6/22] POST /reactive/books/{id}/summary
+[0;32m[OK][0m     -> 400  389 B  0.001s  energy=0.000028 Wh
+[0;36m[INFO][0m   [7/22] GET /books/{id}/summary
+[0;32m[OK][0m     -> 200  34 B  0.001s  energy=0.000012 Wh
+[0;36m[INFO][0m   [8/22] POST /books/{id}/summary
+[0;32m[OK][0m     -> 400  343 B  0.001s  energy=0.000026 Wh
+[0;36m[INFO][0m   [9/22] GET /reactive/books
+[0;32m[OK][0m     -> 200  0 B  0.008s  energy=0.000059 Wh
+[0;36m[INFO][0m   [10/22] GET /reactive/books/{id}
+[0;32m[OK][0m     -> 200  0 B  0.003s  energy=0.000021 Wh
+[0;36m[INFO][0m   [11/22] GET /reactive/books/select
+[0;32m[OK][0m     -> 200  0 B  0.005s  energy=0.000037 Wh
+[0;36m[INFO][0m   [12/22] GET /reactive/books/changes
+[0;32m[OK][0m     -> 400  207 B  0.001s  energy=0.000016 Wh
+[0;36m[INFO][0m   [13/22] GET /reactive/books/cbor
+[0;32m[OK][0m     -> 429  13 B  0.003s  energy=0.000019 Wh
+[0;36m[INFO][0m   [14/22] GET /reactive/books/cacheable
+[0;32m[OK][0m     -> 429  20 B  0.000s  energy=0.000004 Wh
+[0;36m[INFO][0m   [15/22] GET /books
+[0;32m[OK][0m     -> 429  20 B  0.000s  energy=0.000004 Wh
+[0;36m[INFO][0m   [16/22] GET /books/select
+[0;32m[OK][0m     -> 429  20 B  0.000s  energy=0.000004 Wh
+[0;36m[INFO][0m   [17/22] GET /books/noCache/{id}
+[0;32m[OK][0m     -> 429  20 B  0.000s  energy=0.000004 Wh
+[0;36m[INFO][0m   [18/22] GET /books/changes
+[0;32m[OK][0m     -> 429  20 B  0.000s  energy=0.000004 Wh
+[0;36m[INFO][0m   [19/22] GET /books/cbor
+[0;32m[OK][0m     -> 429  20 B  0.000s  energy=0.000004 Wh
+[0;36m[INFO][0m   [20/22] GET /books/batch
+[0;32m[OK][0m     -> 429  20 B  0.000s  energy=0.000004 Wh
+[0;36m[INFO][0m   [21/22] GET /books/async
+[0;32m[OK][0m     -> 429  20 B  0.000s  energy=0.000004 Wh
+[0;36m[INFO][0m   [22/22] GET /books/async/{id}
+[0;32m[OK][0m     -> 429  20 B  0.000s  energy=0.000004 Wh
+[0;36m[INFO][0m Computing Green Score...
+[0;32m[OK][0m   GREEN SCORE: 11/100  Grade: E
+[0;36m[INFO][0m 
+[0;36m[INFO][0m ============================================================
+[0;36m[INFO][0m   📋 Rule ↔ API Resource Mapping
+[0;36m[INFO][0m ============================================================
+[0;32m[OK][0m   ✅ [DE11] Pagination  (5/15 pts)  — 4/12 resource(s) matched
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ No pagination params (page/size/limit/offset/cursor)
+[0;36m[INFO][0m       🟢 GET    /reactive/books
+[0;36m[INFO][0m          └─ Pagination params: page, size
+[0;36m[INFO][0m       🟢 GET    /reactive/books/select
+[0;36m[INFO][0m          └─ Pagination params: page, size
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/changes
+[0;36m[INFO][0m          └─ No pagination params (page/size/limit/offset/cursor)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cbor
+[0;36m[INFO][0m          └─ No pagination params (page/size/limit/offset/cursor)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cacheable
+[0;36m[INFO][0m          └─ No pagination params (page/size/limit/offset/cursor)
+[0;36m[INFO][0m       🟢 GET    /books
+[0;36m[INFO][0m          └─ Pagination params: page, size
+[0;36m[INFO][0m       🟢 GET    /books/select
+[0;36m[INFO][0m          └─ Pagination params: page, size
+[0;36m[INFO][0m       ⚪ GET    /books/changes
+[0;36m[INFO][0m          └─ No pagination params (page/size/limit/offset/cursor)
+[0;36m[INFO][0m       ⚪ GET    /books/cbor
+[0;36m[INFO][0m          └─ No pagination params (page/size/limit/offset/cursor)
+[0;36m[INFO][0m       ⚪ GET    /books/batch
+[0;36m[INFO][0m          └─ No pagination params (page/size/limit/offset/cursor)
+[0;36m[INFO][0m       ⚪ GET    /books/async
+[0;36m[INFO][0m          └─ No pagination params (page/size/limit/offset/cursor)
+[0;32m[OK][0m   ✅ [DE08] Filtrage de champs  (2/15 pts)  — 2/19 resource(s) matched
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /books/{id}/summary
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       🟢 GET    /reactive/books/select
+[0;36m[INFO][0m          └─ Field filter params: fields
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/changes
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cbor
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cacheable
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       🟢 GET    /books/select
+[0;36m[INFO][0m          └─ Field filter params: fields
+[0;36m[INFO][0m       ⚪ GET    /books/noCache/{id}
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /books/changes
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /books/cbor
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /books/batch
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /books/async
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[0;36m[INFO][0m       ⚪ GET    /books/async/{id}
+[0;36m[INFO][0m          └─ No field filter param (fields/select)
+[1;33m[WARN][0m   ❌ [DE01] Compression  (0/15 pts)  — 0/22 resource(s) matched
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ PUT    /books/{id}
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ POST   /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/{id}/summary
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ POST   /books/{id}/summary
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /reactive/books
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/select
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/changes
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cbor
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cacheable
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/select
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/noCache/{id}
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/changes
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/cbor
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/batch
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/async
+[0;36m[INFO][0m          └─ No gzip compression detected
+[0;36m[INFO][0m       ⚪ GET    /books/async/{id}
+[0;36m[INFO][0m          └─ No gzip compression detected
+[1;33m[WARN][0m   ❌ [DE02/DE03] Cache ETag/304  (0/15 pts)  — 0/7 resource(s) matched
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ No ETag header in HEAD/GET response
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ No ETag header in HEAD/GET response
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ No ETag header in HEAD/GET response
+[0;36m[INFO][0m       ⚪ GET    /books/{id}/summary
+[0;36m[INFO][0m          └─ No ETag header in HEAD/GET response
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}
+[0;36m[INFO][0m          └─ No ETag header in HEAD/GET response
+[0;36m[INFO][0m       ⚪ GET    /books/noCache/{id}
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /books/async/{id}
+[0;36m[INFO][0m          └─ Not individually tested
+[0;32m[OK][0m   ✅ [DE06] Delta / Changes  (1/10 pts)  — 2/19 resource(s) matched
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /books/{id}/summary
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /reactive/books
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/select
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       🟢 GET    /reactive/books/changes
+[0;36m[INFO][0m          └─ Path contains 'change', 'delta' or 'since'
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cbor
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cacheable
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /books/select
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /books/noCache/{id}
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       🟢 GET    /books/changes
+[0;36m[INFO][0m          └─ Path contains 'change', 'delta' or 'since'
+[0;36m[INFO][0m       ⚪ GET    /books/cbor
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /books/batch
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /books/async
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[0;36m[INFO][0m       ⚪ GET    /books/async/{id}
+[0;36m[INFO][0m          └─ Not a delta/changes endpoint
+[1;33m[WARN][0m   ❌ [206] Range / Partial Content  (0/10 pts)  — 0/19 resource(s) matched
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ Range: bytes=0-99 → 200 (not 206)
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ Range: bytes=0-99 → 429 (not 206)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ Range: bytes=0-99 → 429 (not 206)
+[0;36m[INFO][0m       ⚪ GET    /books/{id}/summary
+[0;36m[INFO][0m          └─ Range: bytes=0-99 → 429 (not 206)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}
+[0;36m[INFO][0m          └─ Range: bytes=0-99 → 429 (not 206)
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /reactive/books
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/select
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/changes
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cbor
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cacheable
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /books/select
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /books/noCache/{id}
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /books/changes
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /books/cbor
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /books/batch
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /books/async
+[0;36m[INFO][0m          └─ Not individually tested
+[0;36m[INFO][0m       ⚪ GET    /books/async/{id}
+[0;36m[INFO][0m          └─ Not individually tested
+[0;32m[OK][0m   ✅ [AR02] Format binaire (CBOR)  (1/10 pts)  — 2/22 resource(s) matched
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ PUT    /books/{id}
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ POST   /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /books/{id}/summary
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ POST   /books/{id}/summary
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /reactive/books
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/select
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/changes
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       🟢 GET    /reactive/books/cbor
+[0;36m[INFO][0m          └─ Binary format (CBOR/protobuf/octet-stream)
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cacheable
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /books/select
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /books/noCache/{id}
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /books/changes
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       🟢 GET    /books/cbor
+[0;36m[INFO][0m          └─ Binary format (CBOR/protobuf/octet-stream)
+[0;36m[INFO][0m       ⚪ GET    /books/batch
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /books/async
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;36m[INFO][0m       ⚪ GET    /books/async/{id}
+[0;36m[INFO][0m          └─ Standard JSON format
+[0;32m[OK][0m   ✅ [LO01] Observabilite  (2/5 pts)  — 4/10 resource(s) matched
+[0;36m[INFO][0m       🟢 GET    http://localhost:8080/actuator/health
+[0;36m[INFO][0m          └─ HTTP 200 OK
+[0;36m[INFO][0m       ⚪ GET    http://localhost:8080/health
+[0;36m[INFO][0m          └─ HTTP 404
+[0;36m[INFO][0m       🟢 GET    http://localhost:8080/actuator
+[0;36m[INFO][0m          └─ HTTP 200 OK
+[0;36m[INFO][0m       🟢 GET    http://localhost:8080/actuator/metrics
+[0;36m[INFO][0m          └─ HTTP 200 OK
+[0;36m[INFO][0m       🟢 GET    http://localhost:8080/actuator/info
+[0;36m[INFO][0m          └─ HTTP 200 OK
+[0;36m[INFO][0m       ⚪ GET    http://localhost:8081/actuator/health
+[0;36m[INFO][0m          └─ HTTP 429
+[0;36m[INFO][0m       ⚪ GET    http://localhost:8081/health
+[0;36m[INFO][0m          └─ HTTP 429
+[0;36m[INFO][0m       ⚪ GET    http://localhost:8081/actuator
+[0;36m[INFO][0m          └─ HTTP 429
+[0;36m[INFO][0m       ⚪ GET    http://localhost:8081/actuator/metrics
+[0;36m[INFO][0m          └─ HTTP 429
+[0;36m[INFO][0m       ⚪ GET    http://localhost:8081/actuator/info
+[0;36m[INFO][0m          └─ HTTP 429
+[1;33m[WARN][0m   ❌ [US07] Rate Limiting  (0/5 pts)  — 0/22 resource(s) matched
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/{id}
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ PUT    /books/{id}
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ POST   /reactive/books/{id}/summary
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/{id}/summary
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ POST   /books/{id}/summary
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /reactive/books
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/{id}
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/select
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/changes
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cbor
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /reactive/books/cacheable
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/select
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/noCache/{id}
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/changes
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/cbor
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/batch
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/async
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m       ⚪ GET    /books/async/{id}
+[0;36m[INFO][0m          └─ No rate-limit headers in response
+[0;36m[INFO][0m 
+[0;36m[INFO][0m   📋 Reverse Index: API Resource → Rules
+[0;36m[INFO][0m ------------------------------------------------------------
+[0;36m[INFO][0m   get:/books                                         → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/books/async                                   → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/books/async/{id}                              → DE08, DE01, DE02/DE03, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/books/batch                                   → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/books/cbor                                    → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/books/changes                                 → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/books/noCache/{id}                            → DE08, DE01, DE02/DE03, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/books/select                                  → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/books/{id}                                    → DE08, DE01, DE02/DE03, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/books/{id}/summary                            → DE08, DE01, DE02/DE03, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/reactive/books                                → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/reactive/books/cacheable                      → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/reactive/books/cbor                           → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/reactive/books/changes                        → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/reactive/books/select                         → DE11, DE08, DE01, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/reactive/books/{id}                           → DE08, DE01, DE02/DE03, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:/reactive/books/{id}/summary                   → DE08, DE01, DE02/DE03, DE06, 206, AR02, US07
+[0;36m[INFO][0m   get:http://localhost:8080/actuator                 → LO01
+[0;36m[INFO][0m   get:http://localhost:8080/actuator/health          → LO01
+[0;36m[INFO][0m   get:http://localhost:8080/actuator/info            → LO01
+[0;36m[INFO][0m   get:http://localhost:8080/actuator/metrics         → LO01
+[0;36m[INFO][0m   get:http://localhost:8080/health                   → LO01
+[0;36m[INFO][0m   get:http://localhost:8081/actuator                 → LO01
+[0;36m[INFO][0m   get:http://localhost:8081/actuator/health          → LO01
+[0;36m[INFO][0m   get:http://localhost:8081/actuator/info            → LO01
+[0;36m[INFO][0m   get:http://localhost:8081/actuator/metrics         → LO01
+[0;36m[INFO][0m   get:http://localhost:8081/health                   → LO01
+[0;36m[INFO][0m   post:/books/{id}/summary                           → DE01, AR02, US07
+[0;36m[INFO][0m   post:/reactive/books/{id}/summary                  → DE01, AR02, US07
+[0;36m[INFO][0m   put:/books/{id}                                    → DE01, AR02, US07
+[0;36m[INFO][0m ============================================================
+[0;36m[INFO][0m 
+[0;36m[INFO][0m ============================================================
+[0;36m[INFO][0m   💡 Improvement Suggestions (unvalidated rules)
+[0;36m[INFO][0m ============================================================
+[0;36m[INFO][0m   Potential score gain: +45 pts
+[0;36m[INFO][0m 
+[1;33m[WARN][0m   ── [DE01] Compression  (0/15 pts) ──
+[0;36m[INFO][0m     🔴 Suggestion 1: Enable gzip compression on the server
+[0;36m[INFO][0m        Target:   ALL endpoints (server-level)
+[0;36m[INFO][0m        Priority: HIGH
+[0;36m[INFO][0m        Impact:   +0.7 pts/endpoint (total gap: 15 pts) — typically 60-80% payload reduction
+[0;36m[INFO][0m        Option 1 — Spring Boot application.yml:
+[0;36m[INFO][0m          server:
+[0;36m[INFO][0m            compression:
+[0;36m[INFO][0m              enabled: true
+[0;36m[INFO][0m              min-response-size: 1024
+[0;36m[INFO][0m              mime-types: application/json,application/xml,text/html,text/plain
+[0;36m[INFO][0m        
+[0;36m[INFO][0m        Option 2 — Nginx (if reverse proxy):
+[0;36m[INFO][0m          gzip on;
+[0;36m[INFO][0m          gzip_types application/json application/xml text/plain;
+[0;36m[INFO][0m          gzip_min_length 1024;
+[0;36m[INFO][0m          gzip_comp_level 6;
+[0;36m[INFO][0m        
+[0;36m[INFO][0m        Both options apply to ALL endpoints automatically.
+[0;36m[INFO][0m 
+[1;33m[WARN][0m   ── [DE02/DE03] Cache ETag/304  (0/15 pts) ──
+[0;36m[INFO][0m     🔴 Suggestion 1: Add ETag support and If-None-Match → 304 Not Modified
+[0;36m[INFO][0m        Target:   GET /books/{id}
+[0;36m[INFO][0m        Priority: HIGH
+[0;36m[INFO][0m        Impact:   +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth
+[0;36m[INFO][0m        Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option A — Global filter (easiest):
+[0;36m[INFO][0m          @Bean
+[0;36m[INFO][0m          public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {
+[0;36m[INFO][0m            FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();
+[0;36m[INFO][0m            reg.setFilter(new ShallowEtagHeaderFilter());
+[0;36m[INFO][0m            reg.addUrlPatterns("/api/*");
+[0;36m[INFO][0m            return reg;
+[0;36m[INFO][0m          }
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option B — Manual per endpoint:
+[0;36m[INFO][0m          String etag = '"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '"';
+[0;36m[INFO][0m          if (request.checkNotModified(etag)) return null; // → 304
+[0;36m[INFO][0m          return ResponseEntity.ok().eTag(etag).body(body);
+[0;36m[INFO][0m 
+[0;36m[INFO][0m     🔴 Suggestion 2: Add ETag support and If-None-Match → 304 Not Modified
+[0;36m[INFO][0m        Target:   GET /books/{id}
+[0;36m[INFO][0m        Priority: HIGH
+[0;36m[INFO][0m        Impact:   +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth
+[0;36m[INFO][0m        Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option A — Global filter (easiest):
+[0;36m[INFO][0m          @Bean
+[0;36m[INFO][0m          public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {
+[0;36m[INFO][0m            FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();
+[0;36m[INFO][0m            reg.setFilter(new ShallowEtagHeaderFilter());
+[0;36m[INFO][0m            reg.addUrlPatterns("/api/*");
+[0;36m[INFO][0m            return reg;
+[0;36m[INFO][0m          }
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option B — Manual per endpoint:
+[0;36m[INFO][0m          String etag = '"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '"';
+[0;36m[INFO][0m          if (request.checkNotModified(etag)) return null; // → 304
+[0;36m[INFO][0m          return ResponseEntity.ok().eTag(etag).body(body);
+[0;36m[INFO][0m 
+[0;36m[INFO][0m     🔴 Suggestion 3: Add ETag support and If-None-Match → 304 Not Modified
+[0;36m[INFO][0m        Target:   GET /reactive/books/{id}/summary
+[0;36m[INFO][0m        Priority: HIGH
+[0;36m[INFO][0m        Impact:   +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth
+[0;36m[INFO][0m        Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option A — Global filter (easiest):
+[0;36m[INFO][0m          @Bean
+[0;36m[INFO][0m          public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {
+[0;36m[INFO][0m            FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();
+[0;36m[INFO][0m            reg.setFilter(new ShallowEtagHeaderFilter());
+[0;36m[INFO][0m            reg.addUrlPatterns("/api/*");
+[0;36m[INFO][0m            return reg;
+[0;36m[INFO][0m          }
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option B — Manual per endpoint:
+[0;36m[INFO][0m          String etag = '"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '"';
+[0;36m[INFO][0m          if (request.checkNotModified(etag)) return null; // → 304
+[0;36m[INFO][0m          return ResponseEntity.ok().eTag(etag).body(body);
+[0;36m[INFO][0m 
+[0;36m[INFO][0m     🔴 Suggestion 4: Add ETag support and If-None-Match → 304 Not Modified
+[0;36m[INFO][0m        Target:   GET /books/{id}/summary
+[0;36m[INFO][0m        Priority: HIGH
+[0;36m[INFO][0m        Impact:   +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth
+[0;36m[INFO][0m        Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option A — Global filter (easiest):
+[0;36m[INFO][0m          @Bean
+[0;36m[INFO][0m          public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {
+[0;36m[INFO][0m            FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();
+[0;36m[INFO][0m            reg.setFilter(new ShallowEtagHeaderFilter());
+[0;36m[INFO][0m            reg.addUrlPatterns("/api/*");
+[0;36m[INFO][0m            return reg;
+[0;36m[INFO][0m          }
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option B — Manual per endpoint:
+[0;36m[INFO][0m          String etag = '"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '"';
+[0;36m[INFO][0m          if (request.checkNotModified(etag)) return null; // → 304
+[0;36m[INFO][0m          return ResponseEntity.ok().eTag(etag).body(body);
+[0;36m[INFO][0m 
+[0;36m[INFO][0m     🔴 Suggestion 5: Add ETag support and If-None-Match → 304 Not Modified
+[0;36m[INFO][0m        Target:   GET /reactive/books/{id}
+[0;36m[INFO][0m        Priority: HIGH
+[0;36m[INFO][0m        Impact:   +2.1 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth
+[0;36m[INFO][0m        Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option A — Global filter (easiest):
+[0;36m[INFO][0m          @Bean
+[0;36m[INFO][0m          public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {
+[0;36m[INFO][0m            FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();
+[0;36m[INFO][0m            reg.setFilter(new ShallowEtagHeaderFilter());
+[0;36m[INFO][0m            reg.addUrlPatterns("/api/*");
+[0;36m[INFO][0m            return reg;
+[0;36m[INFO][0m          }
+[0;36m[INFO][0m        
+[0;36m[INFO][0m          Option B — Manual per endpoint:
+[0;36m[INFO][0m          String etag = '"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '"';
+[0;36m[INFO][0m          if (request.checkNotModified(etag)) return null; // → 304
+[0;36m[INFO][0m          return ResponseEntity.ok().eTag(etag).body(body);
+[0;36m[INFO][0m 
+[1;33m[WARN][0m   ── [206] Range / Partial Content  (0/10 pts) ──
+[0;36m[INFO][0m     🟢 Suggestion 1: Support HTTP Range header for partial content (206)
+[0;36m[INFO][0m        Target:   GET /books/{id}
+[0;36m[INFO][0m        Priority: LOW
+[0;36m[INFO][0m        Impact:   +10 pts — enables resumable downloads and partial fetches
+[0;36m[INFO][0m        For JSON endpoints, Range/206 is rarely useful.
+[0;36m[INFO][0m        Focus on the file download endpoint(s) instead.
+[0;36m[INFO][0m 
+[0;36m[INFO][0m     🟢 Suggestion 2: Support HTTP Range header for partial content (206)
+[0;36m[INFO][0m        Target:   GET /books/{id}
+[0;36m[INFO][0m        Priority: LOW
+[0;36m[INFO][0m        Impact:   +10 pts — enables resumable downloads and partial fetches
+[0;36m[INFO][0m        For JSON endpoints, Range/206 is rarely useful.
+[0;36m[INFO][0m        Focus on the file download endpoint(s) instead.
+[0;36m[INFO][0m 
+[1;33m[WARN][0m   ── [US07] Rate Limiting  (0/5 pts) ──
+[0;36m[INFO][0m     🟡 Suggestion 1: Add rate-limit response headers
+[0;36m[INFO][0m        Target:   ALL endpoints (server-level)
+[0;36m[INFO][0m        Priority: MEDIUM
+[0;36m[INFO][0m        Impact:   +5 pts — protects the API from abuse and signals limits to clients
+[0;36m[INFO][0m        Option 1 — Spring Boot filter:
+[0;36m[INFO][0m          Add a HandlerInterceptor or OncePerRequestFilter that adds:
+[0;36m[INFO][0m            X-RateLimit-Limit: 100
+[0;36m[INFO][0m            X-RateLimit-Remaining: 97
+[0;36m[INFO][0m            X-RateLimit-Reset: 1620000000
+[0;36m[INFO][0m        
+[0;36m[INFO][0m        Option 2 — Use Bucket4j + Spring Boot Starter:
+[0;36m[INFO][0m          <dependency>com.bucket4j:bucket4j-spring-boot-starter</dependency>
+[0;36m[INFO][0m          Configure rate limits in application.yml per endpoint.
+[0;36m[INFO][0m        
+[0;36m[INFO][0m        Option 3 — Nginx:
+[0;36m[INFO][0m          limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+[0;36m[INFO][0m          location /api/ { limit_req zone=api burst=20; }
+[0;36m[INFO][0m          add_header X-RateLimit-Limit 100;
+[0;36m[INFO][0m 
+[0;36m[INFO][0m ============================================================
+[0;36m[INFO][0m 
+[0;32m[OK][0m Rule-Resource mapping saved: /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/analysis/rule-resource-mapping.json
+[0;36m[INFO][0m No previous report — first analysis: before = after
+[0;32m[OK][0m Report: /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/green-score-report-20260427_212046.json
+[0;32m[OK][0m Latest: /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/latest-report.json
+[0;36m[INFO][0m 🧹 Purge des anciens rapports (conservation des 5 derniers)...
+[0;36m[INFO][0m   🗑️  Suppression : green-score-report-20260427_204050.json
+[0;36m[INFO][0m Generating dashboard...
+[0;32m[OK][0m Dashboard written to /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/dashboard/index.html
+
+============================================================
+  APP: optcreedgreen3
+  GREEN SCORE: 11/100   Grade: E
+  Endpoints discovered: 22
+  Endpoints measured:   20
+
+  Rules breakdown:
+    ✅ DE11                   5/ 15  (4/12 resources)
+    ✅ DE08                   2/ 15  (2/19 resources)
+    ❌ DE01                   0/ 15  (0/22 resources)
+    ❌ DE02/DE03              0/ 15  (0/7 resources)
+    ✅ DE06                   1/ 10  (2/19 resources)
+    ❌ 206                    0/ 10  (0/19 resources)
+    ✅ AR02                   1/ 10  (2/22 resources)
+    ✅ LO01                   2/  5  (4/10 resources)
+    ❌ US07                   0/  5  (0/22 resources)
+
+  Report:    /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/green-score-report-20260427_212046.json
+  Mapping:   /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/analysis/rule-resource-mapping.json
+  Dashboard: dashboard/index.html
+============================================================
+
+[1;33m━━━ 🏷️  Generating Badge ━━━[0m
+Badge written to /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/badges/green-score.svg
+[1;33mℹ️  Dashboard generation skipped (--skip-dashboard) — will be generated after all analyses[0m
+
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0;32m📄 Report: /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/latest-report.json[0m
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[0;36m╔══════════════════════════════════════════════════════════════╗[0m
+[0;36m║  📦 APP: [0;32moptcreedgreen3[0;36m                                        ║[0m
+[0;36m║  🌿 GREEN SCORE:  [0;32m11/100[0;36m   Grade: [0;32mE[0;36m                    ║[0m
+[0;36m║  🔍 Endpoints discovered: [0;32m22[0;36m  measured: [0;32m20[0;36m              ║[0m
+[0;36m╚══════════════════════════════════════════════════════════════╝[0m
+
+Open the dashboard: [1;33mopen /Users/thiernodiallo/greenscoreimpl/dashboard/index.html[0m
+
+Running Creedengo eco-design code analyzer...
+🐳 Container runtime détecté : podman
+[1;33m━━━ ⬇️  Cloning Git repository ━━━[0m
+  Repo:   [0;36mhttps://github.com/thiernodialloAFA/green-api-workshop-final[0m
+  Branch: [0;36mfeat/devoxx-creedengo[0m
+  Into:   [0;36m/Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/.creedengo/checkouts/green-api-workshop-final_-43738[0m
+Cloning into '/Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/.creedengo/checkouts/green-api-workshop-final_-43738'...
+  [0;32m✓ Working directory: /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/.creedengo/checkouts/green-api-workshop-final_-43738[0m
+
+[0;36m╔══════════════════════════════════════════════════════════════╗[0m
+[0;36m║  🌱 Creedengo Green Code Analyzer — Auto-Detect            ║[0m
+[0;36m║  Eco-design static analysis for all languages              ║[0m
+[0;36m╚══════════════════════════════════════════════════════════════╝[0m
+
+[1;33m━━━ 🔍 Detecting project stack ━━━[0m
+  Source:   [0;36mcloned git repo[0m (https://github.com/thiernodialloAFA/green-api-workshop-final @ feat/devoxx-creedengo)
+  Scanning: [0;36m/Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/.creedengo/checkouts/green-api-workshop-final_-43738[0m
+  Languages:    [0;36mjava[0m
+  Primary:      [0;32mjava[0m (no framework)
+  Modules:      [0;36m3[0m
+  Scanner:      [0;36mmaven[0m
+  Plugins:      [0;36mjava[0m
+
+  [0;32m✓ Reactor POM detected — will build & analyze ALL modules together[0m
+  [0;36m  Reactor: /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/.creedengo/checkouts/green-api-workshop-final_-43738/./pom.xml[0m
+[1;33m━━━ 📥 Downloading Creedengo plugins ━━━[0m
+  [0;32m✓ java: cached creedengo-java-plugin-2.1.2.jar[0m
+
+[1;33m━━━ 🐳 Starting SonarQube with Creedengo plugins ━━━[0m
+  [0;36m🧹 Purging all previous Creedengo-SonarQube containers...[0m
+90a17d7842e948b54642307bdc9d97cac2a248aadedfe17888753c4b3979b0e6
+dce86f0e35d631b5b69f08d80539ae98fc0520207417be69ec6c547dee1b4b6d
+a304fbb40a163263587fd5e0823160bc4a475cde83accaad7949f0716e532271
+89113737f4395959757637a1d70083a58e61b0b77cfb729deb73a03926b12555
+  [0;32m✓ Previous containers purged[0m
+  Pulling [0;36msonarqube:community[0m...
+  Container: [0;36mcreedengo-sonar-43738[0m  Port: [0;36m9100[0m
+  [0;36mℹ️  --no-cleanup : le container SonarQube ne sera PAS supprimé à la fin[0m
+[1;33m━━━ ⏳ Waiting for SonarQube to start (may take 60-120s) ━━━[0m
+  ... 20s (starting)
+  ... 40s (STARTING)
+  [0;32m✅ SonarQube ready (50s)[0m
+
+[1;33m━━━ 🔐 Configuring SonarQube ━━━[0m
+  Authenticating to SonarQube...
+  [0;32m✓ Using default admin:admin (no forced change required)[0m
+  [0;32m✓ Auth token generated[0m
+[1;33m━━━ 📦 Provisioning SonarQube project ━━━[0m
+  [0;32m✓ Force authentication disabled[0m
+  [0;32m✓ Project 'green-api-workshop' created (name: optcreedgreen3)[0m
+  [0;32m✓ Project analysis token generated[0m
+  [0;32m✓ Permissions configured (scan, browse, code viewer, issue admin, admin)[0m
+  [0;32m✓ Project verified and accessible[0m
+  Project key:  [0;36mgreen-api-workshop[0m
+  Project name: [0;36moptcreedgreen3[0m
+  SonarQube:    [0;36mhttp://localhost:9100[0m
+
+[1;33m━━━ 📋 Setting up Creedengo quality profiles & gate ━━━[0m
+
+[1;33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[1;33m  📋  SonarQube Quality Profile & Gate Setup (pre-analysis)     [0m
+[1;33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[0;36m── Step 1: Creating quality profile 'creedprofiles' per language ──[0m
+  🔧 Language: [0;36mjava[0m  Repo: [0;36mcreedengo-java[0m
+     Creedengo rules available: [0;36m17[0m
+     [0;32m✓ Quality profile 'creedprofiles-java' created (key: 9882b044-2b51-496b-916d-09eb9df5284c)[0m
+     [0;32m✓ Inherits from 'Sonar agentic AI' (extends default rules)[0m
+
+[0;36m── Step 2: Activating all Creedengo rules in 'creedprofiles' ──[0m
+  [0;32m✓ java: 17/17 Creedengo rules activated in 'creedprofiles-java'[0m
+
+[0;36m── Step 3: Creating quality gate 'CreedGate' (extends default) ──[0m
+  Default quality gate: [0;36mSonar way[0m (id: Sonar way)
+  [0;32m✓ Quality gate 'CreedGate' created (copy of 'Sonar way')[0m
+
+[0;36m── Step 4: Linking profile & gate to project 'green-api-workshop' ──[0m
+  [0;32m✓ 'creedprofiles-java' set as DEFAULT quality profile for java[0m
+  [1;33m⚠ add_project returned HTTP 400 — profile may already be linked[0m
+  [0;32m✓ 'CreedGate' set as DEFAULT quality gate[0m
+  [0;32m✓ 'CreedGate' linked to project 'green-api-workshop'[0m
+
+[1;33m━━━ ✅ Quality Configuration Summary ━━━[0m
+
+  [0;36mQuality Profiles:[0m
+    java: [0;32mcreedprofiles-java[0m (extends Sonar way) → key: 9882b044-2b51-496b-916d-09eb9df5284c
+
+  [0;36mQuality Gate:[0m
+    [0;32mCreedGate[0m (extends Sonar way) → id: 860b6be6-e5b8-4850-8192-45156d3a40f0
+
+  [0;36mProject:[0m
+    [0;32mgreen-api-workshop[0m
+    → Quality profiles: creedprofiles-* (per language)
+    → Quality gate:     CreedGate
+
+  [0;36mVerification:[0m
+    ✅ Sonar way (azureresourcemanager) — 31 rules active, parent: none
+    ✅ Sonar way (cloudformation) — 26 rules active, parent: none
+    ✅ Sonar way (cs) — 324 rules active, parent: none
+    ✅ Sonar way (css) — 27 rules active, parent: none
+    ✅ Sonar way (docker) — 25 rules active, parent: none
+    ✅ Sonar way (flex) — 47 rules active, parent: none
+    ✅ Sonar way (go) — 22 rules active, parent: none
+    ✅ Sonar way (ipynb) — 323 rules active, parent: none
+    ✅ creedprofiles-java (java) — 505 rules active, parent: none
+    ✅ Sonar way (js) — 384 rules active, parent: none
+    ✅ Sonar way (json) — 0 rules active, parent: none
+    ✅ Sonar way (jsp) — 0 rules active, parent: none
+    ✅ Sonar way (kotlin) — 130 rules active, parent: none
+    ✅ Sonar way (kubernetes) — 23 rules active, parent: none
+    ✅ Sonar way (php) — 178 rules active, parent: none
+    ✅ Sonar way (py) — 327 rules active, parent: none
+    ✅ Sonar way (ruby) — 29 rules active, parent: none
+    ✅ Sonar way (rust) — 78 rules active, parent: none
+    ✅ Sonar way (scala) — 30 rules active, parent: none
+    ✅ Sonar way (secrets) — 30 rules active, parent: none
+    ✅ Sonar way (terraform) — 48 rules active, parent: none
+    ✅ Sonar way (text) — 3 rules active, parent: none
+    ✅ Sonar way (ts) — 397 rules active, parent: none
+    ✅ Sonar way (vbnet) — 142 rules active, parent: none
+    ✅ Sonar way (web) — 53 rules active, parent: none
+    ✅ Sonar way (xml) — 25 rules active, parent: none
+    ✅ Sonar way (yaml) — 0 rules active, parent: none
+    ✅ Gate: CreedGate (default: False)
+
+[0;32m━━━ 📋 Quality setup complete — ready for analysis ━━━[0m
+
+
+[0;36mInstalled Creedengo plugins:[0m
+  ✅ creedengo - Java language v2.1.2 (key: creedengojava)
+
+[1;33m━━━ 🔍 Running Creedengo analysis ━━━[0m
+  Sources:  [0;36mgreen-api-baseline/src/main/java,green-api-optimized/src/main/java[0m
+  Java bin: [0;36mgreen-api-baseline/target/classes,green-api-optimized/target/classes[0m
+
+  Using: [0;36msonar-scanner-cli (Docker)[0m
+WARNING: image platform (linux/amd64) does not match the expected platform (linux/arm64)
+21:24:12.797 WARN  Dependencies/libraries were not provided for analysis of SOURCE files. The 'sonar.java.libraries' property is empty. Verify your configuration, as you might end up with less precise results.
+21:24:12.823 WARN  Unresolved imports/types have been detected during analysis. Enable DEBUG mode to see them.
+21:24:12.832 WARN  Use of preview features have been detected during analysis. Enable DEBUG mode to see them.
+21:24:16.073 WARN  Retrieving only language associated files, make sure to run the analysis inside a git repository to make use of inclusions specified via "sonar.text.inclusions"
+21:24:18.162 WARN  Shallow clone detected, no blame information will be provided. You can convert to non-shallow with 'git fetch --unshallow'.
+21:24:18.185 WARN  Missing blame information for the following files:
+21:24:18.187 WARN    * green-api-optimized/src/main/java/com/example/optimized/config/R2dbcDatabaseConfig.java
+21:24:18.191 WARN    * green-api-baseline/src/main/java/com/example/baseline/repo/BookRepository.java
+21:24:18.198 WARN    * green-api-optimized/src/main/java/com/example/optimized/web/GlobalExceptionHandler.java
+21:24:18.203 WARN    * green-api-optimized/src/main/java/com/example/optimized/observability/PayloadLoggingFilter.java
+21:24:18.204 WARN    * green-api-optimized/src/main/java/com/example/optimized/service/BookServiceReactif.java
+21:24:18.213 WARN    * green-api-optimized/src/main/java/com/example/optimized/domain/Book.java
+21:24:18.215 WARN    * green-api-optimized/src/main/java/com/example/optimized/web/RateLimitFilter.java
+21:24:18.220 WARN    * green-api-baseline/src/main/java/com/example/baseline/BaselineApplication.java
+21:24:18.221 WARN    * green-api-optimized/src/main/java/com/example/optimized/config/WebConfig.java
+21:24:18.237 WARN    * green-api-optimized/src/main/java/com/example/optimized/web/ApiError.java
+21:24:18.252 WARN    * green-api-optimized/src/main/java/com/example/optimized/api/BookReactiveController.java
+21:24:18.257 WARN    * green-api-optimized/src/main/java/com/example/optimized/service/BookService.java
+21:24:18.263 WARN    * green-api-optimized/src/main/java/com/example/optimized/repo/BookReactiveRepository.java
+21:24:18.276 WARN    * green-api-baseline/src/main/java/com/example/baseline/domain/Book.java
+21:24:18.292 WARN    * green-api-optimized/src/main/java/com/example/optimized/api/FieldSelector.java
+21:24:18.321 WARN    * green-api-optimized/src/main/java/com/example/optimized/api/BookController.java
+21:24:18.340 WARN    * green-api-optimized/src/main/java/com/example/optimized/OptimizedApplication.java
+21:24:18.369 WARN    * green-api-optimized/src/main/java/com/example/optimized/repo/BookRepository.java
+21:24:18.378 WARN    * green-api-baseline/src/main/java/com/example/baseline/api/BookController.java
+21:24:18.387 WARN  This may lead to missing/broken features in SonarQube
+21:24:21.102 INFO  ANALYSIS SUCCESSFUL, you can find the results at: http://localhost:9100/dashboard?id=green-api-workshop
+  [0;32m✓ Analysis submitted[0m
+[1;33m━━━ ⏳ Waiting for analysis to complete ━━━[0m
+  [0;32m✅ Complete (6s)[0m
+
+[1;33m━━━ 📊 Extracting Creedengo results ━━━[0m
+  ⏳ Checking analysis task status...
+  ✅ Analysis task complete (0s)
+  📋 Fetching Creedengo rule keys from repositories...
+    creedengo-java: 17 rules found
+  📋 Fetching Creedengo issues...
+    creedengo-java: 142 issues
+  Found 142 Creedengo-specific issues
+  📋 Fetching all project issues (for general SonarQube context)...
+  Found 152 total project issues
+  Separated: 142 Creedengo | 10 SonarQube general
+  📋 Fetching rule definitions...
+    creedengo-java: 17 rules defined
+  📋 Fetching project measures...
+  ✅ Creedengo report written to /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/creedengo-report.json
+     Score: 88/100 (Grade: A) — 142 issues
+[1;33mℹ️  Dashboard generation skipped (--skip-dashboard) — will be generated after all analyses[0m
+
+[0;36m╔══════════════════════════════════════════════════════════════╗[0m
+[0;36m║  📦 APP: [0;32moptcreedgreen3[0m
+[0;36m║  🔍 Stack: [0;32mjava[0;36m — [0;32mno framework[0m
+[0;36m║  🔌 Plugins: [0;32mjava[0m
+[0;36m╠══════════════════════════════════════════════════════════════╣[0m
+[0;36m║  🌱 CREEDENGO SCORE (écodesign uniquement)[0m
+[0;36m║     Score: [0;32m88/100[0;36m  Grade: [0;32mA[0m
+[0;36m║     Issues écodesign: [0;32m142[0;36m  Règles violées: [0;32m2/17[0m
+[0;36m║     [0;32mBloquant: 0 | Critique: 0 | Majeur: 0 | Mineur: 142 | Info: 0[0m
+[0;36m╠══════════════════════════════════════════════════════════════╣[0m
+[0;36m║  🔧 SONARQUBE GÉNÉRAL (hors écodesign): [1;33m10 issues[0m
+[0;36m║     [1;33mCritique: 2 | Majeur: 2 | Mineur: 5 | Info: 1[0m
+[0;36m╚══════════════════════════════════════════════════════════════╝[0m
+
+[0;32m📄 Report: /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/creedengo-report.json[0m
+
+Open the dashboard: [1;33mopen greenanalyzer/dashboard/index.html[0m
+[0;36m🧹 Removing cloned working copy: /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/.creedengo/checkouts/green-api-workshop-final_-43738[0m
+
+━━━ 📊 Generating final Dashboard ━━━
+Creedengo report embedded from /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/reports/creedengo-report.json
+Dashboard written to /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/dashboard/index.html
+Markdown dashboard written to /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/dashboard/index.md
+✅ Dashboard generated: /Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/dashboard/index.html
+
+ℹ️  INTERACTIVE_BRIDGE=1 → skipping the trailing SonarQube countdown.
+🐳 Container runtime détecté : podman
+creedengo-sonar-43738

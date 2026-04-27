@@ -35,6 +35,19 @@ header .sub{color:var(--txt-2);font-size:.92rem;margin-top:4px}
 .brand-link{color:var(--green-l);text-decoration:none;font-size:.85rem}
 .brand-link:hover{color:#fff}
 
+/* ── Main tabs (Remote vs Local) ──────────────── */
+.main-tabs{display:flex;gap:6px;margin:0 0 16px;padding:6px;background:rgba(31,41,55,.45);border:1px solid var(--line);border-radius:12px}
+.main-tab{flex:1;padding:11px 16px;border-radius:9px;font-weight:700;font-size:.92rem;cursor:pointer;color:var(--txt-2);text-align:center;border:1px solid transparent;transition:all .18s;background:transparent;font-family:inherit}
+.main-tab:hover{color:var(--txt)}
+.main-tab.active{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-color:#22c55e;box-shadow:0 4px 14px -6px rgba(34,197,94,.55)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.creedengo-card{
+  background:linear-gradient(135deg,rgba(96,165,250,.08),rgba(15,23,42,.6));
+  border:1px solid var(--line);border-radius:12px;padding:18px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+
 /* ── Stepper ─────────────────────────────────── */
 .stepper{display:flex;align-items:stretch;gap:0;margin:8px 0 24px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--panel)}
 .step{flex:1;padding:14px 18px;display:flex;align-items:center;gap:10px;border-right:1px solid var(--line);position:relative;transition:background .25s}
@@ -277,6 +290,15 @@ footer a{color:var(--green-l);text-decoration:none}
     <button class="btn ghost" id="btn-test-bridge" type="button" style="padding:6px 14px;font-size:.78rem">Tester</button>
   </div>
 
+  <!-- ── Main tabs ──────────────────────────────────────────── -->
+  <div class="main-tabs" id="main-tabs">
+    <button class="main-tab active" data-tab="remote" type="button">🌐 Green Score Remote analyse</button>
+    <button class="main-tab" data-tab="local" type="button">💻 Local Green Score / Creedengo Source analyse</button>
+  </div>
+
+  <!-- ══════════ TAB: REMOTE (existing 3-step workflow) ══════════ -->
+  <div class="tab-pane active" id="tab-remote">
+
   <!-- Stepper -->
   <div class="stepper" id="stepper">
     <div class="step active" data-step="1">
@@ -390,6 +412,125 @@ https://api.example.com"></textarea>
     </div>
   </section>
 
+  </div><!-- /tab-remote -->
+
+  <!-- ══════════ TAB: LOCAL (start.sh — Green Score + Creedengo) ══════════ -->
+  <div class="tab-pane" id="tab-local">
+    <!-- Local stepper (config → results) -->
+    <div class="stepper" id="loc-stepper">
+      <div class="step active" data-loc-step="1">
+        <div class="num">1</div>
+        <div class="col"><div class="label">Configuration</div><div class="desc">Cibles, Creedengo, dépôt Git</div></div>
+      </div>
+      <div class="step" data-loc-step="2">
+        <div class="num">2</div>
+        <div class="col"><div class="label">Résultats</div><div class="desc">Green Score + Creedengo</div></div>
+      </div>
+    </div>
+
+    <section class="panel" id="loc-panel-1">
+      <div class="panel-head">
+        <h2>① Analyse locale (Green Score + Creedengo source)</h2>
+        <span class="meta">via <code>scripts/start.sh</code></span>
+      </div>
+      <p style="color:var(--txt-2);font-size:.86rem;margin-bottom:6px">
+        Pilote la chaîne canonique <code>start.sh</code> : attente des cibles → analyse Green Score + (option) analyse Creedengo
+        sur le code source local ou un dépôt Git cloné.
+      </p>
+
+      <label for="loc-targets">Endpoints API (analyse Green Score)</label>
+      <textarea id="loc-targets" placeholder="http://localhost:8080
+http://localhost:8081"></textarea>
+      <div class="hint">Une URL par ligne — ou séparées par des virgules. Optionnel si vous lancez seulement Creedengo sur un dépôt Git.</div>
+
+      <div class="row">
+        <div>
+          <label for="loc-bearer">Bearer token (optionnel)</label>
+          <input type="password" id="loc-bearer" placeholder="eyJhbGciOi…" autocomplete="off">
+        </div>
+        <div>
+          <label for="loc-appname">Nom de l'application</label>
+          <input type="text" id="loc-appname" placeholder="my-api">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:6px">
+        <div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="loc-creedengo" style="width:auto"> Lancer aussi <strong>Creedengo</strong> (analyse code source)
+          </label>
+          <div class="hint">Implique <code>--creedengo</code>. Activé automatiquement si un dépôt Git est fourni.</div>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:0">
+            <input type="checkbox" id="loc-debug" style="width:auto"> Mode debug (verbose)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+            <input type="checkbox" id="loc-git-keep" style="width:auto"> Conserver le clone Git après analyse
+          </label>
+        </div>
+      </div>
+
+      <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
+        <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">📦 Dépôt Git (optionnel — pour Creedengo)</legend>
+        <label for="loc-git-repo">URL du dépôt</label>
+        <input type="text" id="loc-git-repo" placeholder="https://github.com/owner/repo.git">
+        <div class="row">
+          <div>
+            <label for="loc-git-branch">Branche / tag</label>
+            <input type="text" id="loc-git-branch" placeholder="main">
+          </div>
+          <div>
+            <label for="loc-git-subdir">Sous-dossier à analyser</label>
+            <input type="text" id="loc-git-subdir" placeholder="services/api">
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button class="btn primary" id="loc-btn-analyze" type="button">⚡ Lancer start.sh</button>
+        <button class="btn ghost" id="loc-btn-load-sample" type="button">↺ Charger un exemple</button>
+        <span class="meta" id="loc-meta" style="margin-left:auto;font-size:.74rem;color:var(--txt-3)"></span>
+      </div>
+
+      <div class="status hidden" id="loc-status"></div>
+
+      <!-- Live console for start.sh stdout/stderr (polled every ~1.2s while running) -->
+      <div id="loc-console-wrap" style="margin-top:14px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="color:var(--green-l);font-weight:700;font-size:.86rem;display:flex;align-items:center;gap:8px">
+            <span id="loc-console-led" style="width:9px;height:9px;border-radius:50%;background:#86efac;box-shadow:0 0 8px #86efac;animation:spin 1.5s linear infinite;display:inline-block"></span>
+            🖥️ Console <code>start.sh</code>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:.74rem;color:var(--txt-3)">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="checkbox" id="loc-console-autoscroll" checked style="width:auto"> auto-scroll
+            </label>
+            <button class="btn ghost" id="loc-console-clear" type="button" style="padding:4px 10px;font-size:.72rem">Vider</button>
+          </div>
+        </div>
+        <pre id="loc-console" style="background:#070b13;color:#cbd5e1;border:1px solid var(--line);border-radius:10px;padding:12px;max-height:320px;overflow:auto;font-family:'Fira Code','JetBrains Mono',monospace;font-size:.74rem;line-height:1.45;white-space:pre-wrap;word-break:break-word;margin:0">(en attente du premier log…)</pre>
+      </div>
+    </section>
+
+    <section class="panel" id="loc-results-panel" style="display:none">
+      <div class="panel-head">
+        <h2>② Résultats — Green Score + Creedengo</h2>
+        <span class="meta" id="loc-results-meta">—</span>
+      </div>
+      <div id="loc-results-body">
+        <div class="empty"><div class="icon">📊</div><p>En attente du rapport…</p></div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="loc-btn-back" type="button">← Modifier la configuration</button>
+        <button class="btn ghost" id="loc-btn-restart" type="button">🔄 Nouvelle analyse</button>
+        <a class="btn ghost" href="/dashboard/index.html" target="_blank">📈 Dashboard complet</a>
+        <a class="btn ghost" href="/reports/latest-report.json" target="_blank" download="green-score-report.json">⬇ Green Score JSON</a>
+        <a class="btn ghost" href="/reports/creedengo-report.json" target="_blank" download="creedengo-report.json">⬇ Creedengo JSON</a>
+      </div>
+    </section>
+  </div><!-- /tab-local -->
+
   <footer>
     🌿 Green API Score — Devoxx France 2026 ·
     <a href="https://github.com/API-Green-Score/apigreenscoreanalyzer" target="_blank">apigreenscoreanalyzer</a>
@@ -411,6 +552,7 @@ const state = {
   filterMethod: "ALL",
   filterText: "",
   report: null,
+  localReport: null,
 };
 
 // ── Helpers ─────────────────────────────────────────────────────
@@ -450,18 +592,34 @@ function parseTargets(raw){
 
 // Robust fetch+parse: gives a clear error when the bridge server isn't running
 // (e.g. when the page is opened via file:// or a plain static server).
-async function postJSON(url, body){
-  let resp;
+async function postJSON(url, body, opts){
   const fullUrl = absUrl(url);
+  const timeoutMs = (opts && opts.timeoutMs) || 0;
+  const ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  let timer = null;
+  if (timeoutMs > 0 && ctrl) {
+    timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  }
+  let resp;
   try {
     resp = await fetch(fullUrl, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(body),
+      signal: ctrl ? ctrl.signal : undefined,
     });
   } catch (netErr) {
+    if (timer) clearTimeout(timer);
+    if (netErr && netErr.name === "AbortError") {
+      throw new Error(
+        "⏱️ Le bridge n'a pas répondu dans le délai imparti (" +
+        Math.round(timeoutMs/60000) + " min) sur " + fullUrl + ".<br>" +
+        "L'analyse est peut-être encore en cours côté serveur — consultez la console du bridge."
+      );
+    }
     throw new Error(bridgeHelp("Impossible de joindre le bridge à " + fullUrl + "."));
   }
+  if (timer) clearTimeout(timer);
   const text = await resp.text();
   let data = null;
   try { data = text ? JSON.parse(text) : {}; } catch (_) { data = null; }
@@ -531,17 +689,15 @@ $("btn-load-sample").addEventListener("click", () => {
 // ── Bridge detection & override ─────────────────────────────────
 async function probeBridge(base){
   // Returns {ok, message}. base may be "" (same-origin).
-  const url = (base || "").replace(/\/+$/,"") + "/api/discover";
+  // Uses GET /api/ping (cheap & semantically clear) instead of polluting
+  // /api/discover with empty probes.
+  const url = (base || "").replace(/\/+$/,"") + "/api/ping";
   try {
-    const r = await fetch(url, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: '{"targets":[]}',
-    });
+    const r = await fetch(url, { method: "GET" });
     const txt = await r.text();
     try {
       const j = JSON.parse(txt);
-      if (j && (Array.isArray(j.targets) || Array.isArray(j.resources) || j.error)) {
+      if (j && j.ok) {
         return { ok: true, message: "OK · " + (base || "même origine") };
       }
       return { ok: false, message: "Réponse JSON inattendue" };
@@ -883,6 +1039,430 @@ function renderResults(envelope, cfg, log){
       ${log ? `<details class="log" style="margin-top:14px"><summary>📜 Logs analyzer</summary><pre>${escHtml(log)}</pre></details>` : ""}
       </div>
     </details>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════
+// ── Main tabs (Remote vs Local) ─────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+function setMainTab(name){
+  document.querySelectorAll(".main-tab").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".tab-pane").forEach(p => p.classList.toggle("active", p.id === "tab-"+name));
+  // Persist last tab
+  try { localStorage.setItem("greenapi.activeTab", name); } catch {}
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+document.querySelectorAll(".main-tab").forEach(b => {
+  b.addEventListener("click", () => setMainTab(b.dataset.tab));
+});
+try {
+  const saved = localStorage.getItem("greenapi.activeTab");
+  if (saved === "local") setMainTab("local");
+} catch {}
+
+// ════════════════════════════════════════════════════════════════
+// ── Local analysis (delegates to scripts/start.sh via the bridge)
+// ════════════════════════════════════════════════════════════════
+
+// Mini stepper for the local tab (mirrors the remote 3-step workflow
+// but with only 2 steps: Configuration → Results).
+function setLocalStep(n){
+  document.querySelectorAll("#loc-stepper .step").forEach(s => {
+    const st = +s.dataset.locStep;
+    s.classList.toggle("active", st === n);
+    s.classList.toggle("done",   st <  n);
+  });
+  $("loc-panel-1").style.display       = n === 1 ? "" : "none";
+  $("loc-results-panel").style.display = n === 2 ? "" : "none";
+  const panel = n === 1 ? $("loc-panel-1") : $("loc-results-panel");
+  if (panel) panel.scrollIntoView({behavior:"smooth", block:"start"});
+}
+// Allow clicking on the local stepper pills (back always; forward only
+// if results exist).
+document.querySelectorAll("#loc-stepper .step").forEach(s => {
+  s.style.cursor = "pointer";
+  s.addEventListener("click", () => {
+    const n = +s.dataset.locStep;
+    if (n === 1) return setLocalStep(1);
+    if (n === 2 && state.localReport) return setLocalStep(2);
+  });
+});
+$("loc-btn-back")?.addEventListener("click", () => setLocalStep(1));
+$("loc-btn-restart")?.addEventListener("click", () => {
+  state.localReport = null;
+  clearStatus("loc-status");
+  setLocalStep(1);
+});
+
+// ── Live console: polls /api/local-log while start.sh is running ──
+let _locLogTimer = null;
+function locConsoleAppend(text){
+  const pre = $("loc-console");
+  if (!pre) return;
+  // First write replaces the placeholder
+  if (pre.textContent === "(en attente du premier log…)") pre.textContent = "";
+  pre.textContent = text;
+  if ($("loc-console-autoscroll")?.checked) pre.scrollTop = pre.scrollHeight;
+}
+async function locPollLog(){
+  try {
+    const r = await fetch(absUrl("/api/local-log"), { method: "GET" });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && typeof j.content === "string") locConsoleAppend(j.content);
+    }
+  } catch (_) { /* ignore — keep polling */ }
+}
+function locStartLogPolling(){
+  $("loc-console-wrap").style.display = "";
+  $("loc-console-led").style.animation = "spin 1.5s linear infinite";
+  $("loc-console-led").style.background = "#86efac";
+  $("loc-console").textContent = "(en attente du premier log…)";
+  if (_locLogTimer) clearInterval(_locLogTimer);
+  locPollLog();
+  _locLogTimer = setInterval(locPollLog, 1200);
+}
+function locStopLogPolling(){
+  if (_locLogTimer) { clearInterval(_locLogTimer); _locLogTimer = null; }
+  // Final pull to make sure we got the very last bytes
+  locPollLog();
+  $("loc-console-led").style.animation = "none";
+  $("loc-console-led").style.background = "var(--txt-3)";
+}
+$("loc-console-clear")?.addEventListener("click", () => {
+  $("loc-console").textContent = "(vidé)";
+});
+
+$("loc-btn-load-sample").addEventListener("click", () => {
+  $("loc-targets").value = "http://localhost:8080\nhttp://localhost:8081";
+  $("loc-appname").value = "demo-app";
+  $("loc-creedengo").checked = true;
+});
+
+$("loc-btn-analyze").addEventListener("click", async () => {
+  const targets   = parseTargets($("loc-targets").value);
+  const bearer    = $("loc-bearer").value.trim();
+  const appname   = $("loc-appname").value.trim();
+  const creedengo = $("loc-creedengo").checked;
+  const debug     = $("loc-debug").checked;
+  const gitKeep   = $("loc-git-keep").checked;
+  const gitRepo   = $("loc-git-repo").value.trim();
+  const gitBranch = $("loc-git-branch").value.trim();
+  const gitSubdir = $("loc-git-subdir").value.trim();
+
+  if (targets.length === 0 && !gitRepo) {
+    return setStatus("loc-status","error","Veuillez fournir au moins une URL d'API <em>ou</em> un dépôt Git.");
+  }
+
+  const launchedAt = Date.now();
+  setStatus("loc-status","info",
+    `Lancement de <code>start.sh</code> sur ${targets.length} cible(s)` +
+    (gitRepo ? ` + dépôt <code>${escHtml(gitRepo)}</code>` : "") +
+    (creedengo ? " · Creedengo activé" : "") +
+    "… (peut prendre quelques minutes — pas de Ctrl+C dans cet onglet, le bridge gère le timeout).");
+  $("loc-btn-analyze").disabled = true;
+  // Stay on step 1 while running (status is shown in-place); switch to
+  // step 2 only when results arrive.
+  locStartLogPolling();
+
+  try {
+    const { ok, status, data } = await postJSON("/api/local-analyze", {
+      targets, bearer, appname,
+      creedengo, debug, gitKeep,
+      gitRepo, gitBranch, gitSubdir,
+    }, { timeoutMs: 10 * 60 * 1000 });   // 10 min — match server timeout
+    if (!ok || !data.ok) {
+      const detail = data.log ? `<details class="log"><summary>📜 Logs start.sh</summary><pre>${escHtml(data.log)}</pre></details>` : "";
+      throw new Error((data.error || `HTTP ${status}`) + (detail ? "<br>"+detail : ""));
+    }
+    const elapsed = Math.round((Date.now() - launchedAt)/1000);
+    // Only warn about a category the user actually requested. Creedengo is
+    // optional → never warn if it wasn't requested for this run.
+    const cdRequested = data.creedengo_requested === true;
+    const gsTag = data.report
+      ? (data.report_fresh === false ? "♻️ ancien" : "✓")
+      : "❌ non généré";
+    const cdTag = cdRequested
+      ? (data.creedengo ? (data.creedengo_fresh === false ? "♻️ ancien" : "✓") : "❌ non généré")
+      : "—";
+    setStatus("loc-status","success",
+      `✅ start.sh terminé en ${elapsed}s — Green Score: ${gsTag} · Creedengo: ${cdTag}`);
+    state.localReport = data.report || null;
+    renderLocalResults(data.report, data.creedengo, data.config, data.log_tail, {
+      appname,
+      // True when the report (if requested) is fresh; null when not requested
+      // → suppresses the warning entirely on the front side.
+      freshGS: !data.report ? false : data.report_fresh !== false,
+      freshCD: !cdRequested ? null : (!data.creedengo ? false : data.creedengo_fresh !== false),
+      cdRequested,
+    });
+    setLocalStep(2);
+  } catch (err) {
+    setStatus("loc-status","error","❌ " + (err.message || err));
+  } finally {
+    $("loc-btn-analyze").disabled = false;
+    locStopLogPolling();
+  }
+});
+
+// ── Local results renderer ──────────────────────────────────────
+// Re-uses the same Green Score look as the remote tab and adds:
+//   • a Creedengo grade card next to the Green Score card
+//   • a Creedengo suggestions accordion below the Green Score one
+function renderLocalResults(report, creedengo, cfg, log, opts){
+  // The latest-report.json produced by start.sh is wrapped in an envelope:
+  //   { appname, report: { green_score, timestamp, auto_discovery, … } }
+  // Unwrap it so the rest of this function can address fields uniformly —
+  // exactly the same trick renderResults() uses for the remote tab.
+  // Preserve `appname` from the envelope (it lives outside .report) so the
+  // score card can show the right project name.
+  let envelopeAppname = "";
+  if (report && report.report && report.report.green_score) {
+    envelopeAppname = report.appname || "";
+    report = report.report;
+  }
+  // Same for Creedengo (defensive — some pipelines wrap it too).
+  if (creedengo && creedengo.report && creedengo.report.creedengo_score) {
+    creedengo = creedengo.report;
+  }
+  const ruleLabels = {
+    DE11_pagination:"DE11 · Pagination", DE08_fields:"DE08 · Filtrage de champs",
+    DE01_compression:"DE01 · Compression", DE02_DE03_cache:"DE02/03 · Cache",
+    DE06_delta:"DE06 · Delta / changes", range_206:"Range 206",
+    LO01_observability:"LO01 · Observabilité", US07_rate_limit:"US07 · Rate limit",
+    AR02_format_cbor:"AR02 · Format CBOR",
+  };
+  const ruleMax = {DE11_pagination:15, DE08_fields:15, DE01_compression:15, DE02_DE03_cache:15,
+    DE06_delta:10, range_206:10, LO01_observability:5, US07_rate_limit:5, AR02_format_cbor:10};
+
+  // ── Green Score card ─────────────────────────────────────────
+  let gsCardHtml = "";
+  let gsBreakdownHtml = "";
+  let gsSuggestionsHtml = "";
+  let gsSuggestionsCount = 0;
+  let endpointsHtml = "";
+  let metaText = "—";
+  if (report && report.green_score) {
+    const gs = report.green_score;
+    const total = gs.total ?? "?", max = gs.max ?? 100, grade = gs.grade ?? "?";
+    const pct = max > 0 ? Math.round((+total/max)*100) : 0;
+    const color = pct>=80?"#22c55e":pct>=60?"#86efac":pct>=40?"#facc15":pct>=20?"#f97316":"#ef4444";
+    const disc = report.auto_discovery || {};
+    const endpoints = disc.discovered_endpoints || [];
+    metaText = `📅 ${report.timestamp||""} · ${disc.endpoints_measured||0}/${disc.endpoints_discovered||0} endpoints`;
+
+    gsCardHtml = `
+      <div class="score-card">
+        <div style="color:var(--txt-2);font-size:.85rem">${escHtml(opts?.appname || cfg?.appname || envelopeAppname || report.appname || "API")}</div>
+        <div class="score-circle" style="border-color:${color};box-shadow:0 0 30px ${color}40">
+          <span class="number" style="color:${color}">${total}</span>
+          <span class="max">/ ${max}</span>
+          <span class="grade" style="background:${color};color:#0b1220">${escHtml(grade)}</span>
+        </div>
+        <div style="margin-top:6px;color:var(--txt-2);font-size:.84rem">🌿 Green Score · ${pct}%</div>
+        <div class="kv">
+          <div class="k">Endpoints découverts</div><div class="v">${disc.endpoints_discovered ?? 0}</div>
+          <div class="k">Endpoints mesurés</div>  <div class="v">${disc.endpoints_measured ?? 0}</div>
+          <div class="k">Cibles</div>             <div class="v">${(cfg?.targets||[]).length}</div>
+        </div>
+      </div>`;
+
+    const breakdown = gs.breakdown || {};
+    const details = gs.details || {};
+    gsBreakdownHtml = Object.keys(ruleLabels).map(k => {
+      const score = breakdown[k] ?? 0;
+      const m = ruleMax[k] || 0;
+      const cls = score >= m ? "good" : score > 0 ? "med" : "bad";
+      const note = details[k]?.note ? `<div style="color:var(--txt-3);font-size:.72rem;margin-top:2px">${escHtml(details[k].note)}</div>` : "";
+      return `<div class="rule-row"><div><div class="rule-name">${escHtml(ruleLabels[k])}</div>${note}</div><span class="rule-pts ${cls}">${score} / ${m}</span></div>`;
+    }).join("");
+
+    const mapping = gs.rule_resource_mapping || {};
+    const sugList = [];
+    for (const k of Object.keys(mapping)) {
+      for (const s of (mapping[k]?.suggestions || [])) sugList.push({...s, ruleLabel: ruleLabels[k]||k});
+    }
+    const prioOrder = {high:0, medium:1, low:2};
+    sugList.sort((a,b)=>(prioOrder[a.priority]??9)-(prioOrder[b.priority]??9));
+    const prioIcon = {high:"🔴", medium:"🟡", low:"🔵"};
+    gsSuggestionsCount = sugList.length;
+    gsSuggestionsHtml = sugList.length === 0
+      ? `<div class="empty" style="padding:18px"><div class="icon">🎉</div>Aucune suggestion Green Score.</div>`
+      : sugList.map(s => `
+          <details class="suggestion">
+            <summary><div class="sg-head">
+              <span class="sg-prio prio-${escHtml(s.priority||"low")}">${prioIcon[s.priority]||"⚪"} ${escHtml((s.priority||"low").toUpperCase())}</span>
+              <span class="sg-rule">${escHtml(s.ruleLabel)}</span>
+              ${s.target ? `<code class="sg-target">${escHtml(s.target)}</code>`:""}
+            </div></summary>
+            <div class="sg-body">
+              <div class="sg-action">${escHtml(s.action||"")}</div>
+              ${s.impact ? `<div class="sg-impact">💡 ${escHtml(s.impact)}</div>`:""}
+              ${s.how ? `<details class="sg-how"><summary>Comment l'implémenter ?</summary><pre>${escHtml(s.how)}</pre></details>`:""}
+            </div>
+          </details>`).join("");
+
+    endpointsHtml = endpoints.slice(0,200).map(e => {
+      const code = +e.http_code || 0;
+      const cls = code>=500?"s5":code>=400?"s4":code>=300?"s3":code>=200?"s2":"";
+      const sz = (e.size_download||0).toLocaleString("fr-FR");
+      const t  = (+e.time_total||0).toFixed(3);
+      return `<tr><td><span class="method ${escHtml(e.method)}">${escHtml(e.method)}</span></td>
+        <td style="font-family:'Fira Code',monospace">${escHtml(e.path)}</td>
+        <td><span class="code-tag ${cls}">${code||"—"}</span></td>
+        <td style="text-align:right">${sz} B</td>
+        <td style="text-align:right">${t} s</td></tr>`;
+    }).join("");
+  } else {
+    gsCardHtml = `<div class="score-card" style="border-color:rgba(239,68,68,.4)"><div class="empty" style="padding:30px">
+      <div class="icon">⚠️</div>
+      <strong style="color:#fca5a5">Green Score non produit</strong>
+      <div style="font-size:.78rem;color:var(--txt-2);margin-top:6px;line-height:1.5">
+        start.sh n'a pas généré <code>reports/latest-report.json</code>.<br>
+        Causes fréquentes : aucune cible n'a répondu sur le health-check, le bearer token est invalide,<br>
+        ou l'analyzer a été interrompu.<br>
+        <span style="color:var(--green-l)">👉 Consultez les logs <code>start.sh</code> en bas de page.</span>
+      </div>
+    </div></div>`;
+  }
+
+  // ── Creedengo card + suggestions ──────────────────────────────
+  let cdCardHtml = "";
+  let cdSuggestionsHtml = "";
+  let cdSuggestionsCount = 0;
+  if (creedengo && creedengo.creedengo_score) {
+    const cs = creedengo.creedengo_score;
+    const total = cs.total ?? "?", max = cs.max ?? 100, grade = cs.grade ?? "?";
+    const pct = max > 0 ? Math.round((+total/max)*100) : 0;
+    const color = pct>=80?"#22c55e":pct>=60?"#86efac":pct>=40?"#facc15":pct>=20?"#f97316":"#ef4444";
+    const sb = cs.severity_breakdown || {};
+
+    cdCardHtml = `
+      <div class="creedengo-card">
+        <div style="color:var(--txt-2);font-size:.85rem">${escHtml(creedengo.project || creedengo.appname || "source code")}</div>
+        <div class="score-circle" style="border-color:${color};box-shadow:0 0 30px ${color}40">
+          <span class="number" style="color:${color}">${total}</span>
+          <span class="max">/ ${max}</span>
+          <span class="grade" style="background:${color};color:#0b1220">${escHtml(grade)}</span>
+        </div>
+        <div style="margin-top:6px;color:var(--txt-2);font-size:.84rem">🐝 Creedengo · ${pct}%</div>
+        <div class="kv" style="width:100%">
+          <div class="k">Issues</div>     <div class="v">${cs.issues_count ?? 0}</div>
+          <div class="k">Effort total</div><div class="v">${escHtml(cs.total_effort || "—")}</div>
+          <div class="k">Blocker</div>    <div class="v">${sb.BLOCKER ?? 0}</div>
+          <div class="k">Critical</div>   <div class="v">${sb.CRITICAL ?? 0}</div>
+          <div class="k">Major</div>      <div class="v">${sb.MAJOR ?? 0}</div>
+          <div class="k">Minor</div>      <div class="v">${sb.MINOR ?? 0}</div>
+        </div>
+      </div>`;
+
+    // Build Creedengo "suggestions" from rules_summary (one per violated rule)
+    const sevPrio = {BLOCKER:"high", CRITICAL:"high", MAJOR:"medium", MINOR:"low", INFO:"low"};
+    const sevOrder = {BLOCKER:0, CRITICAL:1, MAJOR:2, MINOR:3, INFO:4};
+    const rules = (creedengo.rules_summary || []).slice().sort((a,b) =>
+      (sevOrder[a.severity]??9) - (sevOrder[b.severity]??9));
+    cdSuggestionsCount = rules.length;
+    const prioIcon = {high:"🔴", medium:"🟡", low:"🔵"};
+    cdSuggestionsHtml = rules.length === 0
+      ? `<div class="empty" style="padding:18px"><div class="icon">🎉</div>Aucune règle Creedengo violée.</div>`
+      : rules.map(r => {
+          const prio = sevPrio[r.severity] || "low";
+          const sample = (r.files || []).slice(0,5);
+          return `<details class="suggestion">
+            <summary><div class="sg-head">
+              <span class="sg-prio prio-${escHtml(prio)}">${prioIcon[prio]} ${escHtml(r.severity)}</span>
+              <span class="sg-rule">${escHtml(r.key)} · ${escHtml(r.name)}</span>
+              <code class="sg-target">${r.count} occurrence${r.count>1?"s":""}</code>
+            </div></summary>
+            <div class="sg-body">
+              <div class="sg-action">${escHtml(r.description || r.name || "")}</div>
+              <div class="sg-impact">📂 Catégorie: <code>${escHtml(r.category||"general")}</code> · Type: <code>${escHtml(r.type||"")}</code></div>
+              ${sample.length ? `<details class="sg-how"><summary>Fichiers concernés (${sample.length}${r.files?.length>sample.length?"+":""})</summary><pre>${escHtml(sample.join("\n"))}</pre></details>` : ""}
+            </div>
+          </details>`;
+        }).join("");
+  } else {
+    // Distinguish "not requested" (informational) from "requested but failed"
+    // (actionable) so the user understands what happened.
+    if (opts && opts.cdRequested === true) {
+      cdCardHtml = `<div class="creedengo-card" style="border-color:rgba(239,68,68,.4)"><div class="empty" style="padding:30px">
+        <div class="icon">⚠️</div>
+        <strong style="color:#fca5a5">Creedengo demandé mais non produit</strong>
+        <div style="font-size:.78rem;color:var(--txt-2);margin-top:6px;line-height:1.5">
+          start.sh a échoué à générer <code>creedengo-report.json</code>.<br>
+          Causes fréquentes : <em>SonarQube container failed to start</em> (Elasticsearch shard recovery),<br>
+          mémoire Docker insuffisante (&lt;4 Go), ou volume ES corrompu.<br>
+          <span style="color:var(--green-l)">👉 Consultez les logs <code>start.sh</code> en bas de page.</span>
+        </div>
+      </div></div>`;
+    } else {
+      cdCardHtml = `<div class="creedengo-card"><div class="empty" style="padding:36px">
+        <div class="icon">🐝</div>Pas de rapport Creedengo<br>
+        <span style="font-size:.78rem">(cochez « Lancer aussi Creedengo » ou fournissez un dépôt Git)</span>
+      </div></div>`;
+    }
+  }
+
+  // ── Compose final HTML ────────────────────────────────────────
+  $("loc-results-meta").textContent = metaText;
+  // Only warn about reports the user actually requested for this run:
+  //  • Green Score: always requested (always check freshness).
+  //  • Creedengo:   only if opts.cdRequested === true.
+  // freshCD === null means "not requested" → no warning.
+  const warnGS = (opts && opts.freshGS === false);
+  const warnCD = (opts && opts.cdRequested === true && opts.freshCD === false);
+  const warnHtml = (warnGS || warnCD)
+    ? `<div class="status" style="margin-bottom:14px;background:rgba(234,179,8,.10);border-color:rgba(234,179,8,.4);color:#facc15">
+         ⚠️ Certains rapports demandés n'ont pas été régénérés par cette exécution de <code>start.sh</code> :
+         ${warnGS ? "<br>• Green Score (rapport non produit)" : ""}
+         ${warnCD ? "<br>• Creedengo (rapport non produit)" : ""}
+         <br><small>Vérifiez les logs <code>start.sh</code> ci-dessous pour comprendre pourquoi.</small>
+       </div>`
+    : "";
+  $("loc-results-body").innerHTML = warnHtml + `
+    <div class="results-grid" style="grid-template-columns:1fr 1fr">
+      ${gsCardHtml}
+      ${cdCardHtml}
+    </div>
+
+    ${gsBreakdownHtml ? `
+    <details class="breakdown-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--green-l);font-weight:700">
+        <span>📋 Détail Green Score par règle</span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:10px">${gsBreakdownHtml}</div>
+    </details>` : ""}
+
+    <details class="breakdown-card endpoints-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--green-l);font-weight:700">
+        <span>💡 Suggestions Green Score <span style="color:var(--txt-3);font-weight:500;font-size:.78rem"> · ${gsSuggestionsCount} suggestion(s)</span></span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:10px"><div class="suggestions-wrap">${gsSuggestionsHtml}</div></div>
+    </details>
+
+    <details class="breakdown-card endpoints-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:#93c5fd;font-weight:700">
+        <span>🐝 Suggestions Creedengo <span style="color:var(--txt-3);font-weight:500;font-size:.78rem"> · ${cdSuggestionsCount} règle(s) violée(s)</span></span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:10px"><div class="suggestions-wrap">${cdSuggestionsHtml}</div></div>
+    </details>
+
+    ${endpointsHtml ? `
+    <details class="breakdown-card endpoints-card" style="margin-top:18px">
+      <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--green-l);font-weight:700">
+        <span>📐 Endpoints mesurés</span>
+        <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
+      </summary>
+      <div style="margin-top:10px;overflow:auto;max-height:480px"><table class="ep-table">
+        <thead><tr><th>Méthode</th><th>Chemin</th><th>HTTP</th><th style="text-align:right">Taille</th><th style="text-align:right">Temps</th></tr></thead>
+        <tbody>${endpointsHtml}</tbody>
+      </table></div>
+    </details>` : ""}
+
+    ${log ? `<details class="log" style="margin-top:14px"><summary>📜 Logs start.sh</summary><pre>${escHtml(log)}</pre></details>` : ""}
   `;
 }
 </script>
