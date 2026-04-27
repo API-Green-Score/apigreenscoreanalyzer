@@ -1,9 +1,9 @@
 {
-  "appname": "multitarget",
+  "appname": "opt",
   "report": {
-    "timestamp": "2026-04-25T10:33:36Z",
+    "timestamp": "2026-04-26T19:51:23Z",
     "green_score": {
-      "total": 11,
+      "total": 9,
       "max": 100,
       "grade": "E",
       "breakdown": {
@@ -14,12 +14,12 @@
         "DE06_delta": 1,
         "range_206": 0,
         "AR02_format_cbor": 1,
-        "LO01_observability": 2,
+        "LO01_observability": 0,
         "US07_rate_limit": 0
       },
       "details": {
         "DE11_pagination": {
-          "note": "Pagination on 4/12 collection endpoint(s)"
+          "note": "Pagination on 4/11 collection endpoint(s)"
         },
         "DE08_fields": {
           "note": "Field filtering on 2 endpoint(s)"
@@ -40,7 +40,7 @@
           "note": "Binary format on 2 endpoint(s)"
         },
         "LO01_observability": {
-          "note": "Actuator/health detected"
+          "note": "No health endpoint"
         },
         "US07_rate_limit": {
           "note": "Assumed present (API running, no explicit headers)"
@@ -53,12 +53,6 @@
           "description": "Les endpoints de collection doivent supporter la pagination (page/size ou limit/offset).",
           "max_pts": 15,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
             {
               "method": "GET",
               "path": "/reactive/books",
@@ -129,41 +123,41 @@
           "validated": true,
           "score": 5,
           "matched_count": 4,
-          "candidate_count": 12,
+          "candidate_count": 11,
           "suggestions": [
-            {
-              "target": "GET /books",
-              "action": "Add pagination parameters (page & size)",
-              "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
-              "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
-            },
             {
               "target": "GET /reactive/books/changes",
               "action": "Add pagination parameters (page & size)",
               "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
               "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
             },
             {
               "target": "GET /reactive/books/cbor",
               "action": "Add pagination parameters (page & size)",
               "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
               "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
             },
             {
               "target": "GET /reactive/books/cacheable",
               "action": "Add pagination parameters (page & size)",
               "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
               "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
             },
             {
               "target": "GET /books/changes",
               "action": "Add pagination parameters (page & size)",
               "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+              "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
+            },
+            {
+              "target": "GET /books/cbor",
+              "action": "Add pagination parameters (page & size)",
+              "priority": "high",
+              "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
               "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
             }
           ]
@@ -174,18 +168,6 @@
           "description": "Supporter un parametre 'fields' pour reduire le payload.",
           "max_pts": 15,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
             {
               "method": "GET",
               "path": "/books/{id}",
@@ -292,41 +274,41 @@
           "validated": true,
           "score": 2,
           "matched_count": 2,
-          "candidate_count": 19,
+          "candidate_count": 17,
           "suggestions": [
             {
-              "target": "GET /books",
-              "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "high",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
-              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-            },
-            {
               "target": "GET /books/{id}",
               "action": "Add a 'fields' query parameter for sparse fieldsets",
               "priority": "medium",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
-              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-            },
-            {
-              "target": "GET /books/{id}",
-              "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "medium",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
               "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
             },
             {
               "target": "GET /reactive/books/{id}/summary",
               "action": "Add a 'fields' query parameter for sparse fieldsets",
               "priority": "medium",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
               "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
             },
             {
               "target": "GET /books/{id}/summary",
               "action": "Add a 'fields' query parameter for sparse fieldsets",
               "priority": "medium",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
+            },
+            {
+              "target": "GET /reactive/books",
+              "action": "Add a 'fields' query parameter for sparse fieldsets",
+              "priority": "high",
+              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
+            },
+            {
+              "target": "GET /reactive/books/{id}",
+              "action": "Add a 'fields' query parameter for sparse fieldsets",
+              "priority": "medium",
+              "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
               "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
             }
           ]
@@ -337,18 +319,6 @@
           "description": "Le serveur doit supporter Accept-Encoding: gzip.",
           "max_pts": 15,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
             {
               "method": "GET",
               "path": "/books/{id}",
@@ -473,13 +443,13 @@
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 22,
+          "candidate_count": 20,
           "suggestions": [
             {
               "target": "ALL endpoints (server-level)",
               "action": "Enable gzip compression on the server",
               "priority": "high",
-              "impact": "+0.7 pts/endpoint (total gap: 15 pts) \u2014 typically 60-80% payload reduction",
+              "impact": "+0.8 pts/endpoint (total gap: 15 pts) \u2014 typically 60-80% payload reduction",
               "how": "Option 1 \u2014 Spring Boot application.yml:\n  server:\n    compression:\n      enabled: true\n      min-response-size: 1024\n      mime-types: application/json,application/xml,text/html,text/plain\n\nOption 2 \u2014 Nginx (if reverse proxy):\n  gzip on;\n  gzip_types application/json application/xml text/plain;\n  gzip_min_length 1024;\n  gzip_comp_level 6;\n\nBoth options apply to ALL endpoints automatically."
             }
           ]
@@ -498,12 +468,6 @@
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
-            },
-            {
-              "method": "GET",
               "path": "/reactive/books/{id}/summary",
               "matched": false,
               "reason": "No ETag header in HEAD/GET response"
@@ -524,7 +488,7 @@
               "method": "GET",
               "path": "/books/noCache/{id}",
               "matched": false,
-              "reason": "Not individually tested"
+              "reason": "No ETag header in HEAD/GET response"
             },
             {
               "method": "GET",
@@ -536,41 +500,41 @@
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 7,
+          "candidate_count": 6,
           "suggestions": [
             {
               "target": "GET /books/{id}",
               "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
               "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            },
-            {
-              "target": "GET /books/{id}",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
+              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
               "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
             },
             {
               "target": "GET /reactive/books/{id}/summary",
               "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
               "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
+              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
               "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
             },
             {
               "target": "GET /books/{id}/summary",
               "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
               "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
+              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
               "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
             },
             {
               "target": "GET /reactive/books/{id}",
               "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
               "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
+              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
+              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
+            },
+            {
+              "target": "GET /books/noCache/{id}",
+              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
+              "priority": "high",
+              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
               "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
             }
           ]
@@ -581,18 +545,6 @@
           "description": "Un endpoint /changes?since= ou equivalent doit exister.",
           "max_pts": 10,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
             {
               "method": "GET",
               "path": "/books/{id}",
@@ -699,28 +651,28 @@
           "validated": true,
           "score": 1,
           "matched_count": 2,
-          "candidate_count": 19,
+          "candidate_count": 17,
           "suggestions": [
-            {
-              "target": "GET /books/changes  (new endpoint)",
-              "action": "Add a delta/changes endpoint with a 'since' parameter",
-              "priority": "medium",
-              "impact": "+0.5 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
-              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /books."
-            },
             {
               "target": "GET /reactive/books/changes  (new endpoint)",
               "action": "Add a delta/changes endpoint with a 'since' parameter",
               "priority": "medium",
-              "impact": "+0.5 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
+              "impact": "+0.6 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
               "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books."
             },
             {
               "target": "GET /reactive/books/select/changes  (new endpoint)",
               "action": "Add a delta/changes endpoint with a 'since' parameter",
               "priority": "medium",
-              "impact": "+0.5 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
+              "impact": "+0.6 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
               "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books/select."
+            },
+            {
+              "target": "GET /reactive/books/changes/changes  (new endpoint)",
+              "action": "Add a delta/changes endpoint with a 'since' parameter",
+              "priority": "medium",
+              "impact": "+0.6 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
+              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books/changes."
             }
           ]
         },
@@ -730,12 +682,6 @@
           "description": "Supporter le header Range pour les gros payloads.",
           "max_pts": 10,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 200 (not 206)"
-            },
             {
               "method": "GET",
               "path": "/books/{id}",
@@ -762,9 +708,9 @@
             },
             {
               "method": "GET",
-              "path": "/books",
+              "path": "/books/noCache/{id}",
               "matched": false,
-              "reason": "Not individually tested"
+              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
             },
             {
               "method": "GET",
@@ -810,12 +756,6 @@
             },
             {
               "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
               "path": "/books/changes",
               "matched": false,
               "reason": "Not individually tested"
@@ -848,7 +788,7 @@
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 19,
+          "candidate_count": 17,
           "suggestions": [
             {
               "target": "GET /books/{id}",
@@ -858,7 +798,7 @@
               "how": "For JSON endpoints, Range/206 is rarely useful.\nFocus on the file download endpoint(s) instead."
             },
             {
-              "target": "GET /books/{id}",
+              "target": "GET /reactive/books/{id}/summary",
               "action": "Support HTTP Range header for partial content (206)",
               "priority": "low",
               "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
@@ -872,18 +812,6 @@
           "description": "Un endpoint en format binaire (CBOR, protobuf...) doit exister.",
           "max_pts": 10,
           "candidates": [
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
             {
               "method": "GET",
               "path": "/books/{id}",
@@ -1008,17 +936,17 @@
           "validated": true,
           "score": 1,
           "matched_count": 2,
-          "candidate_count": 22,
+          "candidate_count": 20,
           "suggestions": [
             {
-              "target": "GET /books  (add CBOR variant)",
+              "target": "GET /reactive/books  (add CBOR variant)",
               "action": "Add a binary format alternative (CBOR or Protobuf)",
               "priority": "low",
               "impact": "+10 pts \u2014 binary formats are 30-50% smaller than JSON",
               "how": "Spring Boot + CBOR:\n  1. Add dependency: com.fasterxml.jackson.dataformat:jackson-dataformat-cbor\n  2. Register the converter:\n     @Bean\n     public HttpMessageConverter<Object> cborConverter(ObjectMapper mapper) {\n       ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());\n       return new MappingJackson2CborHttpMessageConverter(cborMapper);\n     }\n  3. Clients send: Accept: application/cbor\n\nAlternative (Protobuf):\n  Add spring-boot-starter-protobuf and define .proto schemas.\n  Register ProtobufHttpMessageConverter."
             },
             {
-              "target": "GET /reactive/books  (add CBOR variant)",
+              "target": "GET /reactive/books/select  (add CBOR variant)",
               "action": "Add a binary format alternative (CBOR or Protobuf)",
               "priority": "low",
               "impact": "+10 pts \u2014 binary formats are 30-50% smaller than JSON",
@@ -1034,69 +962,39 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "http://localhost:8080/actuator/health",
-              "matched": true,
-              "reason": "HTTP 200 OK"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8080/health",
-              "matched": false,
-              "reason": "HTTP 404"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8080/actuator",
-              "matched": true,
-              "reason": "HTTP 200 OK"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8080/actuator/metrics",
-              "matched": true,
-              "reason": "HTTP 200 OK"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8080/actuator/info",
-              "matched": true,
-              "reason": "HTTP 200 OK"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8081/actuator/health",
+              "path": "/actuator/health",
               "matched": false,
               "reason": "HTTP 429"
             },
             {
               "method": "GET",
-              "path": "http://localhost:8081/health",
+              "path": "/health",
               "matched": false,
               "reason": "HTTP 429"
             },
             {
               "method": "GET",
-              "path": "http://localhost:8081/actuator",
+              "path": "/actuator",
               "matched": false,
               "reason": "HTTP 429"
             },
             {
               "method": "GET",
-              "path": "http://localhost:8081/actuator/metrics",
+              "path": "/actuator/metrics",
               "matched": false,
               "reason": "HTTP 429"
             },
             {
               "method": "GET",
-              "path": "http://localhost:8081/actuator/info",
+              "path": "/actuator/info",
               "matched": false,
               "reason": "HTTP 429"
             }
           ],
-          "validated": true,
-          "score": 2,
-          "matched_count": 4,
-          "candidate_count": 10,
+          "validated": false,
+          "score": 0,
+          "matched_count": 0,
+          "candidate_count": 5,
           "suggestions": [
             {
               "target": "/actuator/health, /actuator/metrics",
@@ -1115,18 +1013,6 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
               "path": "/books/{id}",
               "matched": false,
               "reason": "No rate-limit headers in response"
@@ -1249,7 +1135,7 @@
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 22,
+          "candidate_count": 20,
           "suggestions": [
             {
               "target": "ALL endpoints (server-level)",
@@ -1262,15 +1148,6 @@
         }
       },
       "endpoint_rules": {
-        "get:/books": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
         "get:/reactive/books": [
           "DE11_pagination",
           "DE08_fields",
@@ -1308,6 +1185,15 @@
           "US07_rate_limit"
         ],
         "get:/reactive/books/cacheable": [
+          "DE11_pagination",
+          "DE08_fields",
+          "DE01_compression",
+          "DE06_delta",
+          "range_206",
+          "AR02_format_cbor",
+          "US07_rate_limit"
+        ],
+        "get:/books": [
           "DE11_pagination",
           "DE08_fields",
           "DE01_compression",
@@ -1430,34 +1316,19 @@
           "AR02_format_cbor",
           "US07_rate_limit"
         ],
-        "get:http://localhost:8080/actuator/health": [
+        "get:/actuator/health": [
           "LO01_observability"
         ],
-        "get:http://localhost:8080/health": [
+        "get:/health": [
           "LO01_observability"
         ],
-        "get:http://localhost:8080/actuator": [
+        "get:/actuator": [
           "LO01_observability"
         ],
-        "get:http://localhost:8080/actuator/metrics": [
+        "get:/actuator/metrics": [
           "LO01_observability"
         ],
-        "get:http://localhost:8080/actuator/info": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/actuator/health": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/health": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/actuator": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/actuator/metrics": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/actuator/info": [
+        "get:/actuator/info": [
           "LO01_observability"
         ]
       }
@@ -1487,177 +1358,164 @@
         "range_206": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.013879,
+          "time_total": 0.004419,
           "speed_download": 0
         },
         "fields_filter": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.004113,
+          "time_total": 0.00479,
           "speed_download": 0
         },
         "delta_changes": {
           "http_code": 400,
           "size_download": 207,
-          "time_total": 0.001059,
-          "speed_download": 195457
+          "time_total": 0.001275,
+          "speed_download": 162356
         },
         "cbor_format": {
           "http_code": 429,
-          "size_download": 13,
-          "time_total": 0.003481,
-          "speed_download": 3830
+          "size_download": 20,
+          "time_total": 0.000906,
+          "speed_download": 20000
         },
         "full_payload": {
           "http_code": 400,
           "size_download": 389,
-          "time_total": 0.002946,
-          "speed_download": 132062
+          "time_total": 0.001974,
+          "speed_download": 197049
         }
       }
     },
     "auto_discovery": {
-      "base_url": "http://localhost:8080",
-      "endpoints_discovered": 22,
+      "base_url": "http://localhost:8081",
+      "endpoints_discovered": 20,
       "endpoints_measured": 20,
       "all_measurements": {
-        "get:/books": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.001139,
-          "speed_download": 17564
-        },
         "get:/books/{id}": {
           "http_code": 200,
           "size_download": 184,
-          "time_total": 0.010153,
-          "speed_download": 18123
+          "time_total": 0.00214,
+          "speed_download": 85992
         },
         "put:/books/{id}": {
           "http_code": 400,
           "size_download": 316,
-          "time_total": 0.008376,
-          "speed_download": 37725
+          "time_total": 0.002527,
+          "speed_download": 125037
         },
         "get:/reactive/books/{id}/summary": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.013879,
+          "time_total": 0.004419,
           "speed_download": 0
         },
         "post:/reactive/books/{id}/summary": {
           "http_code": 400,
           "size_download": 389,
-          "time_total": 0.002946,
-          "speed_download": 132062
+          "time_total": 0.001974,
+          "speed_download": 197049
         },
         "get:/books/{id}/summary": {
           "http_code": 200,
           "size_download": 34,
-          "time_total": 0.002424,
-          "speed_download": 14028
+          "time_total": 0.001464,
+          "speed_download": 23221
         },
         "post:/books/{id}/summary": {
           "http_code": 400,
           "size_download": 343,
-          "time_total": 0.003734,
-          "speed_download": 91866
+          "time_total": 0.001369,
+          "speed_download": 250517
         },
         "get:/reactive/books": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.007958,
+          "time_total": 0.013016,
           "speed_download": 0
         },
         "get:/reactive/books/{id}": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.002955,
+          "time_total": 0.003387,
           "speed_download": 0
         },
         "get:/reactive/books/select": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.004113,
+          "time_total": 0.00479,
           "speed_download": 0
         },
         "get:/reactive/books/changes": {
           "http_code": 400,
           "size_download": 207,
-          "time_total": 0.001059,
-          "speed_download": 195457
+          "time_total": 0.001275,
+          "speed_download": 162356
         },
         "get:/reactive/books/cbor": {
           "http_code": 429,
-          "size_download": 13,
-          "time_total": 0.003481,
-          "speed_download": 3830
+          "size_download": 20,
+          "time_total": 0.000906,
+          "speed_download": 20000
         },
         "get:/reactive/books/cacheable": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001551,
-          "speed_download": 12895
+          "time_total": 0.000721,
+          "speed_download": 20000
+        },
+        "get:/books": {
+          "http_code": 429,
+          "size_download": 20,
+          "time_total": 0.000516,
+          "speed_download": 20000
         },
         "get:/books/select": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001037,
-          "speed_download": 19292
+          "time_total": 0.000703,
+          "speed_download": 20000
         },
         "get:/books/noCache/{id}": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000631,
+          "time_total": 0.000922,
           "speed_download": 20000
         },
         "get:/books/changes": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000606,
+          "time_total": 0.000729,
           "speed_download": 20000
         },
         "get:/books/cbor": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000606,
+          "time_total": 0.000632,
           "speed_download": 20000
         },
         "get:/books/batch": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000694,
+          "time_total": 0.000561,
           "speed_download": 20000
         },
         "get:/books/async": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000712,
+          "time_total": 0.000898,
           "speed_download": 20000
         },
         "get:/books/async/{id}": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000645,
-          "speed_download": 20000
+          "time_total": 0.001194,
+          "speed_download": 16750
         }
       },
       "discovered_endpoints": [
         {
           "method": "GET",
-          "path": "/books",
-          "operationId": "all",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.001139,
-          "speed_download": 17564
-        },
-        {
-          "method": "GET",
           "path": "/books/{id}",
           "operationId": "byId",
           "summary": "",
@@ -1666,21 +1524,8 @@
           ],
           "http_code": 200,
           "size_download": 184,
-          "time_total": 0.010153,
-          "speed_download": 18123
-        },
-        {
-          "method": "GET",
-          "path": "/books/{id}",
-          "operationId": "byId",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.010153,
-          "speed_download": 18123
+          "time_total": 0.00214,
+          "speed_download": 85992
         },
         {
           "method": "PUT",
@@ -1692,8 +1537,8 @@
           ],
           "http_code": 400,
           "size_download": 316,
-          "time_total": 0.008376,
-          "speed_download": 37725
+          "time_total": 0.002527,
+          "speed_download": 125037
         },
         {
           "method": "GET",
@@ -1705,7 +1550,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.013879,
+          "time_total": 0.004419,
           "speed_download": 0
         },
         {
@@ -1718,8 +1563,8 @@
           ],
           "http_code": 400,
           "size_download": 389,
-          "time_total": 0.002946,
-          "speed_download": 132062
+          "time_total": 0.001974,
+          "speed_download": 197049
         },
         {
           "method": "GET",
@@ -1731,8 +1576,8 @@
           ],
           "http_code": 200,
           "size_download": 34,
-          "time_total": 0.002424,
-          "speed_download": 14028
+          "time_total": 0.001464,
+          "speed_download": 23221
         },
         {
           "method": "POST",
@@ -1744,8 +1589,8 @@
           ],
           "http_code": 400,
           "size_download": 343,
-          "time_total": 0.003734,
-          "speed_download": 91866
+          "time_total": 0.001369,
+          "speed_download": 250517
         },
         {
           "method": "GET",
@@ -1757,7 +1602,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.007958,
+          "time_total": 0.013016,
           "speed_download": 0
         },
         {
@@ -1770,7 +1615,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.002955,
+          "time_total": 0.003387,
           "speed_download": 0
         },
         {
@@ -1783,7 +1628,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.004113,
+          "time_total": 0.00479,
           "speed_download": 0
         },
         {
@@ -1796,8 +1641,8 @@
           ],
           "http_code": 400,
           "size_download": 207,
-          "time_total": 0.001059,
-          "speed_download": 195457
+          "time_total": 0.001275,
+          "speed_download": 162356
         },
         {
           "method": "GET",
@@ -1808,9 +1653,9 @@
             "book-reactive-controller"
           ],
           "http_code": 429,
-          "size_download": 13,
-          "time_total": 0.003481,
-          "speed_download": 3830
+          "size_download": 20,
+          "time_total": 0.000906,
+          "speed_download": 20000
         },
         {
           "method": "GET",
@@ -1822,8 +1667,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001551,
-          "speed_download": 12895
+          "time_total": 0.000721,
+          "speed_download": 20000
         },
         {
           "method": "GET",
@@ -1835,8 +1680,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001139,
-          "speed_download": 17564
+          "time_total": 0.000516,
+          "speed_download": 20000
         },
         {
           "method": "GET",
@@ -1848,8 +1693,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001037,
-          "speed_download": 19292
+          "time_total": 0.000703,
+          "speed_download": 20000
         },
         {
           "method": "GET",
@@ -1861,7 +1706,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000631,
+          "time_total": 0.000922,
           "speed_download": 20000
         },
         {
@@ -1874,7 +1719,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000606,
+          "time_total": 0.000729,
           "speed_download": 20000
         },
         {
@@ -1887,7 +1732,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000606,
+          "time_total": 0.000632,
           "speed_download": 20000
         },
         {
@@ -1900,7 +1745,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000694,
+          "time_total": 0.000561,
           "speed_download": 20000
         },
         {
@@ -1913,7 +1758,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000712,
+          "time_total": 0.000898,
           "speed_download": 20000
         },
         {
@@ -1926,8 +1771,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000645,
-          "speed_download": 20000
+          "time_total": 0.001194,
+          "speed_download": 16750
         }
       ]
     }

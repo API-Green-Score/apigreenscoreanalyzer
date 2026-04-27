@@ -1,13 +1,12 @@
 {
   "appname": "opt",
-  "timestamp": "2026-04-26T19:52:10Z",
+  "timestamp": "2026-04-26T20:02:51Z",
   "service_base_url": "http://localhost:8081",
   "service_base_urls": [
-    "http://localhost:8081",
-    "http://localhost:8080"
+    "http://localhost:8081"
   ],
   "green_score_summary": {
-    "total": 11,
+    "total": 9,
     "max": 100,
     "grade": "E"
   },
@@ -83,52 +82,46 @@
           "path": "/books/async",
           "matched": false,
           "reason": "No pagination params (page/size/limit/offset/cursor)"
-        },
-        {
-          "method": "GET",
-          "path": "/books",
-          "matched": false,
-          "reason": "No pagination params (page/size/limit/offset/cursor)"
         }
       ],
       "validated": true,
       "score": 5,
       "matched_count": 4,
-      "candidate_count": 12,
+      "candidate_count": 11,
       "suggestions": [
         {
           "target": "GET /reactive/books/changes",
           "action": "Add pagination parameters (page & size)",
           "priority": "high",
-          "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+          "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
           "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
         },
         {
           "target": "GET /reactive/books/cbor",
           "action": "Add pagination parameters (page & size)",
           "priority": "high",
-          "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+          "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
           "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
         },
         {
           "target": "GET /reactive/books/cacheable",
           "action": "Add pagination parameters (page & size)",
           "priority": "high",
-          "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+          "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
           "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
         },
         {
           "target": "GET /books/changes",
           "action": "Add pagination parameters (page & size)",
           "priority": "high",
-          "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+          "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
           "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
         },
         {
           "target": "GET /books/cbor",
           "action": "Add pagination parameters (page & size)",
           "priority": "high",
-          "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+          "impact": "+1.4 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
           "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
         }
       ]
@@ -240,58 +233,46 @@
           "path": "/books/async/{id}",
           "matched": false,
           "reason": "No field filter param (fields/select)"
-        },
-        {
-          "method": "GET",
-          "path": "/books",
-          "matched": false,
-          "reason": "No field filter param (fields/select)"
-        },
-        {
-          "method": "GET",
-          "path": "/books/{id}",
-          "matched": false,
-          "reason": "No field filter param (fields/select)"
         }
       ],
       "validated": true,
       "score": 2,
       "matched_count": 2,
-      "candidate_count": 19,
+      "candidate_count": 17,
       "suggestions": [
         {
           "target": "GET /books/{id}",
           "action": "Add a 'fields' query parameter for sparse fieldsets",
           "priority": "medium",
-          "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+          "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
           "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
         },
         {
           "target": "GET /reactive/books/{id}/summary",
           "action": "Add a 'fields' query parameter for sparse fieldsets",
           "priority": "medium",
-          "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+          "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
           "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
         },
         {
           "target": "GET /books/{id}/summary",
           "action": "Add a 'fields' query parameter for sparse fieldsets",
           "priority": "medium",
-          "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+          "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
           "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
         },
         {
           "target": "GET /reactive/books",
           "action": "Add a 'fields' query parameter for sparse fieldsets",
           "priority": "high",
-          "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+          "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
           "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
         },
         {
           "target": "GET /reactive/books/{id}",
           "action": "Add a 'fields' query parameter for sparse fieldsets",
           "priority": "medium",
-          "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+          "impact": "+0.9 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
           "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
         }
       ]
@@ -421,30 +402,18 @@
           "path": "/books/async/{id}",
           "matched": false,
           "reason": "No gzip compression detected"
-        },
-        {
-          "method": "GET",
-          "path": "/books",
-          "matched": false,
-          "reason": "No gzip compression detected"
-        },
-        {
-          "method": "GET",
-          "path": "/books/{id}",
-          "matched": false,
-          "reason": "No gzip compression detected"
         }
       ],
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 22,
+      "candidate_count": 20,
       "suggestions": [
         {
           "target": "ALL endpoints (server-level)",
           "action": "Enable gzip compression on the server",
           "priority": "high",
-          "impact": "+0.7 pts/endpoint (total gap: 15 pts) \u2014 typically 60-80% payload reduction",
+          "impact": "+0.8 pts/endpoint (total gap: 15 pts) \u2014 typically 60-80% payload reduction",
           "how": "Option 1 \u2014 Spring Boot application.yml:\n  server:\n    compression:\n      enabled: true\n      min-response-size: 1024\n      mime-types: application/json,application/xml,text/html,text/plain\n\nOption 2 \u2014 Nginx (if reverse proxy):\n  gzip on;\n  gzip_types application/json application/xml text/plain;\n  gzip_min_length 1024;\n  gzip_comp_level 6;\n\nBoth options apply to ALL endpoints automatically."
         }
       ]
@@ -641,44 +610,32 @@
           "path": "/books/async/{id}",
           "matched": false,
           "reason": "Not a delta/changes endpoint"
-        },
-        {
-          "method": "GET",
-          "path": "/books",
-          "matched": false,
-          "reason": "Not a delta/changes endpoint"
-        },
-        {
-          "method": "GET",
-          "path": "/books/{id}",
-          "matched": false,
-          "reason": "Not a delta/changes endpoint"
         }
       ],
       "validated": true,
       "score": 1,
       "matched_count": 2,
-      "candidate_count": 19,
+      "candidate_count": 17,
       "suggestions": [
         {
           "target": "GET /reactive/books/changes  (new endpoint)",
           "action": "Add a delta/changes endpoint with a 'since' parameter",
           "priority": "medium",
-          "impact": "+0.5 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
+          "impact": "+0.6 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
           "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books."
         },
         {
           "target": "GET /reactive/books/select/changes  (new endpoint)",
           "action": "Add a delta/changes endpoint with a 'since' parameter",
           "priority": "medium",
-          "impact": "+0.5 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
+          "impact": "+0.6 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
           "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books/select."
         },
         {
           "target": "GET /reactive/books/changes/changes  (new endpoint)",
           "action": "Add a delta/changes endpoint with a 'since' parameter",
           "priority": "medium",
-          "impact": "+0.5 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
+          "impact": "+0.6 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
           "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books/changes."
         }
       ]
@@ -790,18 +747,12 @@
           "path": "/books/async/{id}",
           "matched": false,
           "reason": "Not individually tested"
-        },
-        {
-          "method": "GET",
-          "path": "/books",
-          "matched": false,
-          "reason": "Not individually tested"
         }
       ],
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 18,
+      "candidate_count": 17,
       "suggestions": [
         {
           "target": "GET /books/{id}",
@@ -944,24 +895,12 @@
           "path": "/books/async/{id}",
           "matched": false,
           "reason": "Standard JSON format"
-        },
-        {
-          "method": "GET",
-          "path": "/books",
-          "matched": false,
-          "reason": "Standard JSON format"
-        },
-        {
-          "method": "GET",
-          "path": "/books/{id}",
-          "matched": false,
-          "reason": "Standard JSON format"
         }
       ],
       "validated": true,
       "score": 1,
       "matched_count": 2,
-      "candidate_count": 22,
+      "candidate_count": 20,
       "suggestions": [
         {
           "target": "GET /reactive/books  (add CBOR variant)",
@@ -987,69 +926,39 @@
       "candidates": [
         {
           "method": "GET",
-          "path": "http://localhost:8081/actuator/health",
+          "path": "/actuator/health",
           "matched": false,
           "reason": "HTTP 429"
         },
         {
           "method": "GET",
-          "path": "http://localhost:8081/health",
+          "path": "/health",
           "matched": false,
           "reason": "HTTP 429"
         },
         {
           "method": "GET",
-          "path": "http://localhost:8081/actuator",
+          "path": "/actuator",
           "matched": false,
           "reason": "HTTP 429"
         },
         {
           "method": "GET",
-          "path": "http://localhost:8081/actuator/metrics",
+          "path": "/actuator/metrics",
           "matched": false,
           "reason": "HTTP 429"
         },
         {
           "method": "GET",
-          "path": "http://localhost:8081/actuator/info",
+          "path": "/actuator/info",
           "matched": false,
           "reason": "HTTP 429"
-        },
-        {
-          "method": "GET",
-          "path": "http://localhost:8080/actuator/health",
-          "matched": true,
-          "reason": "HTTP 200 OK"
-        },
-        {
-          "method": "GET",
-          "path": "http://localhost:8080/health",
-          "matched": false,
-          "reason": "HTTP 404"
-        },
-        {
-          "method": "GET",
-          "path": "http://localhost:8080/actuator",
-          "matched": true,
-          "reason": "HTTP 200 OK"
-        },
-        {
-          "method": "GET",
-          "path": "http://localhost:8080/actuator/metrics",
-          "matched": true,
-          "reason": "HTTP 200 OK"
-        },
-        {
-          "method": "GET",
-          "path": "http://localhost:8080/actuator/info",
-          "matched": true,
-          "reason": "HTTP 200 OK"
         }
       ],
-      "validated": true,
-      "score": 2,
-      "matched_count": 4,
-      "candidate_count": 10,
+      "validated": false,
+      "score": 0,
+      "matched_count": 0,
+      "candidate_count": 5,
       "suggestions": [
         {
           "target": "/actuator/health, /actuator/metrics",
@@ -1185,24 +1094,12 @@
           "path": "/books/async/{id}",
           "matched": false,
           "reason": "No rate-limit headers in response"
-        },
-        {
-          "method": "GET",
-          "path": "/books",
-          "matched": false,
-          "reason": "No rate-limit headers in response"
-        },
-        {
-          "method": "GET",
-          "path": "/books/{id}",
-          "matched": false,
-          "reason": "No rate-limit headers in response"
         }
       ],
       "validated": false,
       "score": 0,
       "matched_count": 0,
-      "candidate_count": 22,
+      "candidate_count": 20,
       "suggestions": [
         {
           "target": "ALL endpoints (server-level)",
@@ -1383,34 +1280,19 @@
       "AR02_format_cbor",
       "US07_rate_limit"
     ],
-    "get:http://localhost:8081/actuator/health": [
+    "get:/actuator/health": [
       "LO01_observability"
     ],
-    "get:http://localhost:8081/health": [
+    "get:/health": [
       "LO01_observability"
     ],
-    "get:http://localhost:8081/actuator": [
+    "get:/actuator": [
       "LO01_observability"
     ],
-    "get:http://localhost:8081/actuator/metrics": [
+    "get:/actuator/metrics": [
       "LO01_observability"
     ],
-    "get:http://localhost:8081/actuator/info": [
-      "LO01_observability"
-    ],
-    "get:http://localhost:8080/actuator/health": [
-      "LO01_observability"
-    ],
-    "get:http://localhost:8080/health": [
-      "LO01_observability"
-    ],
-    "get:http://localhost:8080/actuator": [
-      "LO01_observability"
-    ],
-    "get:http://localhost:8080/actuator/metrics": [
-      "LO01_observability"
-    ],
-    "get:http://localhost:8080/actuator/info": [
+    "get:/actuator/info": [
       "LO01_observability"
     ]
   }

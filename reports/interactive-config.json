@@ -1,11 +1,9 @@
 {
   "targets": [
-    "http://localhost:8081",
-    "http://localhost:8080"
+    "http://localhost:8081"
   ],
   "swaggers": [
-    "http://localhost:8081/v3/api-docs",
-    "http://localhost:8080/v3/api-docs"
+    "http://localhost:8081/v3/api-docs"
   ],
   "appname": "opt",
   "endpoints": [
@@ -146,20 +144,6 @@
       "target": "http://localhost:8081",
       "method": "GET",
       "path": "/books/async/{id}",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8080",
-      "method": "GET",
-      "path": "/books",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8080",
-      "method": "GET",
-      "path": "/books/{id}",
       "calls": 3,
       "payload": ""
     }

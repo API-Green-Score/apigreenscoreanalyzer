@@ -1,16 +1,13 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "info": {
-    "title": "Merged Green Analyzer discovery",
-    "version": "1.0.0",
-    "description": "Aggregated OpenAPI specs discovered from 2 target(s): http://localhost:8081, http://localhost:8080"
+    "title": "OpenAPI definition",
+    "version": "v0"
   },
   "servers": [
     {
-      "url": "http://localhost:8081"
-    },
-    {
-      "url": "http://localhost:8080"
+      "url": "http://localhost:8081",
+      "description": "Generated server url"
     }
   ],
   "paths": {
@@ -98,9 +95,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books/{id}"
+      }
     },
     "/reactive/books/{id}/summary": {
       "get": {
@@ -182,9 +177,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/reactive/books/{id}/summary"
+      }
     },
     "/books/{id}/summary": {
       "get": {
@@ -266,9 +259,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books/{id}/summary"
+      }
     },
     "/reactive/books": {
       "get": {
@@ -314,9 +305,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/reactive/books"
+      }
     },
     "/reactive/books/{id}": {
       "get": {
@@ -363,9 +352,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/reactive/books/{id}"
+      }
     },
     "/reactive/books/select": {
       "get": {
@@ -420,9 +407,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/reactive/books/select"
+      }
     },
     "/reactive/books/changes": {
       "get": {
@@ -456,9 +441,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/reactive/books/changes"
+      }
     },
     "/reactive/books/cbor": {
       "get": {
@@ -481,9 +464,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/reactive/books/cbor"
+      }
     },
     "/reactive/books/cacheable": {
       "get": {
@@ -506,9 +487,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/reactive/books/cacheable"
+      }
     },
     "/books": {
       "get": {
@@ -554,9 +533,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books"
+      }
     },
     "/books/select": {
       "get": {
@@ -614,9 +591,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books/select"
+      }
     },
     "/books/noCache/{id}": {
       "get": {
@@ -647,9 +622,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books/noCache/{id}"
+      }
     },
     "/books/changes": {
       "get": {
@@ -683,9 +656,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books/changes"
+      }
     },
     "/books/cbor": {
       "get": {
@@ -708,9 +679,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books/cbor"
+      }
     },
     "/books/batch": {
       "get": {
@@ -749,9 +718,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books/batch"
+      }
     },
     "/books/async": {
       "get": {
@@ -774,9 +741,7 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books/async"
+      }
     },
     "/books/async/{id}": {
       "get": {
@@ -807,77 +772,45 @@
             }
           }
         }
-      },
-      "x-source-base-url": "http://localhost:8081",
-      "x-source-original-path": "/books/async/{id}"
-    },
-    "/__t1__/books": {
-      "get": {
-        "tags": [
-          "book-controller"
-        ],
-        "operationId": "all",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Book"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "x-source-base-url": "http://localhost:8080",
-      "x-source-original-path": "/books"
-    },
-    "/__t1__/books/{id}": {
-      "get": {
-        "tags": [
-          "book-controller"
-        ],
-        "operationId": "byId",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Book"
-                }
-              }
-            }
-          }
-        }
-      },
-      "x-source-base-url": "http://localhost:8080",
-      "x-source-original-path": "/books/{id}"
+      }
     }
   },
-  "x-discovery-sources": [
-    {
-      "base_url": "http://localhost:8081",
-      "swagger_source": "http://localhost:8081/v3/api-docs"
-    },
-    {
-      "base_url": "http://localhost:8080",
-      "swagger_source": "http://localhost:8080/v3/api-docs"
+  "components": {
+    "schemas": {
+      "Book": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "published_date": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
     }
-  ]
+  }
 }
