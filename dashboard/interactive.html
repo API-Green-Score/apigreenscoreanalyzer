@@ -267,6 +267,87 @@ details.log summary{cursor:pointer;color:var(--txt-2);font-weight:600}
   font-family:'Fira Code',monospace;font-size:.74rem;
 }
 
+/* ── Suggestions panel (mirror of full dashboard index.html) ── */
+.sg-summary{
+  display:flex;align-items:center;gap:16px;padding:14px 18px;
+  background:linear-gradient(135deg,rgba(22,101,52,.30),rgba(15,23,42,.85));
+  border:1px solid rgba(22,101,52,.55);border-radius:12px;margin-bottom:14px;
+}
+.sg-summary .sg-pot-score{font-size:1.55rem;font-weight:800;color:#86efac;line-height:1.1}
+.sg-summary .sg-pot-label{font-size:.78rem;color:var(--txt-2);margin-top:2px}
+.sg-summary .sg-bar{
+  position:relative;flex:1;height:22px;background:#1f2937;border-radius:11px;overflow:hidden;
+}
+.sg-summary .sg-bar .sg-cur{
+  position:absolute;left:0;top:0;height:100%;background:#ef4444;
+  border-radius:11px 0 0 11px;transition:width .8s ease;
+}
+.sg-summary .sg-bar .sg-tgt{
+  position:absolute;left:0;top:0;height:100%;background:#22c55e;opacity:.35;
+  border-radius:11px;transition:width .8s ease;
+}
+.sg-summary .sg-bar .sg-bar-lbl{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;font-weight:700;color:#fff;z-index:1;text-shadow:0 1px 2px rgba(0,0,0,.6);
+}
+.sg-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.sg-filters .sg-fbtn{
+  padding:5px 14px;border-radius:20px;border:1px solid #374151;background:#1f2937;
+  color:var(--txt-2);font-size:.78rem;font-weight:600;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.sg-filters .sg-fbtn:hover{border-color:#22c55e;color:#86efac}
+.sg-filters .sg-fbtn.active{background:rgba(22,101,52,.35);border-color:#22c55e;color:#86efac}
+.sg-rule-group{margin-bottom:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sg-rule-head{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;
+  background:rgba(15,23,42,.85);cursor:pointer;transition:background .2s;
+}
+.sg-rule-head:hover{background:rgba(22,101,52,.18)}
+.sg-rule-head .sg-rule-icon{font-size:1.15rem}
+.sg-rule-head .sg-rule-title{font-weight:700;font-size:.9rem;color:var(--txt);flex:1}
+.sg-rule-head .sg-rule-pts{
+  padding:3px 10px;border-radius:12px;font-size:.74rem;font-weight:700;
+  background:rgba(22,101,52,.45);color:#86efac;
+}
+.sg-rule-head .sg-rule-st{padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.sg-rule-head .sg-rule-st.failed{background:rgba(239,68,68,.20);color:#fca5a5}
+.sg-rule-head .sg-rule-st.passed{background:rgba(22,101,52,.45);color:#86efac}
+.sg-rule-head .sg-rule-st.partial{background:rgba(234,179,8,.20);color:#facc15}
+.sg-rule-head .sg-cnt{
+  padding:2px 9px;border-radius:10px;font-size:.7rem;font-weight:700;
+  background:#0f1726;color:var(--txt-2);border:1px solid var(--line);
+}
+.sg-rule-head .sg-chev{color:var(--txt-3);font-size:.75rem;transition:transform .25s}
+.sg-rule-head[aria-expanded="false"] .sg-chev{transform:rotate(-90deg)}
+.sg-rule-body{padding:0 14px;max-height:0;overflow:hidden;transition:max-height .35s ease,padding .25s ease}
+.sg-rule-body.open{max-height:5000px;padding:10px 14px 14px}
+.sg-rule-desc{font-size:.76rem;color:var(--txt-3);margin-bottom:10px}
+.sg-item{
+  background:#0f1726;border:1px solid var(--line);border-radius:8px;
+  padding:12px 14px;margin-bottom:8px;transition:border-color .2s;
+}
+.sg-item:hover{border-color:#22c55e}
+.sg-item:last-child{margin-bottom:0}
+.sg-item-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.sg-item .sg-act{font-size:.84rem;color:var(--txt);margin-bottom:4px}
+.sg-item .sg-imp{font-size:.76rem;color:#86efac;font-weight:600;margin-bottom:6px}
+.sg-item .sg-how-btn{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;
+  border:1px solid var(--line);background:#0a0f1a;color:var(--green-l);
+  font-size:.74rem;font-weight:600;cursor:pointer;font-family:inherit;
+}
+.sg-item .sg-how-btn:hover{border-color:#22c55e}
+.sg-item .sg-how-content{
+  max-height:0;overflow:hidden;transition:max-height .35s ease,margin-top .25s ease;
+}
+.sg-item .sg-how-content.open{max-height:1200px;margin-top:8px}
+.sg-item .sg-how-content pre{
+  white-space:pre-wrap;word-break:break-word;color:#cbd5e1;
+  background:#070b13;border:1px solid var(--line);border-radius:6px;
+  padding:10px;margin:0;font-family:'Fira Code',monospace;font-size:.74rem;
+}
+
 footer{text-align:center;color:var(--txt-3);font-size:.78rem;margin-top:30px}
 footer a{color:var(--green-l);text-decoration:none}
 </style>
@@ -551,6 +632,30 @@ http://localhost:8081"></textarea>
       </div>
     </section>
   </div><!-- /tab-local -->
+
+  <!-- ─── Global live console (bottom of page) ──────────────────────
+       Tails whichever run is active:
+         • /api/analyze-log   → Remote tab (POST /api/analyze)
+         • /api/local-log     → Local tab  (POST /api/local-analyze)
+       Auto-shows when either analysis starts; persists the last log between
+       runs so the user can scroll back up after the run completes.
+  -->
+  <section class="panel" id="global-console-panel" style="margin-top:18px">
+    <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between">
+      <h2 style="display:flex;align-items:center;gap:10px;margin:0">
+        <span id="gconsole-led" style="width:9px;height:9px;border-radius:50%;background:var(--txt-3);display:inline-block"></span>
+        🖥️ Console d'analyse — logs en direct
+      </h2>
+      <div style="display:flex;align-items:center;gap:12px;font-size:.74rem;color:var(--txt-3)">
+        <span id="gconsole-source" class="meta">— en attente —</span>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="gconsole-autoscroll" checked style="width:auto"> auto-scroll
+        </label>
+        <button class="btn ghost" id="gconsole-clear" type="button" style="padding:4px 10px;font-size:.72rem">Vider</button>
+      </div>
+    </div>
+    <pre id="gconsole" style="background:#070b13;color:#cbd5e1;border:1px solid var(--line);border-radius:10px;padding:12px;max-height:360px;overflow:auto;font-family:'Fira Code','JetBrains Mono',monospace;font-size:.74rem;line-height:1.45;white-space:pre-wrap;word-break:break-word;margin:0">(en attente du premier log…)</pre>
+  </section>
 
   <footer>
     🌿 Green API Score — Devoxx France 2026 ·
@@ -878,6 +983,8 @@ $("btn-analyze").addEventListener("click", async () => {
   $("btn-analyze").disabled = true;
   setStep(3);
   $("results-body").innerHTML = `<div class="empty"><div class="icon">⏳</div><p>Lancement de l'analyse Green Score…</p></div>`;
+  // Start tailing /api/analyze-log into the global console at the bottom
+  gconsoleStart("remote");
 
   try {
     const body = {
@@ -904,6 +1011,7 @@ $("btn-analyze").addEventListener("click", async () => {
     $("results-body").innerHTML = `<div class="empty"><div class="icon">💥</div><p>Échec de l'analyse — voir le message ci-dessus.</p></div>`;
   } finally {
     $("btn-analyze").disabled = false;
+    gconsoleStop();
   }
 });
 $("btn-back-2").addEventListener("click", () => setStep(2));
@@ -922,6 +1030,225 @@ document.querySelectorAll(".step").forEach(s => {
 });
 
 // ── Step 3 rendering — score + breakdown + endpoints ────────────
+
+// ════════════════════════════════════════════════════════════════
+// Suggestions panel (filter by priority + progression bar)
+//   Mirrors the look & behavior of the full dashboard (index.html).
+//   Reused by both Remote and Local Green Score result tabs.
+// ════════════════════════════════════════════════════════════════
+const _SG_RULE_ICONS = {
+  DE11_pagination:"📄", DE08_fields:"🔍", DE01_compression:"🗜️",
+  DE02_DE03_cache:"💾", DE06_delta:"🔄", range_206:"✂️",
+  AR02_format_cbor:"📦", LO01_observability:"👁️", US07_rate_limit:"🚦",
+};
+// Per-panel state (key = panelId, value = { rrm, ruleLabels, ruleMax, gs, filter })
+const _sgPanels = {};
+
+function _sgPrioLabel(p){
+  return p === "high" ? "🔴 Haute" : p === "medium" ? "🟡 Moyenne" : "⚪ Basse";
+}
+
+// Public: build initial HTML for a suggestions panel.
+// Returns the markup; caller injects it into a container that has data-sg-id.
+function buildSuggestionsPanel(panelId, rrm, ruleLabels, ruleMax, gs){
+  _sgPanels[panelId] = { rrm: rrm||{}, ruleLabels: ruleLabels||{}, ruleMax: ruleMax||{}, gs: gs||{}, filter: "high" };
+  return `<div class="sg-panel" id="sg-panel-${escHtml(panelId)}" data-sg-id="${escHtml(panelId)}">
+    ${_sgRender(panelId)}
+  </div>`;
+}
+
+// Internal: render summary + filters + grouped list for a panel.
+function _sgRender(panelId){
+  const st = _sgPanels[panelId];
+  if (!st) return "";
+  const { rrm, ruleLabels, ruleMax, gs, filter } = st;
+
+  // Collect rules with suggestions
+  const rules = [];
+  const all = [];
+  for (const k of Object.keys(rrm || {})) {
+    const rd = rrm[k] || {};
+    const sgs = rd.suggestions || [];
+    if (!sgs.length) continue;
+    const max_pts = (rd.max_pts != null) ? rd.max_pts : (ruleMax[k] || 0);
+    const score   = rd.score || 0;
+    rules.push({
+      key: k,
+      icon: _SG_RULE_ICONS[k] || "📌",
+      name: ruleLabels[k] || k,
+      description: rd.description || rd.label || "",
+      max_pts, score,
+      validated: !!rd.validated,
+      matched_count: rd.matched_count || 0,
+      candidate_count: rd.candidate_count || 0,
+      suggestions: sgs,
+    });
+    for (const s of sgs) all.push({...s, ruleKey: k});
+  }
+
+  // Empty state
+  if (all.length === 0) {
+    const total = gs.total || 0, max = gs.max || 100;
+    const pct = max > 0 ? Math.round(total/max*100) : 0;
+    const isMax = total >= max;
+    return `<div class="sg-summary" style="justify-content:center;text-align:center;padding:24px 16px">
+      <div>
+        <div style="font-size:2rem;margin-bottom:6px">${isMax?"🏆":"✅"}</div>
+        <div style="font-size:1rem;font-weight:700;color:#86efac;margin-bottom:4px">
+          ${isMax?"Score parfait !":"Aucune suggestion"}
+        </div>
+        <div style="font-size:.82rem;color:var(--txt-2)">
+          ${isMax
+            ? "Toutes les règles Green API sont validées — bravo !"
+            : `Score actuel : <strong style="color:#86efac">${total}/${max}</strong> (${pct}%)`}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Summary bar
+  const total = gs.total || 0, max = gs.max || 100;
+  let gain = 0;
+  for (const r of rules) gain += Math.max(0, r.max_pts - r.score);
+  const potential = Math.min(total + gain, max);
+  const curPct = max > 0 ? (total/max*100) : 0;
+  const potPct = max > 0 ? (potential/max*100) : 0;
+
+  const cntH = all.filter(s => s.priority === "high").length;
+  const cntM = all.filter(s => s.priority === "medium").length;
+  const cntL = all.filter(s => s.priority === "low").length;
+
+  const summaryHtml = `<div class="sg-summary">
+    <div style="text-align:center;min-width:100px">
+      <div class="sg-pot-score">${total} → ${potential}</div>
+      <div class="sg-pot-label">sur ${max} pts</div>
+    </div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;font-size:.74rem;color:var(--txt-2);margin-bottom:4px;flex-wrap:wrap;gap:8px">
+        <span>Score actuel : <strong style="color:#fca5a5">${total}</strong></span>
+        <span>Potentiel : <strong style="color:#86efac">+${gain} pts</strong></span>
+        <span>Score cible : <strong style="color:#86efac">${potential}</strong></span>
+      </div>
+      <div class="sg-bar">
+        <div class="sg-tgt" style="width:${potPct.toFixed(1)}%"></div>
+        <div class="sg-cur" style="width:${curPct.toFixed(1)}%"></div>
+        <div class="sg-bar-lbl">${total} → ${potential} / ${max}  (+${gain} pts possibles)</div>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:6px;font-size:.72rem;color:var(--txt-3);flex-wrap:wrap">
+        <span>🔴 Haute : ${cntH}</span>
+        <span>🟡 Moyenne : ${cntM}</span>
+        <span>⚪ Basse : ${cntL}</span>
+      </div>
+    </div>
+  </div>`;
+
+  // Filters
+  const prios = ["all","high","medium","low"];
+  const lbls  = { all:"🎯 Toutes", high:"🔴 Haute", medium:"🟡 Moyenne", low:"⚪ Basse" };
+  const counts = { all: all.length, high: cntH, medium: cntM, low: cntL };
+  const filtersHtml = `<div class="sg-filters">${prios.map(p =>
+    `<button type="button" class="sg-fbtn ${filter===p?"active":""}"
+       onclick="sgFilter('${escHtml(panelId)}','${p}')">${lbls[p]} (${counts[p]})</button>`
+  ).join("")}</div>`;
+
+  // Sort by highest severity present in the rule's suggestions
+  // (high → medium → low). Tiebreak: gap (max_pts - score) descending.
+  const _sevRank = { high: 0, medium: 1, low: 2 };
+  const _ruleSev = (r) => {
+    let best = 9;
+    for (const s of r.suggestions) {
+      const v = _sevRank[s.priority] ?? 9;
+      if (v < best) best = v;
+    }
+    return best;
+  };
+  rules.sort((a,b) => {
+    const sa = _ruleSev(a), sb = _ruleSev(b);
+    if (sa !== sb) return sa - sb;
+    return (b.max_pts - b.score) - (a.max_pts - a.score);
+  });
+
+  let listHtml = "";
+  for (const rule of rules) {
+    const filtered = (filter === "all" ? rule.suggestions : rule.suggestions.filter(s => s.priority === filter))
+      .slice()
+      .sort((a,b) => (_sevRank[a.priority]??9) - (_sevRank[b.priority]??9));
+    if (!filtered.length) continue;
+    const isPartial = rule.validated && rule.matched_count < rule.candidate_count;
+    const stCls = !rule.validated ? "failed" : isPartial ? "partial" : "passed";
+    const stLbl = !rule.validated ? "❌ Non validé"
+              : isPartial ? `⚠️ Partiel (${rule.matched_count}/${rule.candidate_count})`
+              : "✅ Validé";
+    const gap = Math.max(0, rule.max_pts - rule.score);
+    const bodyId = `sg-body-${panelId}-${rule.key}`;
+
+    let items = "";
+    filtered.forEach((s, i) => {
+      const prio = s.priority || "medium";
+      const howId = `sg-how-${panelId}-${rule.key}-${i}`;
+      items += `<div class="sg-item" data-priority="${escHtml(prio)}">
+        <div class="sg-item-head">
+          <span class="sg-prio prio-${escHtml(prio)}">${_sgPrioLabel(prio)}</span>
+          ${s.target ? `<code class="sg-target">${escHtml(s.target)}</code>` : ""}
+        </div>
+        <div class="sg-act">${escHtml(s.action || "")}</div>
+        ${s.impact ? `<div class="sg-imp">📈 ${escHtml(s.impact)}</div>` : ""}
+        ${s.how ? `
+          <button type="button" class="sg-how-btn" onclick="sgToggleHow('${howId}', this)">
+            🔧 Comment l'implémenter <span style="font-size:.7rem">▼</span>
+          </button>
+          <div class="sg-how-content" id="${howId}"><pre>${escHtml(s.how)}</pre></div>` : ""}
+      </div>`;
+    });
+
+    listHtml += `<div class="sg-rule-group">
+      <div class="sg-rule-head" aria-expanded="true" onclick="sgToggleRule(this,'${bodyId}')">
+        <span class="sg-rule-icon">${rule.icon}</span>
+        <span class="sg-rule-title">${escHtml(rule.name)}</span>
+        <span class="sg-rule-st ${stCls}">${stLbl}</span>
+        ${gap > 0 ? `<span class="sg-rule-pts">+${gap} pts</span>` : ""}
+        <span class="sg-cnt">${filtered.length}</span>
+        <span class="sg-chev">▼</span>
+      </div>
+      <div class="sg-rule-body open" id="${bodyId}">
+        ${rule.description ? `<div class="sg-rule-desc">${escHtml(rule.description)}
+           <span style="margin-left:6px;color:var(--txt-3)">(${rule.matched_count}/${rule.candidate_count} endpoints validés)</span>
+        </div>` : ""}
+        ${items}
+      </div>
+    </div>`;
+  }
+
+  if (!listHtml) {
+    listHtml = `<div class="empty" style="padding:18px"><div class="icon">🔎</div>Aucune suggestion ne correspond à ce filtre.</div>`;
+  }
+
+  return summaryHtml + filtersHtml + listHtml;
+}
+
+// Public click handlers (called from inline onclick=)
+function sgFilter(panelId, prio){
+  const st = _sgPanels[panelId];
+  if (!st) return;
+  st.filter = prio;
+  const c = document.getElementById("sg-panel-" + panelId);
+  if (c) c.innerHTML = _sgRender(panelId);
+}
+function sgToggleRule(head, bodyId){
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  const open = head.getAttribute("aria-expanded") === "true";
+  head.setAttribute("aria-expanded", String(!open));
+  body.classList.toggle("open", !open);
+}
+function sgToggleHow(howId, btn){
+  const el = document.getElementById(howId);
+  if (!el) return;
+  const open = el.classList.toggle("open");
+  const arrow = btn.querySelector("span");
+  if (arrow) arrow.textContent = open ? "▲" : "▼";
+}
+
 function renderResults(envelope, cfg, log){
   const report = (envelope && envelope.report) ? envelope.report : envelope;
   const gs = report.green_score || {};
@@ -965,36 +1292,13 @@ function renderResults(envelope, cfg, log){
     </div>`;
   }).join("");
 
-  // ── Build suggestions list (flatten across all rules) ──────────
+  // ── Build suggestions panel (severity filter + progression bar) ──
   const mapping = gs.rule_resource_mapping || {};
-  const allSuggestions = [];
+  let allSugCount = 0;
   for (const k of Object.keys(mapping)) {
-    const sgs = (mapping[k] && mapping[k].suggestions) || [];
-    for (const s of sgs) {
-      allSuggestions.push({...s, rule: k, ruleLabel: ruleLabels[k] || k});
-    }
+    allSugCount += ((mapping[k] && mapping[k].suggestions) || []).length;
   }
-  const prioOrder = {high:0, medium:1, low:2};
-  allSuggestions.sort((a,b) =>
-    (prioOrder[a.priority]??9) - (prioOrder[b.priority]??9));
-  const prioIcon = {high:"🔴", medium:"🟡", low:"🔵"};
-  const suggestionsHtml = allSuggestions.length === 0
-    ? `<div class="empty" style="padding:18px"><div class="icon">🎉</div>Aucune suggestion — toutes les règles applicables sont validées.</div>`
-    : allSuggestions.map((s,i) => `
-        <details class="suggestion">
-          <summary>
-            <div class="sg-head">
-              <span class="sg-prio prio-${escHtml(s.priority||"low")}">${prioIcon[s.priority]||"⚪"} ${escHtml((s.priority||"low").toUpperCase())}</span>
-              <span class="sg-rule">${escHtml(s.ruleLabel)}</span>
-              ${s.target ? `<code class="sg-target">${escHtml(s.target)}</code>` : ""}
-            </div>
-          </summary>
-          <div class="sg-body">
-            <div class="sg-action">${escHtml(s.action || "")}</div>
-            ${s.impact ? `<div class="sg-impact">💡 ${escHtml(s.impact)}</div>` : ""}
-            ${s.how ? `<details class="sg-how"><summary>Comment l'implémenter ?</summary><pre>${escHtml(s.how)}</pre></details>` : ""}
-          </div>
-        </details>`).join("");
+  const suggestionsPanelHtml = buildSuggestionsPanel("remote", mapping, ruleLabels, ruleMax, gs);
 
   const epRows = endpoints.slice(0, 200).map(e => {
     const code = +e.http_code || 0;
@@ -1037,11 +1341,11 @@ function renderResults(envelope, cfg, log){
 
     <details class="breakdown-card endpoints-card" style="margin-top:18px">
       <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem;color:var(--green-l);font-weight:700">
-        <span>💡 Suggestions d'amélioration <span style="color:var(--txt-3);font-weight:500;font-size:.78rem"> · ${allSuggestions.length} suggestion(s)</span></span>
+        <span>💡 Suggestions d'amélioration <span style="color:var(--txt-3);font-weight:500;font-size:.78rem"> · ${allSugCount} suggestion(s)</span></span>
         <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
       </summary>
-      <div style="margin-top:10px">
-        <div class="suggestions-wrap">${suggestionsHtml}</div>
+      <div style="margin-top:12px">
+        ${suggestionsPanelHtml}
       </div>
     </details>
 
@@ -1154,6 +1458,68 @@ $("loc-console-clear")?.addEventListener("click", () => {
   $("loc-console").textContent = "(vidé)";
 });
 
+// ── Global live console (bottom of page) ────────────────────────
+// Generic poller usable by both the Remote tab (/api/analyze-log) and the
+// Local tab (/api/local-log). The local tab also keeps its inline console;
+// the global one mirrors whichever run is active so the user can keep an
+// eye on the logs without scrolling back up.
+let _gconsoleTimer = null;
+let _gconsoleSource = "";   // "remote" | "local" | ""
+function gconsoleAppend(text){
+  const pre = $("gconsole");
+  if (!pre) return;
+  if (pre.textContent === "(en attente du premier log…)" || pre.textContent === "(vidé)") {
+    pre.textContent = "";
+  }
+  pre.textContent = text;
+  if ($("gconsole-autoscroll")?.checked) pre.scrollTop = pre.scrollHeight;
+}
+function gconsoleSetState(running, source){
+  const led = $("gconsole-led");
+  const lbl = $("gconsole-source");
+  if (running) {
+    led.style.animation = "spin 1.5s linear infinite";
+    led.style.background = "#86efac";
+    led.style.boxShadow  = "0 0 8px #86efac";
+    lbl.textContent = source === "remote"
+      ? "🌐 Remote analyze · /api/analyze-log"
+      : "💻 Local start.sh · /api/local-log";
+  } else {
+    led.style.animation = "none";
+    led.style.background = "var(--txt-3)";
+    led.style.boxShadow  = "none";
+    lbl.textContent = source ? `terminé · ${source}` : "— en attente —";
+  }
+}
+async function gconsolePoll(endpoint){
+  try {
+    const r = await fetch(absUrl(endpoint), { method: "GET" });
+    if (r.ok) {
+      const j = await r.json();
+      if (j && typeof j.content === "string") gconsoleAppend(j.content);
+    }
+  } catch (_) { /* keep polling */ }
+}
+function gconsoleStart(source){
+  // source: "remote" | "local"
+  _gconsoleSource = source;
+  const endpoint = source === "remote" ? "/api/analyze-log" : "/api/local-log";
+  gconsoleSetState(true, source);
+  $("gconsole").textContent = "(en attente du premier log…)";
+  if (_gconsoleTimer) clearInterval(_gconsoleTimer);
+  gconsolePoll(endpoint);
+  _gconsoleTimer = setInterval(() => gconsolePoll(endpoint), 1200);
+}
+function gconsoleStop(){
+  const endpoint = _gconsoleSource === "remote" ? "/api/analyze-log" : "/api/local-log";
+  if (_gconsoleTimer) { clearInterval(_gconsoleTimer); _gconsoleTimer = null; }
+  gconsolePoll(endpoint);   // final pull
+  gconsoleSetState(false, _gconsoleSource);
+}
+$("gconsole-clear")?.addEventListener("click", () => {
+  $("gconsole").textContent = "(vidé)";
+});
+
 $("loc-btn-load-sample").addEventListener("click", () => {
   // Toggle Java ↔ .NET sample on each click for quick demos.
   const isDotnet = $("loc-stack")?.value === "dotnet";
@@ -1241,6 +1607,7 @@ $("loc-btn-analyze").addEventListener("click", async () => {
   } finally {
     $("loc-btn-analyze").disabled = false;
     locStopLogPolling();
+    gconsoleStop();
   }
 });
 
@@ -1317,29 +1684,12 @@ function renderLocalResults(report, creedengo, cfg, log, opts){
     }).join("");
 
     const mapping = gs.rule_resource_mapping || {};
-    const sugList = [];
+    let _gsCount = 0;
     for (const k of Object.keys(mapping)) {
-      for (const s of (mapping[k]?.suggestions || [])) sugList.push({...s, ruleLabel: ruleLabels[k]||k});
+      _gsCount += ((mapping[k] && mapping[k].suggestions) || []).length;
     }
-    const prioOrder = {high:0, medium:1, low:2};
-    sugList.sort((a,b)=>(prioOrder[a.priority]??9)-(prioOrder[b.priority]??9));
-    const prioIcon = {high:"🔴", medium:"🟡", low:"🔵"};
-    gsSuggestionsCount = sugList.length;
-    gsSuggestionsHtml = sugList.length === 0
-      ? `<div class="empty" style="padding:18px"><div class="icon">🎉</div>Aucune suggestion Green Score.</div>`
-      : sugList.map(s => `
-          <details class="suggestion">
-            <summary><div class="sg-head">
-              <span class="sg-prio prio-${escHtml(s.priority||"low")}">${prioIcon[s.priority]||"⚪"} ${escHtml((s.priority||"low").toUpperCase())}</span>
-              <span class="sg-rule">${escHtml(s.ruleLabel)}</span>
-              ${s.target ? `<code class="sg-target">${escHtml(s.target)}</code>`:""}
-            </div></summary>
-            <div class="sg-body">
-              <div class="sg-action">${escHtml(s.action||"")}</div>
-              ${s.impact ? `<div class="sg-impact">💡 ${escHtml(s.impact)}</div>`:""}
-              ${s.how ? `<details class="sg-how"><summary>Comment l'implémenter ?</summary><pre>${escHtml(s.how)}</pre></details>`:""}
-            </div>
-          </details>`).join("");
+    gsSuggestionsCount = _gsCount;
+    gsSuggestionsHtml = buildSuggestionsPanel("local", mapping, ruleLabels, ruleMax, gs);
 
     endpointsHtml = endpoints.slice(0,200).map(e => {
       const code = +e.http_code || 0;
@@ -1478,7 +1828,7 @@ function renderLocalResults(report, creedengo, cfg, log, opts){
         <span>💡 Suggestions Green Score <span style="color:var(--txt-3);font-weight:500;font-size:.78rem"> · ${gsSuggestionsCount} suggestion(s)</span></span>
         <span style="font-size:.74rem;color:var(--txt-3);font-weight:500">▼ cliquer pour déplier</span>
       </summary>
-      <div style="margin-top:10px"><div class="suggestions-wrap">${gsSuggestionsHtml}</div></div>
+      <div style="margin-top:12px">${gsSuggestionsHtml}</div>
     </details>
 
     <details class="breakdown-card endpoints-card" style="margin-top:18px">

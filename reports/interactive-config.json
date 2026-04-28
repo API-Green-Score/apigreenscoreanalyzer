@@ -1,149 +1,86 @@
 {
   "targets": [
-    "http://localhost:8081"
+    "https://localhost:7179"
   ],
   "swaggers": [
-    "http://localhost:8081/v3/api-docs"
+    "https://localhost:7179/swagger/v1/swagger.json"
   ],
-  "appname": "opt",
+  "appname": "",
   "endpoints": [
     {
-      "target": "http://localhost:8081",
+      "target": "https://localhost:7179",
       "method": "GET",
-      "path": "/books/{id}",
+      "path": "/actuator",
       "calls": 3,
       "payload": ""
     },
     {
-      "target": "http://localhost:8081",
+      "target": "https://localhost:7179",
+      "method": "GET",
+      "path": "/actuator/info",
+      "calls": 3,
+      "payload": ""
+    },
+    {
+      "target": "https://localhost:7179",
+      "method": "GET",
+      "path": "/actuator/metrics",
+      "calls": 3,
+      "payload": ""
+    },
+    {
+      "target": "https://localhost:7179",
+      "method": "GET",
+      "path": "/",
+      "calls": 3,
+      "payload": ""
+    },
+    {
+      "target": "https://localhost:7179",
+      "method": "GET",
+      "path": "/Products",
+      "calls": 3,
+      "payload": ""
+    },
+    {
+      "target": "https://localhost:7179",
+      "method": "POST",
+      "path": "/Products",
+      "calls": 3,
+      "payload": ""
+    },
+    {
+      "target": "https://localhost:7179",
+      "method": "GET",
+      "path": "/Products/{id}",
+      "calls": 3,
+      "payload": ""
+    },
+    {
+      "target": "https://localhost:7179",
       "method": "PUT",
-      "path": "/books/{id}",
+      "path": "/Products/{id}",
       "calls": 3,
       "payload": ""
     },
     {
-      "target": "http://localhost:8081",
+      "target": "https://localhost:7179",
       "method": "GET",
-      "path": "/reactive/books/{id}/summary",
+      "path": "/Scores/leaderboard",
       "calls": 3,
       "payload": ""
     },
     {
-      "target": "http://localhost:8081",
+      "target": "https://localhost:7179",
       "method": "POST",
-      "path": "/reactive/books/{id}/summary",
+      "path": "/Scores/calculate",
       "calls": 3,
       "payload": ""
     },
     {
-      "target": "http://localhost:8081",
+      "target": "https://localhost:7179",
       "method": "GET",
-      "path": "/books/{id}/summary",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "POST",
-      "path": "/books/{id}/summary",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/reactive/books",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/reactive/books/{id}",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/reactive/books/select",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/reactive/books/changes",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/reactive/books/cbor",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/reactive/books/cacheable",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/books",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/books/select",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/books/noCache/{id}",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/books/changes",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/books/cbor",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/books/batch",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/books/async",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "http://localhost:8081",
-      "method": "GET",
-      "path": "/books/async/{id}",
+      "path": "/WeatherForecast",
       "calls": 3,
       "payload": ""
     }

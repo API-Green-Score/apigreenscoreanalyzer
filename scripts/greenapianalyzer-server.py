@@ -201,6 +201,23 @@ class Handler(BaseHTTPRequestHandler):
                 "content": content,
                 "size": len(content),
             })
+        # ── Live log tail of the most recent /api/analyze run (Remote tab) ──
+        if path == "/api/analyze-log":
+            log_file = REPORTS / ".analyzer.log"
+            if not log_file.is_file():
+                return self._send_json(200, {"ok": True, "running": False, "content": "", "size": 0})
+            try:
+                with log_file.open("r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+            except Exception as e:
+                return self._send_json(500, {"error": f"failed to read log: {e}"})
+            running_marker = REPORTS / ".analyzer.running"
+            return self._send_json(200, {
+                "ok": True,
+                "running": running_marker.is_file(),
+                "content": content,
+                "size": len(content),
+            })
         # Map path to filesystem under ROOT
         rel = path.lstrip("/")
         # Prevent traversal
@@ -319,17 +336,46 @@ class Handler(BaseHTTPRequestHandler):
         if appname:
             cmd += ["--appname", appname]
 
+        # ── Live log streaming (mirror of /api/local-analyze) ────────
+        # Write the analyzer's stdout+stderr to .analyzer.log while the
+        # subprocess is blocked, so the dashboard can poll /api/analyze-log
+        # in parallel and display a live console at the bottom of the page.
+        log_file = REPORTS / ".analyzer.log"
+        running_marker = REPORTS / ".analyzer.running"
+        try: log_file.unlink(missing_ok=True)        # truncate (py3.8+)
+        except TypeError:
+            try: log_file.unlink()
+            except Exception: pass
+        try: running_marker.touch()
+        except Exception: pass
+
         try:
-            proc = subprocess.run(
-                cmd, cwd=str(ROOT),
-                capture_output=True, text=True, timeout=900,
-            )
+            with open(str(log_file), "w", encoding="utf-8") as lf:
+                lf.write("$ " + " ".join(cmd) + "\n")
+                lf.flush()
+                proc = subprocess.run(
+                    cmd, cwd=str(ROOT),
+                    stdout=lf, stderr=subprocess.STDOUT,
+                    text=True, timeout=900,
+                )
         except subprocess.TimeoutExpired:
+            try: running_marker.unlink()
+            except Exception: pass
             return self._send_json(504, {"error": "analyzer timeout (>15 min)"})
         except Exception as e:
+            try: running_marker.unlink()
+            except Exception: pass
             return self._send_json(500, {"error": f"failed to run analyzer: {e}"})
+        finally:
+            try: running_marker.unlink()
+            except Exception: pass
 
-        log = (proc.stdout or "") + "\n" + (proc.stderr or "")
+        # Re-read the log file we just wrote — that's the canonical capture.
+        try:
+            with open(str(log_file), "r", encoding="utf-8", errors="replace") as lf:
+                log = lf.read()
+        except Exception:
+            log = ""
         latest = REPORTS / "latest-report.json"
         if proc.returncode != 0 or not latest.is_file():
             return self._send_json(500, {

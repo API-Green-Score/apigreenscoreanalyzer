@@ -1,43 +1,44 @@
 {
-  "appname": "optcreedgreen3",
+  "appname": "apigreenscoreanalyzer",
   "report": {
-    "timestamp": "2026-04-27T21:20:46Z",
+    "timestamp": "2026-04-28T20:22:57Z",
     "green_score": {
-      "total": 11,
+      "total": 49,
       "max": 100,
-      "grade": "E",
+      "grade": "D",
       "breakdown": {
-        "DE11_pagination": 5,
-        "DE08_fields": 2,
-        "DE01_compression": 0,
-        "DE02_DE03_cache": 0,
-        "DE06_delta": 1,
+        "DE11_pagination": 6,
+        "DE08_fields": 8,
+        "DE01_compression": 15,
+        "DE02_DE03_cache": 15,
+        "DE06_delta": 0,
         "range_206": 0,
-        "AR02_format_cbor": 1,
-        "LO01_observability": 2,
+        "AR02_format_cbor": 0,
+        "LO01_observability": 5,
         "US07_rate_limit": 0
       },
       "details": {
         "DE11_pagination": {
-          "note": "Pagination on 4/12 collection endpoint(s)"
+          "note": "Pagination on 3/7 collection endpoint(s)"
         },
         "DE08_fields": {
-          "note": "Field filtering on 2 endpoint(s)"
+          "note": "Field filtering on 4 endpoint(s)"
         },
         "DE01_compression": {
-          "note": "Gzip not detected"
+          "note": "Gzip compression active"
         },
         "DE02_DE03_cache": {
-          "note": "ETag/304 not detected"
+          "http_code": 304,
+          "note": "ETag + 304 supported (OpenAPI spec declares 304 Not Modified response)"
         },
         "DE06_delta": {
-          "note": "Delta endpoint(s) found: 2"
+          "note": "No delta endpoint found"
         },
         "range_206": {
           "note": "Range not supported"
         },
         "AR02_format_cbor": {
-          "note": "Binary format on 2 endpoint(s)"
+          "note": "No binary format endpoint"
         },
         "LO01_observability": {
           "note": "Actuator/health detected"
@@ -55,115 +56,71 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "/books",
+              "path": "/actuator",
               "matched": false,
               "reason": "No pagination params (page/size/limit/offset/cursor)"
             },
             {
               "method": "GET",
-              "path": "/reactive/books",
+              "path": "/actuator/info",
+              "matched": false,
+              "reason": "No pagination params (page/size/limit/offset/cursor)"
+            },
+            {
+              "method": "GET",
+              "path": "/actuator/metrics",
+              "matched": false,
+              "reason": "No pagination params (page/size/limit/offset/cursor)"
+            },
+            {
+              "method": "GET",
+              "path": "/",
+              "matched": false,
+              "reason": "No pagination params (page/size/limit/offset/cursor)"
+            },
+            {
+              "method": "GET",
+              "path": "/Products",
               "matched": true,
               "reason": "Pagination params: page, size"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/select",
+              "path": "/Scores/leaderboard",
               "matched": true,
               "reason": "Pagination params: page, size"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/books",
+              "path": "/WeatherForecast",
               "matched": true,
               "reason": "Pagination params: page, size"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
-              "matched": true,
-              "reason": "Pagination params: page, size"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "No pagination params (page/size/limit/offset/cursor)"
             }
           ],
           "validated": true,
-          "score": 5,
-          "matched_count": 4,
-          "candidate_count": 12,
+          "score": 6,
+          "matched_count": 3,
+          "candidate_count": 7,
           "suggestions": [
             {
-              "target": "GET /books",
+              "target": "GET /actuator",
               "action": "Add pagination parameters (page & size)",
               "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+              "impact": "+2.1 pts/endpoint (total gap: 9 pts) \u2014 reduces payload size for large collections",
               "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
             },
             {
-              "target": "GET /reactive/books/changes",
+              "target": "GET /actuator/info",
               "action": "Add pagination parameters (page & size)",
               "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+              "impact": "+2.1 pts/endpoint (total gap: 9 pts) \u2014 reduces payload size for large collections",
               "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
             },
             {
-              "target": "GET /reactive/books/cbor",
+              "target": "GET /",
               "action": "Add pagination parameters (page & size)",
               "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
-              "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
-            },
-            {
-              "target": "GET /reactive/books/cacheable",
-              "action": "Add pagination parameters (page & size)",
-              "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
-              "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
-            },
-            {
-              "target": "GET /books/changes",
-              "action": "Add pagination parameters (page & size)",
-              "priority": "high",
-              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 reduces payload size for large collections",
+              "impact": "+2.1 pts/endpoint (total gap: 9 pts) \u2014 reduces payload size for large collections",
               "how": "Spring Boot: Change return type from List<T> to Page<T> and add @RequestParam defaultValue parameters:\n  @GetMapping\n  public ApiResponse<Page<T>> list(\n      @RequestParam(defaultValue = \"0\") int page,\n      @RequestParam(defaultValue = \"20\") int size) {\n    return ApiResponse.success(repository.findAll(PageRequest.of(page, size)));\n  }\nOpenAPI: params 'page' and 'size' will appear automatically via springdoc."
             }
           ]
@@ -176,157 +133,84 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "/books",
+              "path": "/actuator",
               "matched": false,
               "reason": "No field filter param (fields/select)"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/actuator/info",
               "matched": false,
               "reason": "No field filter param (fields/select)"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/actuator/metrics",
               "matched": false,
               "reason": "No field filter param (fields/select)"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/{id}/summary",
+              "path": "/",
               "matched": false,
               "reason": "No field filter param (fields/select)"
             },
             {
               "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
+              "path": "/Products",
               "matched": true,
               "reason": "Field filter params: fields"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
+              "path": "/Products/{id}",
               "matched": true,
               "reason": "Field filter params: fields"
             },
             {
               "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
+              "path": "/Scores/leaderboard",
+              "matched": true,
+              "reason": "Field filter params: fields"
             },
             {
               "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
-              "matched": false,
-              "reason": "No field filter param (fields/select)"
+              "path": "/WeatherForecast",
+              "matched": true,
+              "reason": "Field filter params: fields"
             }
           ],
           "validated": true,
-          "score": 2,
-          "matched_count": 2,
-          "candidate_count": 19,
+          "score": 8,
+          "matched_count": 4,
+          "candidate_count": 8,
           "suggestions": [
             {
-              "target": "GET /books",
+              "target": "GET /actuator",
               "action": "Add a 'fields' query parameter for sparse fieldsets",
               "priority": "high",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "impact": "+1.9 pts/endpoint (total gap: 7 pts) \u2014 lets clients request only needed fields, reducing payload",
               "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
             },
             {
-              "target": "GET /books/{id}",
+              "target": "GET /actuator/info",
               "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "medium",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "priority": "high",
+              "impact": "+1.9 pts/endpoint (total gap: 7 pts) \u2014 lets clients request only needed fields, reducing payload",
               "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
             },
             {
-              "target": "GET /books/{id}",
+              "target": "GET /actuator/metrics",
               "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "medium",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "priority": "high",
+              "impact": "+1.9 pts/endpoint (total gap: 7 pts) \u2014 lets clients request only needed fields, reducing payload",
               "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
             },
             {
-              "target": "GET /reactive/books/{id}/summary",
+              "target": "GET /",
               "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "medium",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
-              "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
-            },
-            {
-              "target": "GET /books/{id}/summary",
-              "action": "Add a 'fields' query parameter for sparse fieldsets",
-              "priority": "medium",
-              "impact": "+0.8 pts/endpoint (total gap: 13 pts) \u2014 lets clients request only needed fields, reducing payload",
+              "priority": "high",
+              "impact": "+1.9 pts/endpoint (total gap: 7 pts) \u2014 lets clients request only needed fields, reducing payload",
               "how": "Spring Boot: Add an optional @RequestParam and filter the DTO:\n  @GetMapping\n  public ApiResponse<?> list(\n      @RequestParam(required = false) String fields) {\n    // If fields != null, use Jackson @JsonFilter or a projection\n    // to return only the requested fields.\n  }\nAlternative: Use a custom Jackson MappingJacksonValue with a\nSimpleFilterProvider that keeps only the requested properties.\nOpenAPI: The 'fields' param will appear automatically."
             }
           ]
@@ -339,150 +223,76 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "No gzip compression detected"
+              "path": "/actuator",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No gzip compression detected"
+              "path": "/actuator/info",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No gzip compression detected"
+              "path": "/actuator/metrics",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
+            },
+            {
+              "method": "GET",
+              "path": "/",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
+            },
+            {
+              "method": "GET",
+              "path": "/Products",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
+            },
+            {
+              "method": "POST",
+              "path": "/Products",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
+            },
+            {
+              "method": "GET",
+              "path": "/Products/{id}",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
             },
             {
               "method": "PUT",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No gzip compression detected"
+              "path": "/Products/{id}",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "No gzip compression detected"
+              "path": "/Scores/leaderboard",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
             },
             {
               "method": "POST",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "No gzip compression detected"
+              "path": "/Scores/calculate",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
             },
             {
               "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "POST",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "No gzip compression detected"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
-              "matched": false,
-              "reason": "No gzip compression detected"
+              "path": "/WeatherForecast",
+              "matched": true,
+              "reason": "Server supports gzip (confirmed on another endpoint)"
             }
           ],
-          "validated": false,
-          "score": 0,
-          "matched_count": 0,
-          "candidate_count": 22,
-          "suggestions": [
-            {
-              "target": "ALL endpoints (server-level)",
-              "action": "Enable gzip compression on the server",
-              "priority": "high",
-              "impact": "+0.7 pts/endpoint (total gap: 15 pts) \u2014 typically 60-80% payload reduction",
-              "how": "Option 1 \u2014 Spring Boot application.yml:\n  server:\n    compression:\n      enabled: true\n      min-response-size: 1024\n      mime-types: application/json,application/xml,text/html,text/plain\n\nOption 2 \u2014 Nginx (if reverse proxy):\n  gzip on;\n  gzip_types application/json application/xml text/plain;\n  gzip_min_length 1024;\n  gzip_comp_level 6;\n\nBoth options apply to ALL endpoints automatically."
-            }
-          ]
+          "validated": true,
+          "score": 15,
+          "matched_count": 11,
+          "candidate_count": 11,
+          "suggestions": []
         },
         "DE02_DE03_cache": {
           "id": "DE02/DE03",
@@ -492,88 +302,16 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
-              "matched": false,
-              "reason": "Not individually tested"
+              "path": "/Products/{id}",
+              "matched": true,
+              "reason": "ETag=\"2f0da10640b0df58\"\u2026 \u2192 304 Not Modified"
             }
           ],
-          "validated": false,
-          "score": 0,
-          "matched_count": 0,
-          "candidate_count": 7,
-          "suggestions": [
-            {
-              "target": "GET /books/{id}",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            },
-            {
-              "target": "GET /books/{id}",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            },
-            {
-              "target": "GET /reactive/books/{id}/summary",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            },
-            {
-              "target": "GET /books/{id}/summary",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            },
-            {
-              "target": "GET /reactive/books/{id}",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.1 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            }
-          ]
+          "validated": true,
+          "score": 15,
+          "matched_count": 1,
+          "candidate_count": 1,
+          "suggestions": []
         },
         "DE06_delta": {
           "id": "DE06",
@@ -583,144 +321,78 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "/books",
+              "path": "/actuator",
               "matched": false,
               "reason": "Not a delta/changes endpoint"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/actuator/info",
               "matched": false,
               "reason": "Not a delta/changes endpoint"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/actuator/metrics",
               "matched": false,
               "reason": "Not a delta/changes endpoint"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/{id}/summary",
+              "path": "/",
               "matched": false,
               "reason": "Not a delta/changes endpoint"
             },
             {
               "method": "GET",
-              "path": "/books/{id}/summary",
+              "path": "/Products",
               "matched": false,
               "reason": "Not a delta/changes endpoint"
             },
             {
               "method": "GET",
-              "path": "/reactive/books",
+              "path": "/Products/{id}",
               "matched": false,
               "reason": "Not a delta/changes endpoint"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/{id}",
+              "path": "/Scores/leaderboard",
               "matched": false,
               "reason": "Not a delta/changes endpoint"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": true,
-              "reason": "Path contains 'change', 'delta' or 'since'"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": true,
-              "reason": "Path contains 'change', 'delta' or 'since'"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "Not a delta/changes endpoint"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
+              "path": "/WeatherForecast",
               "matched": false,
               "reason": "Not a delta/changes endpoint"
             }
           ],
-          "validated": true,
-          "score": 1,
-          "matched_count": 2,
-          "candidate_count": 19,
+          "validated": false,
+          "score": 0,
+          "matched_count": 0,
+          "candidate_count": 8,
           "suggestions": [
             {
-              "target": "GET /books/changes  (new endpoint)",
+              "target": "GET /actuator/changes  (new endpoint)",
               "action": "Add a delta/changes endpoint with a 'since' parameter",
               "priority": "medium",
-              "impact": "+0.5 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
-              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /books."
+              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 clients fetch only what changed since last sync",
+              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /actuator."
             },
             {
-              "target": "GET /reactive/books/changes  (new endpoint)",
+              "target": "GET /actuator/info/changes  (new endpoint)",
               "action": "Add a delta/changes endpoint with a 'since' parameter",
               "priority": "medium",
-              "impact": "+0.5 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
-              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books."
+              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 clients fetch only what changed since last sync",
+              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /actuator/info."
             },
             {
-              "target": "GET /reactive/books/select/changes  (new endpoint)",
+              "target": "GET /actuator/metrics/changes  (new endpoint)",
               "action": "Add a delta/changes endpoint with a 'since' parameter",
               "priority": "medium",
-              "impact": "+0.5 pts/endpoint (total gap: 9 pts) \u2014 clients fetch only what changed since last sync",
-              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /reactive/books/select."
+              "impact": "+1.2 pts/endpoint (total gap: 10 pts) \u2014 clients fetch only what changed since last sync",
+              "how": "Spring Boot: Add a new endpoint that filters by updatedAt:\n  @GetMapping(\"/changes\")\n  public ApiResponse<List<T>> getChanges(\n      @RequestParam @DateTimeFormat(iso = ISO.DATE_TIME) LocalDateTime since) {\n    return ApiResponse.success(\n        repository.findByUpdatedAtAfter(since));\n  }\n\nPrerequisite: Add an 'updatedAt' column with @UpdateTimestamp\nto your entity, and a repository method findByUpdatedAtAfter().\nAlternative: Add @RequestParam 'since' to existing /actuator/metrics."
             }
           ]
         },
@@ -732,115 +404,49 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/Products/{id}",
               "matched": false,
               "reason": "Range: bytes=0-99 \u2192 200 (not 206)"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/actuator",
               "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+              "reason": "Range: bytes=0-99 \u2192 200 (not 206)"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/{id}/summary",
+              "path": "/actuator/info",
               "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+              "reason": "Range: bytes=0-99 \u2192 200 (not 206)"
             },
             {
               "method": "GET",
-              "path": "/books/{id}/summary",
+              "path": "/actuator/metrics",
               "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+              "reason": "Range: bytes=0-99 \u2192 200 (not 206)"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/{id}",
+              "path": "/",
               "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+              "reason": "Range: bytes=0-99 \u2192 200 (not 206)"
             },
             {
               "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
+              "path": "/Products",
               "matched": false,
               "reason": "Not individually tested"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/select",
+              "path": "/Scores/leaderboard",
               "matched": false,
               "reason": "Not individually tested"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "Not individually tested"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
+              "path": "/WeatherForecast",
               "matched": false,
               "reason": "Not individually tested"
             }
@@ -848,17 +454,17 @@
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 19,
+          "candidate_count": 8,
           "suggestions": [
             {
-              "target": "GET /books/{id}",
+              "target": "GET /Products/{id}",
               "action": "Support HTTP Range header for partial content (206)",
               "priority": "low",
               "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
               "how": "For JSON endpoints, Range/206 is rarely useful.\nFocus on the file download endpoint(s) instead."
             },
             {
-              "target": "GET /books/{id}",
+              "target": "GET /actuator",
               "action": "Support HTTP Range header for partial content (206)",
               "priority": "low",
               "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
@@ -874,151 +480,85 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "/books",
+              "path": "/actuator",
               "matched": false,
               "reason": "Standard JSON format"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/actuator/info",
               "matched": false,
               "reason": "Standard JSON format"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/actuator/metrics",
+              "matched": false,
+              "reason": "Standard JSON format"
+            },
+            {
+              "method": "GET",
+              "path": "/",
+              "matched": false,
+              "reason": "Standard JSON format"
+            },
+            {
+              "method": "GET",
+              "path": "/Products",
+              "matched": false,
+              "reason": "Standard JSON format"
+            },
+            {
+              "method": "POST",
+              "path": "/Products",
+              "matched": false,
+              "reason": "Standard JSON format"
+            },
+            {
+              "method": "GET",
+              "path": "/Products/{id}",
               "matched": false,
               "reason": "Standard JSON format"
             },
             {
               "method": "PUT",
-              "path": "/books/{id}",
+              "path": "/Products/{id}",
               "matched": false,
               "reason": "Standard JSON format"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "POST",
-              "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/{id}/summary",
+              "path": "/Scores/leaderboard",
               "matched": false,
               "reason": "Standard JSON format"
             },
             {
               "method": "POST",
-              "path": "/books/{id}/summary",
+              "path": "/Scores/calculate",
               "matched": false,
               "reason": "Standard JSON format"
             },
             {
               "method": "GET",
-              "path": "/reactive/books",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": true,
-              "reason": "Binary format (CBOR/protobuf/octet-stream)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": true,
-              "reason": "Binary format (CBOR/protobuf/octet-stream)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "Standard JSON format"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
+              "path": "/WeatherForecast",
               "matched": false,
               "reason": "Standard JSON format"
             }
           ],
-          "validated": true,
-          "score": 1,
-          "matched_count": 2,
-          "candidate_count": 22,
+          "validated": false,
+          "score": 0,
+          "matched_count": 0,
+          "candidate_count": 11,
           "suggestions": [
             {
-              "target": "GET /books  (add CBOR variant)",
+              "target": "GET /actuator  (add CBOR variant)",
               "action": "Add a binary format alternative (CBOR or Protobuf)",
               "priority": "low",
               "impact": "+10 pts \u2014 binary formats are 30-50% smaller than JSON",
               "how": "Spring Boot + CBOR:\n  1. Add dependency: com.fasterxml.jackson.dataformat:jackson-dataformat-cbor\n  2. Register the converter:\n     @Bean\n     public HttpMessageConverter<Object> cborConverter(ObjectMapper mapper) {\n       ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());\n       return new MappingJackson2CborHttpMessageConverter(cborMapper);\n     }\n  3. Clients send: Accept: application/cbor\n\nAlternative (Protobuf):\n  Add spring-boot-starter-protobuf and define .proto schemas.\n  Register ProtobufHttpMessageConverter."
             },
             {
-              "target": "GET /reactive/books  (add CBOR variant)",
+              "target": "GET /actuator/info  (add CBOR variant)",
               "action": "Add a binary format alternative (CBOR or Protobuf)",
               "priority": "low",
               "impact": "+10 pts \u2014 binary formats are 30-50% smaller than JSON",
@@ -1034,78 +574,40 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "http://localhost:8080/actuator/health",
+              "path": "/actuator/health",
               "matched": true,
               "reason": "HTTP 200 OK"
             },
             {
               "method": "GET",
-              "path": "http://localhost:8080/health",
-              "matched": false,
-              "reason": "HTTP 404"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8080/actuator",
+              "path": "/health",
               "matched": true,
               "reason": "HTTP 200 OK"
             },
             {
               "method": "GET",
-              "path": "http://localhost:8080/actuator/metrics",
+              "path": "/actuator",
               "matched": true,
               "reason": "HTTP 200 OK"
             },
             {
               "method": "GET",
-              "path": "http://localhost:8080/actuator/info",
+              "path": "/actuator/metrics",
               "matched": true,
               "reason": "HTTP 200 OK"
             },
             {
               "method": "GET",
-              "path": "http://localhost:8081/actuator/health",
-              "matched": false,
-              "reason": "HTTP 429"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8081/health",
-              "matched": false,
-              "reason": "HTTP 429"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8081/actuator",
-              "matched": false,
-              "reason": "HTTP 429"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8081/actuator/metrics",
-              "matched": false,
-              "reason": "HTTP 429"
-            },
-            {
-              "method": "GET",
-              "path": "http://localhost:8081/actuator/info",
-              "matched": false,
-              "reason": "HTTP 429"
+              "path": "/actuator/info",
+              "matched": true,
+              "reason": "HTTP 200 OK"
             }
           ],
           "validated": true,
-          "score": 2,
-          "matched_count": 4,
-          "candidate_count": 10,
-          "suggestions": [
-            {
-              "target": "/actuator/health, /actuator/metrics",
-              "action": "Expose Spring Boot Actuator endpoints",
-              "priority": "high",
-              "impact": "+5 pts \u2014 essential for production monitoring",
-              "how": "Spring Boot application.yml:\n  management:\n    endpoints:\n      web:\n        exposure:\n          include: health,info,metrics\n    endpoint:\n      health:\n        show-details: when-authorized\n\nAdd dependency: spring-boot-starter-actuator (likely already present)."
-            }
-          ]
+          "score": 5,
+          "matched_count": 5,
+          "candidate_count": 5,
+          "suggestions": []
         },
         "US07_rate_limit": {
           "id": "US07",
@@ -1115,133 +617,67 @@
           "candidates": [
             {
               "method": "GET",
-              "path": "/books",
+              "path": "/actuator",
               "matched": false,
               "reason": "No rate-limit headers in response"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/actuator/info",
               "matched": false,
               "reason": "No rate-limit headers in response"
             },
             {
               "method": "GET",
-              "path": "/books/{id}",
+              "path": "/actuator/metrics",
+              "matched": false,
+              "reason": "No rate-limit headers in response"
+            },
+            {
+              "method": "GET",
+              "path": "/",
+              "matched": false,
+              "reason": "No rate-limit headers in response"
+            },
+            {
+              "method": "GET",
+              "path": "/Products",
+              "matched": false,
+              "reason": "No rate-limit headers in response"
+            },
+            {
+              "method": "POST",
+              "path": "/Products",
+              "matched": false,
+              "reason": "No rate-limit headers in response"
+            },
+            {
+              "method": "GET",
+              "path": "/Products/{id}",
               "matched": false,
               "reason": "No rate-limit headers in response"
             },
             {
               "method": "PUT",
-              "path": "/books/{id}",
+              "path": "/Products/{id}",
               "matched": false,
               "reason": "No rate-limit headers in response"
             },
             {
               "method": "GET",
-              "path": "/reactive/books/{id}/summary",
+              "path": "/Scores/leaderboard",
               "matched": false,
               "reason": "No rate-limit headers in response"
             },
             {
               "method": "POST",
-              "path": "/reactive/books/{id}/summary",
+              "path": "/Scores/calculate",
               "matched": false,
               "reason": "No rate-limit headers in response"
             },
             {
               "method": "GET",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "POST",
-              "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/select",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/select",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/changes",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/cbor",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/batch",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async",
-              "matched": false,
-              "reason": "No rate-limit headers in response"
-            },
-            {
-              "method": "GET",
-              "path": "/books/async/{id}",
+              "path": "/WeatherForecast",
               "matched": false,
               "reason": "No rate-limit headers in response"
             }
@@ -1249,7 +685,7 @@
           "validated": false,
           "score": 0,
           "matched_count": 0,
-          "candidate_count": 22,
+          "candidate_count": 11,
           "suggestions": [
             {
               "target": "ALL endpoints (server-level)",
@@ -1262,7 +698,37 @@
         }
       },
       "endpoint_rules": {
-        "get:/books": [
+        "get:/actuator": [
+          "DE11_pagination",
+          "DE08_fields",
+          "DE01_compression",
+          "DE06_delta",
+          "range_206",
+          "AR02_format_cbor",
+          "LO01_observability",
+          "US07_rate_limit"
+        ],
+        "get:/actuator/info": [
+          "DE11_pagination",
+          "DE08_fields",
+          "DE01_compression",
+          "DE06_delta",
+          "range_206",
+          "AR02_format_cbor",
+          "LO01_observability",
+          "US07_rate_limit"
+        ],
+        "get:/actuator/metrics": [
+          "DE11_pagination",
+          "DE08_fields",
+          "DE01_compression",
+          "DE06_delta",
+          "range_206",
+          "AR02_format_cbor",
+          "LO01_observability",
+          "US07_rate_limit"
+        ],
+        "get:/": [
           "DE11_pagination",
           "DE08_fields",
           "DE01_compression",
@@ -1271,7 +737,7 @@
           "AR02_format_cbor",
           "US07_rate_limit"
         ],
-        "get:/reactive/books": [
+        "get:/Products": [
           "DE11_pagination",
           "DE08_fields",
           "DE01_compression",
@@ -1280,7 +746,7 @@
           "AR02_format_cbor",
           "US07_rate_limit"
         ],
-        "get:/reactive/books/select": [
+        "get:/Scores/leaderboard": [
           "DE11_pagination",
           "DE08_fields",
           "DE01_compression",
@@ -1289,7 +755,7 @@
           "AR02_format_cbor",
           "US07_rate_limit"
         ],
-        "get:/reactive/books/changes": [
+        "get:/WeatherForecast": [
           "DE11_pagination",
           "DE08_fields",
           "DE01_compression",
@@ -1298,70 +764,7 @@
           "AR02_format_cbor",
           "US07_rate_limit"
         ],
-        "get:/reactive/books/cbor": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/reactive/books/cacheable": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/books/select": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/books/changes": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/books/cbor": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/books/batch": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/books/async": [
-          "DE11_pagination",
-          "DE08_fields",
-          "DE01_compression",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/books/{id}": [
+        "get:/Products/{id}": [
           "DE08_fields",
           "DE01_compression",
           "DE02_DE03_cache",
@@ -1370,94 +773,25 @@
           "AR02_format_cbor",
           "US07_rate_limit"
         ],
-        "get:/reactive/books/{id}/summary": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/books/{id}/summary": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/reactive/books/{id}": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/books/noCache/{id}": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "get:/books/async/{id}": [
-          "DE08_fields",
-          "DE01_compression",
-          "DE02_DE03_cache",
-          "DE06_delta",
-          "range_206",
-          "AR02_format_cbor",
-          "US07_rate_limit"
-        ],
-        "put:/books/{id}": [
+        "post:/Products": [
           "DE01_compression",
           "AR02_format_cbor",
           "US07_rate_limit"
         ],
-        "post:/reactive/books/{id}/summary": [
+        "put:/Products/{id}": [
           "DE01_compression",
           "AR02_format_cbor",
           "US07_rate_limit"
         ],
-        "post:/books/{id}/summary": [
+        "post:/Scores/calculate": [
           "DE01_compression",
           "AR02_format_cbor",
           "US07_rate_limit"
         ],
-        "get:http://localhost:8080/actuator/health": [
+        "get:/actuator/health": [
           "LO01_observability"
         ],
-        "get:http://localhost:8080/health": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8080/actuator": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8080/actuator/metrics": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8080/actuator/info": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/actuator/health": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/health": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/actuator": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/actuator/metrics": [
-          "LO01_observability"
-        ],
-        "get:http://localhost:8081/actuator/info": [
+        "get:/health": [
           "LO01_observability"
         ]
       }
@@ -1484,450 +818,229 @@
         }
       },
       "optimized": {
-        "range_206": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.011738,
-          "speed_download": 0
-        },
-        "fields_filter": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.00534,
-          "speed_download": 0
-        },
-        "delta_changes": {
-          "http_code": 400,
-          "size_download": 207,
-          "time_total": 0.000635,
-          "speed_download": 207000
-        },
-        "cbor_format": {
-          "http_code": 429,
-          "size_download": 13,
-          "time_total": 0.002611,
-          "speed_download": 5106
-        },
         "full_payload": {
-          "http_code": 400,
-          "size_download": 389,
-          "time_total": 0.000973,
-          "speed_download": 389000
+          "http_code": 200,
+          "size_download": 1137,
+          "time_total": 0.034809,
+          "speed_download": 32673
         }
       }
     },
     "auto_discovery": {
-      "base_url": "http://localhost:8080",
-      "endpoints_discovered": 22,
-      "endpoints_measured": 20,
+      "base_url": "https://localhost:7179",
+      "endpoints_discovered": 11,
+      "endpoints_measured": 11,
       "all_measurements": {
-        "get:/books": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000463,
-          "speed_download": 20000
-        },
-        "get:/books/{id}": {
+        "get:/actuator": {
           "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.010405,
-          "speed_download": 17684
+          "size_download": 237,
+          "time_total": 0.027264,
+          "speed_download": 8692
         },
-        "put:/books/{id}": {
-          "http_code": 400,
+        "get:/actuator/info": {
+          "http_code": 200,
+          "size_download": 219,
+          "time_total": 0.02808,
+          "speed_download": 7799
+        },
+        "get:/actuator/metrics": {
+          "http_code": 200,
+          "size_download": 226,
+          "time_total": 0.033689,
+          "speed_download": 6708
+        },
+        "get:/": {
+          "http_code": 200,
+          "size_download": 735,
+          "time_total": 0.098864,
+          "speed_download": 7434
+        },
+        "get:/Products": {
+          "http_code": 200,
           "size_download": 316,
-          "time_total": 0.004983,
-          "speed_download": 63416
+          "time_total": 0.03198,
+          "speed_download": 9881
         },
-        "get:/reactive/books/{id}/summary": {
+        "post:/Products": {
+          "http_code": 415,
+          "size_download": 176,
+          "time_total": 0.042232,
+          "speed_download": 4167
+        },
+        "get:/Products/{id}": {
           "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.011738,
-          "speed_download": 0
+          "size_download": 81,
+          "time_total": 0.032669,
+          "speed_download": 2479
         },
-        "post:/reactive/books/{id}/summary": {
-          "http_code": 400,
-          "size_download": 389,
-          "time_total": 0.000973,
-          "speed_download": 389000
+        "put:/Products/{id}": {
+          "http_code": 415,
+          "size_download": 176,
+          "time_total": 0.037994,
+          "speed_download": 4632
         },
-        "get:/books/{id}/summary": {
+        "get:/Scores/leaderboard": {
           "http_code": 200,
-          "size_download": 34,
-          "time_total": 0.001452,
-          "speed_download": 23408
+          "size_download": 238,
+          "time_total": 0.032304,
+          "speed_download": 7367
         },
-        "post:/books/{id}/summary": {
-          "http_code": 400,
-          "size_download": 343,
-          "time_total": 0.001014,
-          "speed_download": 338222
+        "post:/Scores/calculate": {
+          "http_code": 415,
+          "size_download": 176,
+          "time_total": 0.030648,
+          "speed_download": 5742
         },
-        "get:/reactive/books": {
+        "get:/WeatherForecast": {
           "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.008491,
-          "speed_download": 0
-        },
-        "get:/reactive/books/{id}": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.003077,
-          "speed_download": 0
-        },
-        "get:/reactive/books/select": {
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.00534,
-          "speed_download": 0
-        },
-        "get:/reactive/books/changes": {
-          "http_code": 400,
-          "size_download": 207,
-          "time_total": 0.000635,
-          "speed_download": 207000
-        },
-        "get:/reactive/books/cbor": {
-          "http_code": 429,
-          "size_download": 13,
-          "time_total": 0.002611,
-          "speed_download": 5106
-        },
-        "get:/reactive/books/cacheable": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000373,
-          "speed_download": 20000
-        },
-        "get:/books/select": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000391,
-          "speed_download": 20000
-        },
-        "get:/books/noCache/{id}": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.0004,
-          "speed_download": 20000
-        },
-        "get:/books/changes": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000381,
-          "speed_download": 20000
-        },
-        "get:/books/cbor": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000421,
-          "speed_download": 20000
-        },
-        "get:/books/batch": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000385,
-          "speed_download": 20000
-        },
-        "get:/books/async": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.00039,
-          "speed_download": 20000
-        },
-        "get:/books/async/{id}": {
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000402,
-          "speed_download": 20000
+          "size_download": 1137,
+          "time_total": 0.034809,
+          "speed_download": 32673
         }
       },
       "discovered_endpoints": [
         {
           "method": "GET",
-          "path": "/books",
-          "operationId": "all",
-          "summary": "",
+          "path": "/actuator",
+          "operationId": "get_/actuator",
+          "summary": "List available actuator endpoints",
           "tags": [
-            "book-controller"
+            "Actuator"
           ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000463,
-          "speed_download": 20000
+          "http_code": 200,
+          "size_download": 237,
+          "time_total": 0.027264,
+          "speed_download": 8692
         },
         {
           "method": "GET",
-          "path": "/books/{id}",
-          "operationId": "byId",
-          "summary": "",
+          "path": "/actuator/info",
+          "operationId": "get_/actuator/info",
+          "summary": "Application info",
           "tags": [
-            "book-controller"
+            "Actuator"
           ],
           "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.010405,
-          "speed_download": 17684
+          "size_download": 219,
+          "time_total": 0.02808,
+          "speed_download": 7799
         },
         {
           "method": "GET",
-          "path": "/books/{id}",
-          "operationId": "byId",
-          "summary": "",
+          "path": "/actuator/metrics",
+          "operationId": "get_/actuator/metrics",
+          "summary": "Process & GC metrics",
           "tags": [
-            "book-controller"
+            "Actuator"
           ],
           "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.010405,
-          "speed_download": 17684
+          "size_download": 226,
+          "time_total": 0.033689,
+          "speed_download": 6708
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "operationId": "get_/",
+          "summary": "",
+          "tags": [
+            "GreenScoreApi"
+          ],
+          "http_code": 200,
+          "size_download": 735,
+          "time_total": 0.098864,
+          "speed_download": 7434
+        },
+        {
+          "method": "GET",
+          "path": "/Products",
+          "operationId": "get_/Products",
+          "summary": "",
+          "tags": [
+            "Products"
+          ],
+          "http_code": 200,
+          "size_download": 316,
+          "time_total": 0.03198,
+          "speed_download": 9881
+        },
+        {
+          "method": "POST",
+          "path": "/Products",
+          "operationId": "post_/Products",
+          "summary": "",
+          "tags": [
+            "Products"
+          ],
+          "http_code": 415,
+          "size_download": 176,
+          "time_total": 0.042232,
+          "speed_download": 4167
+        },
+        {
+          "method": "GET",
+          "path": "/Products/{id}",
+          "operationId": "get_/Products/{id}",
+          "summary": "",
+          "tags": [
+            "Products"
+          ],
+          "http_code": 200,
+          "size_download": 81,
+          "time_total": 0.032669,
+          "speed_download": 2479
         },
         {
           "method": "PUT",
-          "path": "/books/{id}",
-          "operationId": "updateBook",
+          "path": "/Products/{id}",
+          "operationId": "put_/Products/{id}",
           "summary": "",
           "tags": [
-            "book-controller"
+            "Products"
           ],
-          "http_code": 400,
-          "size_download": 316,
-          "time_total": 0.004983,
-          "speed_download": 63416
+          "http_code": 415,
+          "size_download": 176,
+          "time_total": 0.037994,
+          "speed_download": 4632
         },
         {
           "method": "GET",
-          "path": "/reactive/books/{id}/summary",
-          "operationId": "summaryRange",
+          "path": "/Scores/leaderboard",
+          "operationId": "get_/Scores/leaderboard",
           "summary": "",
           "tags": [
-            "book-reactive-controller"
+            "Scores"
           ],
           "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.011738,
-          "speed_download": 0
+          "size_download": 238,
+          "time_total": 0.032304,
+          "speed_download": 7367
         },
         {
           "method": "POST",
-          "path": "/reactive/books/{id}/summary",
-          "operationId": "updateSummary",
+          "path": "/Scores/calculate",
+          "operationId": "post_/Scores/calculate",
           "summary": "",
           "tags": [
-            "book-reactive-controller"
+            "Scores"
           ],
-          "http_code": 400,
-          "size_download": 389,
-          "time_total": 0.000973,
-          "speed_download": 389000
+          "http_code": 415,
+          "size_download": 176,
+          "time_total": 0.030648,
+          "speed_download": 5742
         },
         {
           "method": "GET",
-          "path": "/books/{id}/summary",
-          "operationId": "summaryRange_1",
+          "path": "/WeatherForecast",
+          "operationId": "GetWeatherForecast",
           "summary": "",
           "tags": [
-            "book-controller"
+            "WeatherForecast"
           ],
           "http_code": 200,
-          "size_download": 34,
-          "time_total": 0.001452,
-          "speed_download": 23408
-        },
-        {
-          "method": "POST",
-          "path": "/books/{id}/summary",
-          "operationId": "updateSummary_1",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 400,
-          "size_download": 343,
-          "time_total": 0.001014,
-          "speed_download": 338222
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books",
-          "operationId": "allBooksWithoutCache",
-          "summary": "",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.008491,
-          "speed_download": 0
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/{id}",
-          "operationId": "byId_1",
-          "summary": "",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.003077,
-          "speed_download": 0
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/select",
-          "operationId": "select",
-          "summary": "",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 200,
-          "size_download": 0,
-          "time_total": 0.00534,
-          "speed_download": 0
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/changes",
-          "operationId": "changes",
-          "summary": "",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 400,
-          "size_download": 207,
-          "time_total": 0.000635,
-          "speed_download": 207000
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/cbor",
-          "operationId": "getBooksCbor",
-          "summary": "",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 429,
-          "size_download": 13,
-          "time_total": 0.002611,
-          "speed_download": 5106
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/cacheable",
-          "operationId": "allBooks",
-          "summary": "",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000373,
-          "speed_download": 20000
-        },
-        {
-          "method": "GET",
-          "path": "/books",
-          "operationId": "all",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000463,
-          "speed_download": 20000
-        },
-        {
-          "method": "GET",
-          "path": "/books/select",
-          "operationId": "select_1",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000391,
-          "speed_download": 20000
-        },
-        {
-          "method": "GET",
-          "path": "/books/noCache/{id}",
-          "operationId": "byId_2",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.0004,
-          "speed_download": 20000
-        },
-        {
-          "method": "GET",
-          "path": "/books/changes",
-          "operationId": "changes_1",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000381,
-          "speed_download": 20000
-        },
-        {
-          "method": "GET",
-          "path": "/books/cbor",
-          "operationId": "getBooksCbor_1",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000421,
-          "speed_download": 20000
-        },
-        {
-          "method": "GET",
-          "path": "/books/batch",
-          "operationId": "batch",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000385,
-          "speed_download": 20000
-        },
-        {
-          "method": "GET",
-          "path": "/books/async",
-          "operationId": "getBooksAsync",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.00039,
-          "speed_download": 20000
-        },
-        {
-          "method": "GET",
-          "path": "/books/async/{id}",
-          "operationId": "getBookByIdAsync",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 429,
-          "size_download": 20,
-          "time_total": 0.000402,
-          "speed_download": 20000
+          "size_download": 1137,
+          "time_total": 0.034809,
+          "speed_download": 32673
         }
       ]
     }
