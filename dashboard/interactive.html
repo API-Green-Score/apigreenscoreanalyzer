@@ -1373,6 +1373,10 @@ function renderResults(envelope, cfg, log){
 function setMainTab(name){
   document.querySelectorAll(".main-tab").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
   document.querySelectorAll(".tab-pane").forEach(p => p.classList.toggle("active", p.id === "tab-"+name));
+  // Global live console is only useful for the Remote tab — the Local tab
+  // already embeds its own inline console (start.sh logs).
+  const gcp = document.getElementById("global-console-panel");
+  if (gcp) gcp.style.display = (name === "remote") ? "" : "none";
   // Persist last tab
   try { localStorage.setItem("greenapi.activeTab", name); } catch {}
   window.scrollTo({top:0, behavior:"smooth"});
@@ -1383,7 +1387,8 @@ document.querySelectorAll(".main-tab").forEach(b => {
 try {
   const saved = localStorage.getItem("greenapi.activeTab");
   if (saved === "local") setMainTab("local");
-} catch {}
+  else setMainTab("remote");   // ensure global console visibility matches initial tab
+} catch { setMainTab("remote"); }
 
 // ════════════════════════════════════════════════════════════════
 // ── Local analysis (delegates to scripts/start.sh via the bridge)

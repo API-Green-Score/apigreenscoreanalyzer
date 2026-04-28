@@ -1,7 +1,7 @@
 {
-  "appname": "apigreenscoreanalyzer",
+  "appname": "dotcreedgreen",
   "report": {
-    "timestamp": "2026-04-28T20:22:57Z",
+    "timestamp": "2026-04-28T23:16:50Z",
     "green_score": {
       "total": 49,
       "max": 100,
@@ -799,10 +799,10 @@
     "measurements": {
       "baseline": {
         "full_payload": {
-          "http_code": 400,
-          "size_download": 389,
-          "time_total": 0.000973,
-          "speed_download": 389000
+          "http_code": 200,
+          "size_download": 1138,
+          "time_total": 0.036966,
+          "speed_download": 30784
         },
         "single_resource": {
           "http_code": 0,
@@ -820,9 +820,9 @@
       "optimized": {
         "full_payload": {
           "http_code": 200,
-          "size_download": 1137,
-          "time_total": 0.034809,
-          "speed_download": 32673
+          "size_download": 1138,
+          "time_total": 0.036966,
+          "speed_download": 30784
         }
       }
     },
@@ -834,68 +834,68 @@
         "get:/actuator": {
           "http_code": 200,
           "size_download": 237,
-          "time_total": 0.027264,
-          "speed_download": 8692
+          "time_total": 0.027024,
+          "speed_download": 8769
         },
         "get:/actuator/info": {
           "http_code": 200,
           "size_download": 219,
-          "time_total": 0.02808,
-          "speed_download": 7799
+          "time_total": 0.03079,
+          "speed_download": 7112
         },
         "get:/actuator/metrics": {
           "http_code": 200,
-          "size_download": 226,
-          "time_total": 0.033689,
-          "speed_download": 6708
+          "size_download": 228,
+          "time_total": 0.029332,
+          "speed_download": 7772
         },
         "get:/": {
           "http_code": 200,
           "size_download": 735,
-          "time_total": 0.098864,
-          "speed_download": 7434
+          "time_total": 0.099201,
+          "speed_download": 7409
         },
         "get:/Products": {
           "http_code": 200,
           "size_download": 316,
-          "time_total": 0.03198,
-          "speed_download": 9881
+          "time_total": 0.039337,
+          "speed_download": 8033
         },
         "post:/Products": {
           "http_code": 415,
           "size_download": 176,
-          "time_total": 0.042232,
-          "speed_download": 4167
+          "time_total": 0.033449,
+          "speed_download": 5261
         },
         "get:/Products/{id}": {
           "http_code": 200,
           "size_download": 81,
-          "time_total": 0.032669,
-          "speed_download": 2479
+          "time_total": 0.035389,
+          "speed_download": 2288
         },
         "put:/Products/{id}": {
           "http_code": 415,
           "size_download": 176,
-          "time_total": 0.037994,
-          "speed_download": 4632
+          "time_total": 0.030614,
+          "speed_download": 5749
         },
         "get:/Scores/leaderboard": {
           "http_code": 200,
           "size_download": 238,
-          "time_total": 0.032304,
-          "speed_download": 7367
+          "time_total": 0.032544,
+          "speed_download": 7313
         },
         "post:/Scores/calculate": {
           "http_code": 415,
           "size_download": 176,
-          "time_total": 0.030648,
-          "speed_download": 5742
+          "time_total": 0.033832,
+          "speed_download": 5202
         },
         "get:/WeatherForecast": {
           "http_code": 200,
-          "size_download": 1137,
-          "time_total": 0.034809,
-          "speed_download": 32673
+          "size_download": 1138,
+          "time_total": 0.036966,
+          "speed_download": 30784
         }
       },
       "discovered_endpoints": [
@@ -909,8 +909,8 @@
           ],
           "http_code": 200,
           "size_download": 237,
-          "time_total": 0.027264,
-          "speed_download": 8692
+          "time_total": 0.027024,
+          "speed_download": 8769
         },
         {
           "method": "GET",
@@ -922,8 +922,8 @@
           ],
           "http_code": 200,
           "size_download": 219,
-          "time_total": 0.02808,
-          "speed_download": 7799
+          "time_total": 0.03079,
+          "speed_download": 7112
         },
         {
           "method": "GET",
@@ -934,9 +934,9 @@
             "Actuator"
           ],
           "http_code": 200,
-          "size_download": 226,
-          "time_total": 0.033689,
-          "speed_download": 6708
+          "size_download": 228,
+          "time_total": 0.029332,
+          "speed_download": 7772
         },
         {
           "method": "GET",
@@ -948,8 +948,8 @@
           ],
           "http_code": 200,
           "size_download": 735,
-          "time_total": 0.098864,
-          "speed_download": 7434
+          "time_total": 0.099201,
+          "speed_download": 7409
         },
         {
           "method": "GET",
@@ -961,8 +961,8 @@
           ],
           "http_code": 200,
           "size_download": 316,
-          "time_total": 0.03198,
-          "speed_download": 9881
+          "time_total": 0.039337,
+          "speed_download": 8033
         },
         {
           "method": "POST",
@@ -974,8 +974,8 @@
           ],
           "http_code": 415,
           "size_download": 176,
-          "time_total": 0.042232,
-          "speed_download": 4167
+          "time_total": 0.033449,
+          "speed_download": 5261
         },
         {
           "method": "GET",
@@ -987,8 +987,8 @@
           ],
           "http_code": 200,
           "size_download": 81,
-          "time_total": 0.032669,
-          "speed_download": 2479
+          "time_total": 0.035389,
+          "speed_download": 2288
         },
         {
           "method": "PUT",
@@ -1000,8 +1000,8 @@
           ],
           "http_code": 415,
           "size_download": 176,
-          "time_total": 0.037994,
-          "speed_download": 4632
+          "time_total": 0.030614,
+          "speed_download": 5749
         },
         {
           "method": "GET",
@@ -1013,8 +1013,8 @@
           ],
           "http_code": 200,
           "size_download": 238,
-          "time_total": 0.032304,
-          "speed_download": 7367
+          "time_total": 0.032544,
+          "speed_download": 7313
         },
         {
           "method": "POST",
@@ -1026,8 +1026,8 @@
           ],
           "http_code": 415,
           "size_download": 176,
-          "time_total": 0.030648,
-          "speed_download": 5742
+          "time_total": 0.033832,
+          "speed_download": 5202
         },
         {
           "method": "GET",
@@ -1038,9 +1038,9 @@
             "WeatherForecast"
           ],
           "http_code": 200,
-          "size_download": 1137,
-          "time_total": 0.034809,
-          "speed_download": 32673
+          "size_download": 1138,
+          "time_total": 0.036966,
+          "speed_download": 30784
         }
       ]
     }

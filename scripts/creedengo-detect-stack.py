@@ -384,24 +384,30 @@ def detect_javascript_typescript(root: Path) -> Optional[ModuleInfo]:
 
 
 def detect_csharp(root: Path) -> Optional[ModuleInfo]:
-    """Detect C# / .NET project (.csproj / .sln / global.json).
+    """Detect C# / .NET project (.csproj / .sln / .slnx / global.json).
 
     Also detects F# (*.fsproj) and VB.NET (*.vbproj) — emits a `notes` field
     stating Creedengo only supports C#. Reads Properties/launchSettings.json
     when present to pre-fill `default_url` for ASP.NET Core projects.
+
+    Recognised solution formats:
+      - *.sln  (legacy, Visual Studio binary-text)
+      - *.slnx (new XML solution format introduced with .NET 9 / VS 17.10+)
     """
     csproj_files = sorted(root.glob("*.csproj"))
     fsproj_files = sorted(root.glob("*.fsproj"))
     vbproj_files = sorted(root.glob("*.vbproj"))
-    sln_files    = sorted(root.glob("*.sln"))
+    sln_files    = sorted(list(root.glob("*.sln")) + list(root.glob("*.slnx")))
     global_json  = root / "global.json"
 
     if not (csproj_files or fsproj_files or vbproj_files or sln_files or global_json.is_file()):
-        # Check one level deep (common for src/MyApi/MyApi.csproj layouts)
-        csproj_files = sorted(root.glob("*/*.csproj"))
-        fsproj_files = sorted(root.glob("*/*.fsproj"))
-        vbproj_files = sorted(root.glob("*/*.vbproj"))
-        if not (csproj_files or fsproj_files or vbproj_files):
+        # Check up to 2 levels deep (common for src/MyApi/MyApi.csproj
+        # or src/MyApi/MyApi.Web/MyApi.Web.csproj layouts)
+        csproj_files = sorted(list(root.glob("*/*.csproj")) + list(root.glob("*/*/*.csproj")))
+        fsproj_files = sorted(list(root.glob("*/*.fsproj")) + list(root.glob("*/*/*.fsproj")))
+        vbproj_files = sorted(list(root.glob("*/*.vbproj")) + list(root.glob("*/*/*.vbproj")))
+        sln_files    = sorted(list(root.glob("*/*.sln"))    + list(root.glob("*/*.slnx")))
+        if not (csproj_files or fsproj_files or vbproj_files or sln_files):
             return None
 
     config_file = ""

@@ -1,10 +1,10 @@
 # 🌿 Green API Score Dashboard
 
-> 📦 **Application : apigreenscoreanalyzer**
+> 📦 **Application : dotcreedgreen**
 >
 > **Devoxx France 2026 — Green Architecture : moins de gras, plus d'impact !**
 
-📅 *Dernière analyse : 2026-04-28T20:22:57Z*
+📅 *Dernière analyse : 2026-04-28T23:16:50Z*
 
 ---
 
@@ -29,22 +29,22 @@
 | Méthode | Endpoint | Taille | Temps | HTTP |
 |:-------:|----------|-------:|------:|-----:|
 | GET | `/actuator` | 237 B | 0.027s | 200 |
-| GET | `/actuator/info` | 219 B | 0.028s | 200 |
-| GET | `/actuator/metrics` | 226 B | 0.034s | 200 |
+| GET | `/actuator/info` | 219 B | 0.031s | 200 |
+| GET | `/actuator/metrics` | 228 B | 0.029s | 200 |
 | GET | `/` | 735 B | 0.099s | 200 |
-| GET | `/Products` | 316 B | 0.032s | 200 |
-| POST | `/Products` | 176 B | 0.042s | 415 |
-| GET | `/Products/{id}` | 81 B | 0.033s | 200 |
-| PUT | `/Products/{id}` | 176 B | 0.038s | 415 |
-| GET | `/Scores/leaderboard` | 238 B | 0.032s | 200 |
-| POST | `/Scores/calculate` | 176 B | 0.031s | 415 |
-| GET | `/WeatherForecast` | 1.1 KB | 0.035s | 200 |
+| GET | `/Products` | 316 B | 0.039s | 200 |
+| POST | `/Products` | 176 B | 0.033s | 415 |
+| GET | `/Products/{id}` | 81 B | 0.035s | 200 |
+| PUT | `/Products/{id}` | 176 B | 0.031s | 415 |
+| GET | `/Scores/leaderboard` | 238 B | 0.033s | 200 |
+| POST | `/Scores/calculate` | 176 B | 0.034s | 415 |
+| GET | `/WeatherForecast` | 1.1 KB | 0.037s | 200 |
 
 ### 🔑 Métriques clés
 
 - **Endpoints mesurés** : 11
 - **Transfert total** : 3.7 KB
-- **Transfert moyen / endpoint** : 337 B
+- **Transfert moyen / endpoint** : 338 B
 - **Temps moyen** : 0.039s
 - **⚡ Énergie totale / appel** : 0.0032 Wh
 - **🌍 CO₂ / appel** : 0.00017 g (France — 53 gCO₂/kWh)
@@ -205,96 +205,6 @@ SimpleFilterProvider that keeps only the requested properties.
 OpenAPI: The 'fields' param will appear automatically.
 ```
 </details>
-
-
----
-
-## 🌱 Creedengo Éco-Design : **88/100** — Grade **A** 🟢
-
-> Analyse statique de l'éco-conception du code source via [Creedengo](https://github.com/green-code-initiative) / SonarQube
-
-> ⚠️ **Seules les règles Creedengo/écodesign sont comptabilisées** dans le score et le récapitulatif ci-dessous. Les règles SonarQube générales sont listées séparément.
-
-- **Langages détectés** : java
-- **Principal** : java
-- **Plugins Creedengo** : java
-
-### 📊 Récapitulatif — Règles Creedengo écodesign uniquement
-
-| Sévérité | Nombre |
-|:--------:|-------:|
-| 🔴 **Bloquant** | 0 |
-| 🟠 **Critique** | 0 |
-| 🟡 **Majeur** | 0 |
-| ⚪ **Mineur** | 142 |
-| 🔵 **Info** | 0 |
-| **Total** | **142** |
-
-- **Issues écodesign** : 142
-- **Règles écodesign violées** : 2 / 17 analysées
-- **Formule du score** : (1 − 2/17) × 100 = **88/100**
-- **Effort de remédiation** : 12h20min
-
-- **Lignes de code** : 718
-
-### 🏷️ Catégories éco-design
-
-| Catégorie | Issues | Règles |
-|-----------|-------:|-------:|
-| 🌱 Éco-conception générale | 140 | 1 |
-| 💾 Utilisation mémoire | 2 | 1 |
-
-### 📋 Règles Creedengo violées
-
-| Sévérité | Règle | Issues | Catégorie |
-|:--------:|-------|-------:|-----------|
-| ⚪ MINOR | **GCI82** — Variable can be made constant | 140 | general |
-| ⚪ MINOR | **GCI76** — Avoid usage of static collections. | 2 | memory |
-
-### 📁 Fichiers les plus impactés (écodesign)
-
-| Fichier | Issues |
-|---------|-------:|
-| `api/BookReactiveController.java` | 37 |
-| `api/BookController.java` | 36 |
-| `repo/BookRepository.java` | 19 |
-| `observability/PayloadLoggingFilter.java` | 8 |
-| `api/FieldSelector.java` | 7 |
-| `web/GlobalExceptionHandler.java` | 7 |
-| `domain/Book.java` | 6 |
-| `repo/BookRepository.java` | 5 |
-| `web/ApiError.java` | 5 |
-| `web/RateLimitFilter.java` | 5 |
-| *… et 5 autres* | |
-
----
-
-### 🔧 Issues SonarQube générales (hors écodesign) — 10 issues
-
-> Ces issues proviennent des règles SonarQube standard (qualité de code, bugs, sécurité). Elles ne sont **pas** comptabilisées dans le score Creedengo.
-
-| Sévérité | Nombre |
-|:--------:|-------:|
-| 🟠 Critique | 2 |
-| 🟡 Majeur | 2 |
-| ⚪ Mineur | 5 |
-| 🔵 Info | 1 |
-| **Total** | **10** |
-
-| Sévérité | Règle | Issues |
-|:--------:|-------|-------:|
-| 🟠 CRITICAL | **S1192** — S1192 | 2 |
-| 🟡 MAJOR | **S108** — S108 | 1 |
-| 🟡 MAJOR | **S107** — S107 | 1 |
-| ⚪ MINOR | **S1170** — S1170 | 2 |
-| ⚪ MINOR | **S1612** — S1612 | 1 |
-| ⚪ MINOR | **S1602** — S1602 | 1 |
-| ⚪ MINOR | **S1319** — S1319 | 1 |
-| 🔵 INFO | **S1135** — S1135 | 1 |
-
-- **Effort de remédiation SonarQube** : 1h02min
-
-📅 *2026-04-27T21:24:33Z*
 
 ---
 

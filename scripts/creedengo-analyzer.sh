@@ -276,7 +276,11 @@ if [ $DETECT_EXIT -ne 0 ] || [ -z "$DETECT_JSON" ]; then
     echo -e "${RED}   Error output:${NC}"
     cat "$DETECT_STDERR" >&2
   fi
-  echo -e "${YELLOW}   💡 Check that your project has a pom.xml, build.gradle, package.json, or requirements.txt${NC}"
+  echo -e "${YELLOW}   💡 Check that your project has one of:${NC}"
+  echo -e "${YELLOW}      • Java:    pom.xml, build.gradle(.kts)${NC}"
+  echo -e "${YELLOW}      • .NET:    *.sln, *.slnx, *.csproj (or global.json)${NC}"
+  echo -e "${YELLOW}      • Node:    package.json${NC}"
+  echo -e "${YELLOW}      • Python:  requirements.txt, pyproject.toml${NC}"
   rm -f "$DETECT_STDERR" 2>/dev/null
   exit 1
 fi
@@ -298,6 +302,7 @@ if [ -n "$FORCE_LANG" ]; then
     python) PLUGIN_KEYS="python" ;;
     javascript|typescript) PLUGIN_KEYS="javascript" ;;
     csharp) PLUGIN_KEYS="csharp" ;;
+    dotnet) PLUGIN_KEYS="csharp" ;;
     *) echo -e "${RED}❌ Unsupported language: $FORCE_LANG${NC}"; exit 1 ;;
   esac
 fi
@@ -487,10 +492,321 @@ fi
 #         - Validates JAR manifest contains Plugin-Key (SonarQube requirement)
 #         - Backup directory for offline use
 #         - csharp is skipped (NuGet analyzer, no SonarQube JAR published)
+#
+# ⚡ Pre-gate: ANY .NET / C# detection forces the Creedengo.Tool fast path —
+# we will NEVER start the SonarQube container for a C# project, even if other
+# languages are also present. Rationale: the Creedengo SonarQube C# JAR plugin
+# is not yet published (see green-code-initiative/creedengo-csharp-sonarqube),
+# so spinning up SonarQube would only run *Java* plugins on Java sources, never
+# the eco-design rules — which is exactly what the user wants to avoid.
 ###############################################################################
+CSHARP_DIRECT_PLANNED=false
+HAS_DOTNET_MODULE=false
+
+# Detect .NET presence from MULTIPLE signals (robust to detection edge cases):
+#   1. PRIMARY_LANG explicitly csharp/dotnet
+#   2. PLUGIN_KEYS contains csharp (set by detect_csharp() and by --lang dotnet)
+#   3. ALL_LANGUAGES contains csharp (multi-module / mixed-language repos)
+#   4. DOTNET_MODULE_DIR set by Step 2-bis (truthful filesystem evidence)
+case ",${PRIMARY_LANG},${PLUGIN_KEYS},${ALL_LANGUAGES}," in
+  *,csharp,*|*,dotnet,*) HAS_DOTNET_MODULE=true ;;
+esac
+[ -n "$DOTNET_MODULE_DIR" ] && HAS_DOTNET_MODULE=true
+
+if [ "$HAS_DOTNET_MODULE" = true ]; then
+  CSHARP_DIRECT_PLANNED=true
+  echo -e "${CYAN}⏩ .NET / C# project detected — switching to Creedengo.Tool fast path${NC}"
+  echo -e "   ${CYAN}↪ Skipping plugin downloads (Step 3) and SonarQube container (Steps 4–11)${NC}"
+  echo -e "   ${CYAN}↪ All analysis will be done locally via 'creedengo-cli' (.NET tool)${NC}"
+
+  # Hard requirement: dotnet SDK must be available. If missing, install it
+  # locally (no sudo) via the official dotnet-install script before falling
+  # back to an actionable error. We MUST NOT silently fall back to SonarQube
+  # (which would only analyze Java/JS — never C#) — that's the exact behaviour
+  # the user asked us to suppress.
+  DOTNET_LOCAL_ROOT="${DOTNET_ROOT:-$HOME/.dotnet}"
+  mkdir -p "$DOTNET_LOCAL_ROOT"
+  # Prepend so our local install wins over a system 'dotnet' that may not see
+  # the runtimes we just extracted (the apphost trusts $DOTNET_ROOT first).
+  export PATH="$DOTNET_LOCAL_ROOT:$DOTNET_LOCAL_ROOT/tools:$HOME/.dotnet/tools:$PATH"
+
+  # ── Always export DOTNET_ROOT (+ arch-specific variant) so the apphost can
+  # find the runtime, even when ``dotnet`` is already on PATH. The error
+  # ``DOTNET_ROOT_ARM64 = <not set> / DOTNET_ROOT = <not set>`` is exactly what
+  # the apphost prints when these are missing — so set them unconditionally.
+  export DOTNET_ROOT="$DOTNET_LOCAL_ROOT"
+  export DOTNET_NOLOGO=1
+  export DOTNET_CLI_TELEMETRY_OPTOUT=1
+  # The Roslyn MSBuild BuildHost subprocess (spawned by Creedengo.Tool when
+  # loading projects) literally calls `Process.Start("dotnet", …)` from its
+  # current directory — without DOTNET_HOST_PATH it fails with
+  # "An error occurred trying to start process 'dotnet' … No such file or directory".
+  if [ -x "$DOTNET_LOCAL_ROOT/dotnet" ]; then
+    export DOTNET_HOST_PATH="$DOTNET_LOCAL_ROOT/dotnet"
+  fi
+  _DOTNET_ARCH="$(uname -m 2>/dev/null || echo)"
+  case "$_DOTNET_ARCH" in
+    arm64|aarch64) export DOTNET_ROOT_ARM64="$DOTNET_LOCAL_ROOT" ;;
+    x86_64|amd64)  export DOTNET_ROOT_X64="$DOTNET_LOCAL_ROOT" ;;
+  esac
+  # Allow a net9.0 tool to launch on a higher runtime (e.g. the .NET 10
+  # backup pkg), which would otherwise be rejected by the default
+  # "Minor" roll-forward policy.
+  export DOTNET_ROLL_FORWARD="${DOTNET_ROLL_FORWARD:-Major}"
+
+  # Creedengo.Tool 2.x ships as net9.0 — we therefore default to channel 9.0.
+  # Override with DOTNET_CHANNEL=8.0 (or other) if you pin to an older Creedengo.Tool.
+  INSTALL_CHANNEL="${DOTNET_CHANNEL:-9.0}"
+  # Required runtime moniker(s) for Creedengo.Tool. The apphost looks for
+  # Microsoft.NETCore.App matching the tool's TFM — for v2.x that's net9.0.
+  REQUIRED_RUNTIME_MAJOR="${CREEDENGO_REQUIRED_RUNTIME:-9}"
+
+  # ── Helper: extract a locally-cached .NET runtime/SDK .pkg (macOS) or
+  # .tar.gz (Linux) into $DOTNET_LOCAL_ROOT without sudo. Looks in:
+  #     <repo>/.creedengo/.dotnet/*.pkg|*.tar.gz
+  # The macOS .pkg layout is:
+  #     <pkg>/<component>.pkg/Payload  (cpio.gz)
+  # whose contents map to /usr/local/share/dotnet/{shared,host,sdk,…}
+  # We extract Payload via ``cpio`` and copy the ``shared/host/sdk`` trees
+  # straight into $DOTNET_LOCAL_ROOT (which mirrors that layout).
+  _dotnet_install_from_backup() {
+    local backup_dir="$GREEN_DIR/.creedengo/.dotnet"
+    [ -d "$backup_dir" ] || return 1
+    local found=false rc_overall=1
+    shopt -s nullglob 2>/dev/null || true
+
+    for pkg in "$backup_dir"/dotnet-*.pkg "$backup_dir"/*.pkg; do
+      [ -f "$pkg" ] || continue
+      found=true
+      echo -e "  ${CYAN}📦 Extracting offline .NET payload: ${pkg##*/}${NC}"
+      local tmp; tmp=$(mktemp -d /tmp/dotnet-pkg-XXXXX) || continue
+      if pkgutil --expand-full "$pkg" "$tmp/expanded" >/dev/null 2>&1; then
+        # pkgutil --expand-full already explodes Payload into a directory tree.
+        # Each component pkg lays files under e.g. `<comp>.pkg/Payload/...`
+        # with an absolute-style structure starting at `usr/local/share/dotnet`
+        # OR directly at `shared/`, `host/`, `sdk/` depending on the package.
+        local src
+        for src in $(find "$tmp/expanded" -type d \
+                       \( -name "Payload" -o -name "shared" -o -name "host" -o -name "sdk" \) 2>/dev/null); do
+          case "$(basename "$src")" in
+            Payload)
+              # Inside Payload we expect either ./shared/... or ./usr/local/share/dotnet/shared/...
+              # or — for the host pkg — the ``dotnet`` binary at root.
+              if [ -d "$src/usr/local/share/dotnet" ]; then
+                cp -R "$src/usr/local/share/dotnet/." "$DOTNET_LOCAL_ROOT/" 2>/dev/null && rc_overall=0
+              elif [ -d "$src/shared" ] || [ -d "$src/host" ] || [ -d "$src/sdk" ] || [ -f "$src/dotnet" ]; then
+                cp -R "$src/." "$DOTNET_LOCAL_ROOT/" 2>/dev/null && rc_overall=0
+              fi
+              ;;
+            shared|host|sdk)
+              cp -R "$src" "$DOTNET_LOCAL_ROOT/" 2>/dev/null && rc_overall=0
+              ;;
+          esac
+        done
+      else
+        echo -e "  ${YELLOW}  ⚠ pkgutil --expand-full failed on ${pkg##*/}${NC}"
+      fi
+      rm -rf "$tmp" 2>/dev/null || true
+    done
+
+    # Linux/macOS .tar.gz fallback (e.g. dotnet-runtime-9.0.x-linux-x64.tar.gz)
+    for tarball in "$backup_dir"/dotnet-*.tar.gz "$backup_dir"/*.tar.gz; do
+      [ -f "$tarball" ] || continue
+      found=true
+      echo -e "  ${CYAN}📦 Extracting offline .NET tarball: ${tarball##*/}${NC}"
+      tar -xzf "$tarball" -C "$DOTNET_LOCAL_ROOT" 2>/dev/null && rc_overall=0
+    done
+
+    if [ "$found" = false ]; then
+      return 1
+    fi
+
+    # macOS Gatekeeper: strip quarantine + ad-hoc sign so the apphost can run.
+    if [ "$(uname -s 2>/dev/null)" = "Darwin" ]; then
+      xattr -dr com.apple.quarantine "$DOTNET_LOCAL_ROOT" 2>/dev/null || true
+      if command -v codesign >/dev/null 2>&1 && [ -x "$DOTNET_LOCAL_ROOT/dotnet" ]; then
+        codesign --force --deep --sign - "$DOTNET_LOCAL_ROOT/dotnet" >/dev/null 2>&1 || true
+      fi
+    fi
+    return $rc_overall
+  }
+
+  # ── Helper: install/refresh .NET via the official dotnet-install script ────
+  # Args: $1 = "sdk" | "runtime",  $2 = channel (e.g. 9.0),  $3 = runtime kind
+  #       (only for runtime: "dotnet" for shared framework / "aspnetcore" / …)
+  _dotnet_local_install() {
+    local kind="$1" channel="$2" runtime_kind="${3:-dotnet}"
+    local OS_NAME log_file
+    OS_NAME=$(uname -s 2>/dev/null || echo "Unknown")
+    log_file="/tmp/dotnet-install-$$.log"
+
+    case "$OS_NAME" in
+      Linux*|Darwin*|*BSD*)
+        local installer_url="https://dot.net/v1/dotnet-install.sh"
+        local installer_file="/tmp/dotnet-install-$$.sh"
+        echo -e "  ${CYAN}📥 Fetching ${installer_url}${NC}"
+        if ! { curl -fsSL "$installer_url" -o "$installer_file" 2>>"$log_file" \
+               || wget -qO  "$installer_file" "$installer_url" 2>>"$log_file"; }; then
+          echo -e "  ${RED}❌ Could not download dotnet-install.sh${NC}"
+          tail -10 "$log_file" 2>/dev/null || true
+          rm -f "$log_file" 2>/dev/null
+          return 1
+        fi
+        chmod +x "$installer_file"
+        local args=(--channel "$channel" --install-dir "$DOTNET_LOCAL_ROOT" --no-path)
+        if [ "$kind" = "runtime" ]; then
+          args+=(--runtime "$runtime_kind")
+          echo -e "  ${CYAN}⚙  bash $installer_file --runtime $runtime_kind --channel $channel --install-dir $DOTNET_LOCAL_ROOT${NC}"
+        else
+          echo -e "  ${CYAN}⚙  bash $installer_file --channel $channel --install-dir $DOTNET_LOCAL_ROOT${NC}"
+        fi
+        bash "$installer_file" "${args[@]}" 2>&1 | tee -a "$log_file" | tail -10
+        local rc=${PIPESTATUS[0]}
+        rm -f "$installer_file" 2>/dev/null
+        rm -f "$log_file" 2>/dev/null
+        export DOTNET_ROOT="$DOTNET_LOCAL_ROOT"
+        export PATH="$DOTNET_LOCAL_ROOT:$PATH"
+        export DOTNET_NOLOGO=1
+        export DOTNET_CLI_TELEMETRY_OPTOUT=1
+        # macOS only: locally-built dotnet binaries from dotnet-install.sh are
+        # not signed by Apple → Gatekeeper kills them with "Killed: 9" before
+        # they can even print --version. Strip quarantine + apply an ad-hoc
+        # codesign so the host can launch (and so it can later launch the
+        # Creedengo.Tool apphost too).
+        if [ "$OS_NAME" = "Darwin" ]; then
+          xattr -dr com.apple.quarantine "$DOTNET_LOCAL_ROOT" 2>/dev/null || true
+          if command -v codesign >/dev/null 2>&1 && [ -x "$DOTNET_LOCAL_ROOT/dotnet" ]; then
+            codesign --force --deep --sign - "$DOTNET_LOCAL_ROOT/dotnet" >/dev/null 2>&1 || true
+          fi
+        fi
+        return $rc
+        ;;
+      MINGW*|MSYS*|CYGWIN*)
+        echo -e "  ${YELLOW}⚠ Windows shell detected — please install .NET ${kind} manually:${NC}"
+        if [ "$kind" = "runtime" ]; then
+          echo -e "  ${YELLOW}   PowerShell:  iwr https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1; ./dotnet-install.ps1 -Runtime $runtime_kind -Channel $channel${NC}"
+        else
+          echo -e "  ${YELLOW}   PowerShell:  iwr https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1; ./dotnet-install.ps1 -Channel $channel${NC}"
+        fi
+        return 1
+        ;;
+      *)
+        echo -e "  ${YELLOW}⚠ Unknown OS '$OS_NAME' — install .NET ${kind} manually from https://dot.net/install${NC}"
+        return 1
+        ;;
+    esac
+  }
+
+  # ── Helper: does the system expose Microsoft.NETCore.App <major>.x ? ───────
+  # With DOTNET_ROLL_FORWARD=Major (set above), a net9.0 tool can also run on
+  # a higher runtime (10.x, 11.x, …) — so we accept ANY major ≥ required.
+  _dotnet_has_runtime_major() {
+    local need="$1"
+    command -v dotnet &>/dev/null || return 1
+    dotnet --list-runtimes 2>/dev/null \
+      | awk -v m="$need" '
+          $1=="Microsoft.NETCore.App" {
+            split($2, v, ".");
+            if (v[1]+0 >= m+0) { found=1 }
+          }
+          END { exit !found }'
+  }
+
+  # ── Step A: ensure the SDK is present (so `dotnet tool install` works) ─────
+  if ! command -v dotnet &>/dev/null; then
+    echo -e "  ${YELLOW}⚠ 'dotnet' SDK not in PATH — attempting local install (no sudo required)${NC}"
+    _dotnet_local_install sdk "$INSTALL_CHANNEL" || true
+
+    # If the network install failed, try the offline backup at
+    # <repo>/.creedengo/.dotnet/*.pkg (or *.tar.gz)
+    if ! command -v dotnet &>/dev/null; then
+      echo -e "  ${YELLOW}⚠ Network install failed — trying offline backup at .creedengo/.dotnet/${NC}"
+      _dotnet_install_from_backup || true
+    fi
+
+    if command -v dotnet &>/dev/null; then
+      DOTNET_VER=$(dotnet --version 2>/dev/null || echo "?")
+      echo -e "  ${GREEN}✓ .NET SDK installed locally — version $DOTNET_VER${NC}"
+      echo -e "  ${GREEN}  DOTNET_ROOT=$DOTNET_ROOT${NC}"
+    else
+      echo ""
+      echo -e "${RED}❌ .NET project detected but the 'dotnet' SDK could not be auto-installed${NC}"
+      echo -e "${YELLOW}   The Creedengo SonarQube plugin for C# is not published, so we${NC}"
+      echo -e "${YELLOW}   refuse to launch SonarQube here — it would never apply eco-design${NC}"
+      echo -e "${YELLOW}   rules to your C# code.${NC}"
+      echo -e "${YELLOW}   💡 Install .NET SDK ${INSTALL_CHANNEL} manually and re-run, e.g.:${NC}"
+      echo -e "${YELLOW}      • macOS:  brew install --cask dotnet-sdk${NC}"
+      echo -e "${YELLOW}      • Linux:  curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel ${INSTALL_CHANNEL}${NC}"
+      echo -e "${YELLOW}      • Win:    iwr https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1; ./dotnet-install.ps1 -Channel ${INSTALL_CHANNEL}${NC}"
+      echo -e "${YELLOW}      • Or run inside a container with the dotnet/sdk:${INSTALL_CHANNEL} image${NC}"
+      exit 1
+    fi
+  else
+    DOTNET_VER=$(dotnet --version 2>/dev/null || echo "?")
+    echo -e "  ${GREEN}✓ Found 'dotnet' on PATH — SDK $DOTNET_VER${NC}"
+  fi
+
+  # ── Step B: ensure the runtime required by Creedengo.Tool is installed ────
+  # Symptom this prevents:
+  #     "You must install or update .NET to run this application.
+  #      App: …/creedengo.tool/<ver>/tools/net9.0/any/Creedengo.Tool.dll
+  #      .NET location: Not found"
+  # Even when ``dotnet`` is on PATH (e.g. SDK 8 only), the apphost refuses to
+  # launch the tool if no ``Microsoft.NETCore.App`` of the right major exists.
+  if ! _dotnet_has_runtime_major "$REQUIRED_RUNTIME_MAJOR"; then
+    echo -e "  ${YELLOW}⚠ .NET runtime ${REQUIRED_RUNTIME_MAJOR}.x missing — Creedengo.Tool targets net${REQUIRED_RUNTIME_MAJOR}.0${NC}"
+    echo -e "  ${CYAN}📥 Installing .NET ${REQUIRED_RUNTIME_MAJOR}.0 runtime locally (no sudo required)...${NC}"
+    if _dotnet_local_install runtime "${REQUIRED_RUNTIME_MAJOR}.0" dotnet \
+       && _dotnet_has_runtime_major "$REQUIRED_RUNTIME_MAJOR"; then
+      echo -e "  ${GREEN}✓ .NET ${REQUIRED_RUNTIME_MAJOR}.x runtime installed under $DOTNET_ROOT${NC}"
+    else
+      # Last-ditch attempt: install the full SDK of the required major (it
+      # bundles the matching shared runtime).
+      echo -e "  ${YELLOW}⚠ Runtime install failed — falling back to installing the SDK ${REQUIRED_RUNTIME_MAJOR}.0${NC}"
+      _dotnet_local_install sdk "${REQUIRED_RUNTIME_MAJOR}.0" || true
+    fi
+
+    # Offline backup fallback: extract any locally-cached .pkg/.tar.gz the
+    # operator dropped at <repo>/.creedengo/.dotnet/. With
+    # DOTNET_ROLL_FORWARD=Major this can be a higher major than required
+    # (e.g. dotnet-runtime-10.x for a net9.0 tool).
+    if ! _dotnet_has_runtime_major "$REQUIRED_RUNTIME_MAJOR"; then
+      echo -e "  ${YELLOW}⚠ Online runtime install failed — trying offline backup at .creedengo/.dotnet/${NC}"
+      _dotnet_install_from_backup || true
+    fi
+
+    if ! _dotnet_has_runtime_major "$REQUIRED_RUNTIME_MAJOR"; then
+      echo ""
+      echo -e "${RED}❌ Could not install the .NET ${REQUIRED_RUNTIME_MAJOR}.x runtime required by Creedengo.Tool${NC}"
+      echo -e "${YELLOW}   The tool ships as net${REQUIRED_RUNTIME_MAJOR}.0 and refuses to launch without it.${NC}"
+      echo -e "${YELLOW}   💡 Install the .NET ${REQUIRED_RUNTIME_MAJOR}.0 runtime manually and re-run:${NC}"
+      echo -e "${YELLOW}      • macOS (arm64): brew install --cask dotnet  # or:${NC}"
+      echo -e "${YELLOW}        curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --runtime dotnet --channel ${REQUIRED_RUNTIME_MAJOR}.0${NC}"
+      echo -e "${YELLOW}      • Linux: curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --runtime dotnet --channel ${REQUIRED_RUNTIME_MAJOR}.0${NC}"
+      echo -e "${YELLOW}      • Win:   iwr https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1; ./dotnet-install.ps1 -Runtime dotnet -Channel ${REQUIRED_RUNTIME_MAJOR}.0${NC}"
+      echo -e "${YELLOW}      • Direct download: https://aka.ms/dotnet-core-applaunch?missing_runtime=true${NC}"
+      echo -e "${YELLOW}      • Override the requirement: CREEDENGO_REQUIRED_RUNTIME=8 ${0##*/}${NC}"
+      exit 1
+    fi
+  else
+    if [ "$DEBUG_MODE" = true ]; then
+      echo -e "  ${GREEN}✓ .NET ${REQUIRED_RUNTIME_MAJOR}.x runtime is available${NC}"
+    fi
+  fi
+  echo ""
+fi
+
+# Always define PLUGIN_DIR / BACKUP_DIR — they are referenced by Step 4
+# (SonarQube docker run) and the C# JAR detection block, even when Step 3
+# below is skipped via CSHARP_DIRECT_PLANNED=true. Without this guard, ``set
+# -u`` (nounset) would crash with "PLUGIN_DIR: unbound variable" if the C#
+# fast path silently fell through to the SonarQube branch (e.g. mixed-language
+# repos where csharp planning is true but Java/JS modules also need scanning).
 PLUGIN_DIR="$GREEN_DIR/.creedengo/plugins"
 BACKUP_DIR="$GREEN_DIR/.creedengo/backup"
 mkdir -p "$PLUGIN_DIR" "$BACKUP_DIR"
+
+if [ "$CSHARP_DIRECT_PLANNED" = false ]; then
 
 # ── Purge corrupted JARs (no Plugin-Key in manifest) on startup ──
 for dir in "$PLUGIN_DIR" "$BACKUP_DIR"; do
@@ -674,11 +990,446 @@ if [ -z "$ALL_SONAR_REPOS" ]; then
   echo -e "  ${GREEN}✓ ALL_SONAR_LANGS=${ALL_SONAR_LANGS}${NC}"
 fi
 
+fi  # ── end of "if [ \"$CSHARP_DIRECT_PLANNED\" = false ]" wrapping Step 3 (plugin downloads) ──
+
 echo ""
+
+###############################################################################
+# Step 3-bis: Fast path for C# / .NET via the official Creedengo .NET tool
+#             (https://github.com/green-code-initiative/creedengo-csharp)
+#
+# When the project is C#-only and ``dotnet`` is available locally, we bypass
+# SonarQube entirely and use ``Creedengo.Tool`` (NuGet) which writes JSON
+# directly. This is:
+#   • ✓ much faster (no Docker, no ES shard recovery, no quality profile setup)
+#   • ✓ uses the canonical eco-design ruleset (Creedengo Roslyn analyzers)
+#   • ✓ produces the report format the dashboard already understands (after
+#     conversion via creedengo-cli-to-report.py).
+#
+# A side benefit: this works even when the SonarQube creedengo-csharp JAR plugin
+# is absent (which is currently the case — green-code-initiative does not yet
+# publish one for SonarQube; see creedengo-csharp-sonarqube companion repo).
+#
+# The flag CSHARP_DIRECT_DONE=true short-circuits Steps 4 → 11 below, jumping
+# straight to Step 12 (embed detection metadata) and the dashboard wrap-up.
+###############################################################################
+CSHARP_DIRECT_DONE=false
+# Run the fast path whenever the pre-gate planned it OR — for safety — whenever
+# we still see any .NET signal. This guarantees we never silently regress to
+# SonarQube for a C# project.
+if [ "$CSHARP_DIRECT_PLANNED" = true ] || [ -n "$DOTNET_MODULE_DIR" ] \
+   || echo "${PLUGIN_KEYS}" | grep -q "csharp"; then
+
+  # If the SDK isn't here, we already exited above when CSHARP_DIRECT_PLANNED
+  # was set; this guard is a defence in depth in case a custom build path
+  # reaches this block without going through the pre-gate.
+  if ! command -v dotnet &>/dev/null; then
+    echo -e "${YELLOW}⚠ Skipping Creedengo .NET fast path — 'dotnet' SDK not in PATH${NC}"
+  else
+
+  echo -e "${YELLOW}━━━ 🐝 Creedengo C# fast path (.NET tool) ━━━${NC}"
+  echo -e "  Tool:    ${CYAN}Creedengo.Tool${NC} (https://www.nuget.org/packages/Creedengo.Tool)"
+  echo -e "  Target:  ${CYAN}${DOTNET_ENTRY_POINT:-$DOTNET_MODULE_DIR}${NC}"
+
+  # Ensure user-installed global tools are on PATH
+  export PATH="$PATH:$HOME/.dotnet/tools"
+
+  # Local offline backup: when nuget.org is unreachable (CI behind a proxy,
+  # offline workshops, etc.), drop a pre-downloaded ``Creedengo.Tool.<ver>.nupkg``
+  # — or a pre-extracted CLI binary — into one of these paths.
+  CREEDENGO_TOOL_BACKUP_DIRS=(
+    "$GREEN_DIR/.creedengo/.creedengo.tool"
+    "$GREEN_DIR/.creedengo/creedengo.tool"
+    "$GREEN_DIR/.creedengo/backup/creedengo.tool"
+  )
+
+  # ── Helper: locate the installed Creedengo CLI binary ──────────────────────
+  # The NuGet package ID is "Creedengo.Tool" (a.k.a. lowercase "creedengo.tool")
+  # but the executable name (``<ToolCommandName>`` in the .csproj) varies across
+  # versions: v1.x → ``creedengo``, v2.x → ``creedengo-cli``, may change again.
+  # This helper queries ``dotnet tool list --global`` for the **actual command
+  # name** declared by the package, then resolves it on disk. Falls back to
+  # globbing ``~/.dotnet/tools/creedengo*`` for robustness.
+  _find_creedengo_cli() {
+    # Try parsing "Commands" column from `dotnet tool list --global`.
+    # Output format (whitespace-separated):
+    #   Package ID       Version   Commands
+    #   ---------------- --------- ------------
+    #   creedengo.tool   2.1.0     creedengo-cli
+    local cmd
+    cmd=$(dotnet tool list --global 2>/dev/null \
+          | awk 'tolower($1) ~ /^creedengo\.tool$/ {print $3; exit}')
+    if [ -n "$cmd" ]; then
+      if command -v "$cmd" &>/dev/null; then echo "$cmd"; return 0; fi
+      [ -x "$HOME/.dotnet/tools/$cmd" ] && { echo "$HOME/.dotnet/tools/$cmd"; return 0; }
+    fi
+    # Glob-based discovery
+    for cand in "$HOME/.dotnet/tools/"creedengo-cli \
+                "$HOME/.dotnet/tools/"creedengo \
+                "$HOME/.dotnet/tools/"creedengo.tool \
+                "$HOME/.dotnet/tools/"creedengo*; do
+      [ -x "$cand" ] && { echo "$cand"; return 0; }
+    done
+    return 1
+  }
+
+  # ── Helper: is the package already registered as a global dotnet tool? ──
+  _creedengo_tool_installed() {
+    dotnet tool list --global 2>/dev/null \
+      | awk 'tolower($1) ~ /^creedengo\.tool$/' | grep -q .
+  }
+
+  # If already installed (e.g. by a previous run or by the user), skip install.
+  if ! CREEDENGO_CLI_BIN=$(_find_creedengo_cli); then
+    echo -e "  ${CYAN}📥 Installing Creedengo.Tool global tool (online from nuget.org)...${NC}"
+    INSTALL_LOG="/tmp/creedengo-cli-install-$$.log"
+    : >"$INSTALL_LOG"
+
+    # Note: ``dotnet tool install --global`` returns a non-zero exit code with
+    # message "is already installed" if the package was previously registered
+    # (even partially). We treat that as success and continue to the binary
+    # check below — that's why we don't ``|| exit`` here.
+    dotnet tool install --global Creedengo.Tool >>"$INSTALL_LOG" 2>&1 \
+      || dotnet tool update  --global Creedengo.Tool >>"$INSTALL_LOG" 2>&1 \
+      || true
+
+    # ── Try offline backup if the binary still isn't reachable ──
+    if ! CREEDENGO_CLI_BIN=$(_find_creedengo_cli); then
+      echo -e "  ${YELLOW}⚠ Online install did not yield a usable CLI — searching local backup...${NC}"
+      BACKUP_NUPKG=""
+      BACKUP_BIN=""
+      BACKUP_DIR_USED=""
+      for d in "${CREEDENGO_TOOL_BACKUP_DIRS[@]}"; do
+        [ -d "$d" ] || continue
+        # .nupkg names are case-insensitive on disk; match both spellings
+        cand=$(ls -1 "$d"/Creedengo.Tool*.nupkg "$d"/creedengo.tool*.nupkg 2>/dev/null | sort -V | tail -1)
+        if [ -n "$cand" ] && [ -f "$cand" ]; then BACKUP_NUPKG="$cand"; BACKUP_DIR_USED="$d"; break; fi
+        for b in "$d/creedengo-cli" "$d/creedengo-cli.exe" "$d/creedengo" "$d/creedengo.tool"; do
+          if [ -x "$b" ] || [ -f "$b" ]; then BACKUP_BIN="$b"; BACKUP_DIR_USED="$d"; break; fi
+        done
+        [ -n "$BACKUP_BIN" ] && break
+      done
+
+      if [ -n "$BACKUP_NUPKG" ]; then
+        echo -e "  ${CYAN}📦 Found offline package: ${BACKUP_NUPKG}${NC}"
+
+        # Critical: the dotnet CLI's ``--add-source`` resolves to the version
+        # *being installed* — but if "creedengo.tool" is already registered as
+        # a global tool (from a failed run, system-wide install, or prior
+        # offline attempt) we MUST uninstall first or ``install`` will exit
+        # with "is already installed" and never copy the new binary.
+        if _creedengo_tool_installed; then
+          echo -e "  ${CYAN}↻ Uninstalling stale 'creedengo.tool' global tool entry...${NC}"
+          dotnet tool uninstall --global creedengo.tool >>"$INSTALL_LOG" 2>&1 \
+            || dotnet tool uninstall --global Creedengo.Tool >>"$INSTALL_LOG" 2>&1 \
+            || true
+        fi
+
+        echo -e "  ${CYAN}⚙  dotnet tool install --global --add-source \"$BACKUP_DIR_USED\" Creedengo.Tool${NC}"
+        dotnet tool install --global --add-source "$BACKUP_DIR_USED" Creedengo.Tool \
+          >>"$INSTALL_LOG" 2>&1 \
+          || dotnet tool install --global --add-source "$BACKUP_DIR_USED" creedengo.tool \
+          >>"$INSTALL_LOG" 2>&1 \
+          || true
+
+        if CREEDENGO_CLI_BIN=$(_find_creedengo_cli); then
+          echo -e "  ${GREEN}✓ Creedengo.Tool installed from local backup → $CREEDENGO_CLI_BIN${NC}"
+        fi
+      elif [ -n "$BACKUP_BIN" ]; then
+        echo -e "  ${CYAN}📦 Found pre-built binary: ${BACKUP_BIN}${NC}"
+        chmod +x "$BACKUP_BIN" 2>/dev/null || true
+        export PATH="$BACKUP_DIR_USED:$PATH"
+        CREEDENGO_CLI_BIN="$BACKUP_BIN"
+        echo -e "  ${GREEN}✓ Using local Creedengo.Tool binary${NC}"
+      fi
+    fi
+
+    # ── If the package is registered but binary still not found, surface this ──
+    if [ -z "${CREEDENGO_CLI_BIN:-}" ] && _creedengo_tool_installed; then
+      echo -e "  ${YELLOW}ℹ Package 'creedengo.tool' is registered but its CLI command was not located.${NC}"
+      echo -e "  ${YELLOW}   Tools dir contents:${NC}"
+      ls -la "$HOME/.dotnet/tools/" 2>/dev/null | sed 's/^/      /' | head -20
+    fi
+
+    if [ -z "${CREEDENGO_CLI_BIN:-}" ]; then
+      echo -e "  ${YELLOW}⚠ Could not install Creedengo.Tool (online + offline both failed)${NC}"
+      echo -e "  ${YELLOW}   💡 Drop a pre-downloaded NuGet package at:${NC}"
+      echo -e "  ${YELLOW}      ${CREEDENGO_TOOL_BACKUP_DIRS[0]}/Creedengo.Tool.<version>.nupkg${NC}"
+      echo -e "  ${YELLOW}   📜 Last install log (tail):${NC}"
+      tail -15 "$INSTALL_LOG" 2>/dev/null | sed 's/^/      /'
+    fi
+    rm -f "$INSTALL_LOG" 2>/dev/null
+  else
+    echo -e "  ${GREEN}✓ Creedengo.Tool already installed → $CREEDENGO_CLI_BIN${NC}"
+  fi
+
+  if [ -n "${CREEDENGO_CLI_BIN:-}" ]; then
+    CREEDENGO_TOOL_VERSION=$(dotnet tool list --global 2>/dev/null \
+      | awk 'tolower($1) ~ /^creedengo\.tool$/ {print $2; exit}')
+    [ -z "$CREEDENGO_TOOL_VERSION" ] && CREEDENGO_TOOL_VERSION="unknown"
+
+    # Pick the analysis target (prefer .sln/.slnx, then .csproj, then nested csproj)
+    CREEDENGO_TARGET="${DOTNET_ENTRY_POINT:-}"
+    if [ -z "$CREEDENGO_TARGET" ] || [ ! -e "$CREEDENGO_TARGET" ]; then
+      CREEDENGO_TARGET=$(ls "$DOTNET_MODULE_DIR"/*.slnx 2>/dev/null | head -1)
+      [ -z "$CREEDENGO_TARGET" ] && CREEDENGO_TARGET=$(ls "$DOTNET_MODULE_DIR"/*.sln    2>/dev/null | head -1)
+      [ -z "$CREEDENGO_TARGET" ] && CREEDENGO_TARGET=$(ls "$DOTNET_MODULE_DIR"/*.csproj 2>/dev/null | head -1)
+      [ -z "$CREEDENGO_TARGET" ] && CREEDENGO_TARGET=$(ls "$DOTNET_MODULE_DIR"/*/*.csproj 2>/dev/null | head -1)
+    fi
+
+    if [ -z "$CREEDENGO_TARGET" ] || [ ! -e "$CREEDENGO_TARGET" ]; then
+      echo -e "  ${YELLOW}⚠ Could not locate a .sln/.slnx/.csproj under ${DOTNET_MODULE_DIR} — falling back${NC}"
+    else
+      # ── Workaround for upstream packaging bug in Creedengo.Tool 2.x ────────
+      # The published .nupkg does NOT include `Creedengo.globalconfig` (the
+      # editorconfig file the analyzer reads to map GCI* rule severities).
+      # Without it the CLI errors with:
+      #   "Editor config file not found at .../tools/net9.0/any/Creedengo.globalconfig"
+      # We synthesize a minimal valid one in the tool's BaseDirectory if missing.
+      CREEDENGO_TOOL_DIR=$(dirname "$(readlink "$CREEDENGO_CLI_BIN" 2>/dev/null || echo "$CREEDENGO_CLI_BIN")")
+      # `creedengo` in $HOME/.dotnet/tools is a shim — the real tool lives under
+      # .store/creedengo.tool/<ver>/creedengo.tool/<ver>/tools/<tfm>/any/.
+      if [ ! -d "$CREEDENGO_TOOL_DIR" ] || [ ! -f "$CREEDENGO_TOOL_DIR/Creedengo.Tool.dll" ]; then
+        CREEDENGO_TOOL_DIR=$(find "$HOME/.dotnet/tools/.store/creedengo.tool" \
+                              -type f -name "Creedengo.Tool.dll" 2>/dev/null \
+                            | head -1 | xargs -I{} dirname {} 2>/dev/null)
+      fi
+      if [ -n "$CREEDENGO_TOOL_DIR" ] && [ -d "$CREEDENGO_TOOL_DIR" ] \
+         && [ ! -f "$CREEDENGO_TOOL_DIR/Creedengo.globalconfig" ]; then
+        #    <repo>/.creedengo/.dotnet/Creedengo.globalconfig (matches the
+        #    upstream creedengo-csharp release artifact).
+        BACKUP_GLOBALCONFIG="$GREEN_DIR/.creedengo/.dotnet/Creedengo.globalconfig"
+        if [ -f "$BACKUP_GLOBALCONFIG" ]; then
+          echo -e "  ${YELLOW}⚠ Creedengo.globalconfig missing from tool install — copying offline backup${NC}"
+          cp "$BACKUP_GLOBALCONFIG" "$CREEDENGO_TOOL_DIR/Creedengo.globalconfig"
+          echo -e "  ${GREEN}  ✓ Copied $BACKUP_GLOBALCONFIG → $CREEDENGO_TOOL_DIR/Creedengo.globalconfig${NC}"
+        else
+          # 2) Fallback: synthesize a minimal valid one so the CLI launches.
+          echo -e "  ${YELLOW}⚠ Creedengo.globalconfig missing from tool install — synthesizing a minimal one${NC}"
+          # is_global=true makes this an unconditional .editorconfig that applies
+          # to every analyzed file. global_level=100 means it overrides any other
+          # config a user project may also define. We enable the full known GCI*
+          # rule set at "warning" so the CLI emits diagnostics for them.
+          {
+            echo "is_global = true"
+            echo "global_level = 100"
+            echo ""
+            for n in 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 \
+                     85 86 87 88 89 90 91 92 93 94 95 96 97 98 99; do
+              printf 'dotnet_diagnostic.GCI%d.severity = warning\n' "$n"
+            done
+          } > "$CREEDENGO_TOOL_DIR/Creedengo.globalconfig"
+          echo -e "  ${GREEN}  ✓ Wrote $CREEDENGO_TOOL_DIR/Creedengo.globalconfig${NC}"
+          echo -e "  ${YELLOW}    💡 For a full official rule set, drop the upstream file at:${NC}"
+          echo -e "  ${YELLOW}       $BACKUP_GLOBALCONFIG${NC}"
+        fi
+      fi
+
+      # ── Workaround #2: ensure Microsoft.CodeAnalysis.NetAnalyzers DLLs are
+      # available next to Creedengo.Tool.dll. The published Creedengo.Tool
+      # .nupkg references CA* rules in its globalconfig but does NOT bundle
+      # the NetAnalyzers assemblies. Without them the CLI errors with:
+      #   "Could not load file or assembly 'Microsoft.CodeAnalysis.NetAnalyzers,
+      #    Culture=neutral, PublicKeyToken=null'."
+      # The .NET SDK ships a copy at
+      #   <DOTNET_ROOT>/sdk/<ver>/Sdks/Microsoft.NET.Sdk/analyzers/
+      # and the operator can also drop them at
+      #   <repo>/.creedengo/.dotnet/Microsoft.CodeAnalysis*NetAnalyzers.dll
+      if [ -n "$CREEDENGO_TOOL_DIR" ] && [ -d "$CREEDENGO_TOOL_DIR" ]; then
+        for asm in Microsoft.CodeAnalysis.NetAnalyzers.dll \
+                   Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll; do
+          if [ ! -f "$CREEDENGO_TOOL_DIR/$asm" ]; then
+            # 1) operator-provided backup
+            CAND=""
+            for dir in "$GREEN_DIR/.creedengo/.dotnet" \
+                       "$GREEN_DIR/.creedengo/analyzers"; do
+              if [ -f "$dir/$asm" ]; then CAND="$dir/$asm"; break; fi
+            done
+            # 2) latest copy shipped with the local .NET SDK
+            if [ -z "$CAND" ]; then
+              CAND=$(find "${DOTNET_ROOT:-$HOME/.dotnet}" \
+                       -path "*/Sdks/Microsoft.NET.Sdk/analyzers/$asm" \
+                       2>/dev/null | sort -V | tail -1)
+            fi
+            # 3) any other dotnet install on PATH
+            if [ -z "$CAND" ]; then
+              CAND=$(find /usr/local/share/dotnet /usr/share/dotnet "$HOME/.dotnet" \
+                       -path "*/Sdks/Microsoft.NET.Sdk/analyzers/$asm" \
+                       2>/dev/null | sort -V | tail -1)
+            fi
+            if [ -n "$CAND" ] && [ -f "$CAND" ]; then
+              cp "$CAND" "$CREEDENGO_TOOL_DIR/$asm"
+              echo -e "  ${GREEN}  ✓ Copied $asm → tool dir (from $(dirname "$CAND"))${NC}"
+            else
+              echo -e "  ${YELLOW}  ⚠ Could not locate $asm — CA* rules will be skipped${NC}"
+              echo -e "  ${YELLOW}    💡 Drop it at: $GREEN_DIR/.creedengo/.dotnet/$asm${NC}"
+            fi
+          fi
+        done
+      fi
+
+      # ── Workaround #3: align bundled MSBuild assemblies with the SDK that
+      # Microsoft.Build.Locator will register at runtime. The Creedengo.Tool
+      # 2.1.0 .nupkg ships an older Microsoft.Build.Framework.dll (17.12)
+      # while a recent .NET SDK on disk (e.g. 9.0.x / 10.x) loads a newer
+      # Microsoft.Build.dll that references new fields like
+      #   Microsoft.Build.Framework.ChangeWaves.Wave17_14
+      # introduced in MSBuild 17.14. The result is the runtime error:
+      #   "Field not found: 'Microsoft.Build.Framework.ChangeWaves.Wave17_14'"
+      # (see AnalyzeCommand.ExecuteAsync at MSBuildWorkspace.OpenSolutionAsync).
+      # Fix: overwrite the bundled MSBuild assemblies with the ones from the
+      # highest installed SDK (which is exactly what MSBuildLocator will use).
+      if [ -n "$CREEDENGO_TOOL_DIR" ] && [ -d "$CREEDENGO_TOOL_DIR" ]; then
+        # Detect the tool's TFM from its install path: ".../tools/net<major>.0/any"
+        # The MSBuild assemblies must be sourced from a matching-major SDK,
+        # otherwise their transitive references (e.g. System.Runtime
+        # Version=<major>.0.0.0) will fail to resolve at runtime — that's the
+        # root cause of:
+        #   "Could not load file or assembly 'System.Runtime, Version=10.0.0.0…'"
+        # when SDK 10 dlls are dropped into a net9.0 tool dir.
+        TOOL_TFM_MAJOR=$(printf '%s' "$CREEDENGO_TOOL_DIR" \
+                         | sed -nE 's|.*/tools/net([0-9]+)\.[0-9]+/any.*|\1|p')
+        MSBUILD_SDK_DIR=""
+        if [ -n "$TOOL_TFM_MAJOR" ]; then
+          MSBUILD_SDK_DIR=$(ls -d "${DOTNET_ROOT:-$HOME/.dotnet}"/sdk/${TOOL_TFM_MAJOR}.* 2>/dev/null \
+                            | sort -V | tail -1)
+          if [ -z "$MSBUILD_SDK_DIR" ]; then
+            MSBUILD_SDK_DIR=$(ls -d /usr/local/share/dotnet/sdk/${TOOL_TFM_MAJOR}.* /usr/share/dotnet/sdk/${TOOL_TFM_MAJOR}.* 2>/dev/null \
+                              | sort -V | tail -1)
+          fi
+        fi
+        # Fallback: highest installed SDK (last-resort, may produce the
+        # System.Runtime mismatch above if its major differs from the tool TFM).
+        if [ -z "$MSBUILD_SDK_DIR" ] || [ ! -d "$MSBUILD_SDK_DIR" ]; then
+          MSBUILD_SDK_DIR=$(ls -d "${DOTNET_ROOT:-$HOME/.dotnet}"/sdk/* 2>/dev/null \
+                            | sort -V | tail -1)
+        fi
+        if [ -z "$MSBUILD_SDK_DIR" ] || [ ! -d "$MSBUILD_SDK_DIR" ]; then
+          MSBUILD_SDK_DIR=$(ls -d /usr/local/share/dotnet/sdk/* /usr/share/dotnet/sdk/* 2>/dev/null \
+                            | sort -V | tail -1)
+        fi
+        if [ -n "$MSBUILD_SDK_DIR" ] && [ -d "$MSBUILD_SDK_DIR" ]; then
+          MSB_STAMP_FILE="$CREEDENGO_TOOL_DIR/.msbuild-aligned-from"
+          MSB_STAMP_PREV=""
+          [ -f "$MSB_STAMP_FILE" ] && MSB_STAMP_PREV=$(cat "$MSB_STAMP_FILE" 2>/dev/null || true)
+          if [ "$MSB_STAMP_PREV" != "$MSBUILD_SDK_DIR" ]; then
+            if [ -n "$TOOL_TFM_MAJOR" ]; then
+              echo -e "  ${CYAN}🔧 Aligning bundled MSBuild with SDK ${MSBUILD_SDK_DIR##*/} (tool TFM net${TOOL_TFM_MAJOR}.0)${NC}"
+            else
+              echo -e "  ${CYAN}🔧 Aligning bundled MSBuild with SDK ${MSBUILD_SDK_DIR##*/}${NC}"
+            fi
+            for msb in Microsoft.Build.Framework.dll \
+                       Microsoft.Build.Tasks.Core.dll \
+                       Microsoft.Build.Utilities.Core.dll \
+                       Microsoft.Build.dll \
+                       Microsoft.NET.StringTools.dll; do
+              if [ -f "$MSBUILD_SDK_DIR/$msb" ]; then
+                cp "$MSBUILD_SDK_DIR/$msb" "$CREEDENGO_TOOL_DIR/$msb" 2>/dev/null \
+                  && echo -e "  ${GREEN}    ✓ $msb (�� SDK ${MSBUILD_SDK_DIR##*/})${NC}"
+              fi
+            done
+            printf '%s\n' "$MSBUILD_SDK_DIR" > "$MSB_STAMP_FILE" 2>/dev/null || true
+          elif [ "$DEBUG_MODE" = true ]; then
+            echo -e "  ${GREEN}✓ MSBuild assemblies already aligned with ${MSBUILD_SDK_DIR##*/}${NC}"
+          fi
+        else
+          echo -e "  ${YELLOW}  ⚠ No .NET SDK found to align MSBuild assemblies — analyze may fail with 'Wave17_14'${NC}"
+        fi
+      fi
+
+      CLI_OUT="/tmp/creedengo-cli-out-$$.json"
+      rm -f "$CLI_OUT" 2>/dev/null
+
+      # Pin the SDK that Microsoft.Build.Locator will register inside the tool
+      # by writing a temporary global.json next to the target. Without this,
+      # Locator picks the highest installed SDK regardless of our DLL alignment
+      # — and SDK 10 dlls dropped into a net9.0 tool fail with
+      # "Could not load file or assembly 'System.Runtime, Version=10.0.0.0…'".
+      CREEDENGO_TARGET_DIR=$(dirname "$CREEDENGO_TARGET")
+      CREEDENGO_GJSON="$CREEDENGO_TARGET_DIR/global.json"
+      CREEDENGO_GJSON_BAK=""
+      CREEDENGO_GJSON_WRITTEN=false
+      if [ -n "$MSBUILD_SDK_DIR" ] && [ -d "$MSBUILD_SDK_DIR" ]; then
+        SDK_PIN_VERSION="${MSBUILD_SDK_DIR##*/}"
+        if [ -f "$CREEDENGO_GJSON" ]; then
+          CREEDENGO_GJSON_BAK="$CREEDENGO_GJSON.creedengo-bak.$$"
+          mv "$CREEDENGO_GJSON" "$CREEDENGO_GJSON_BAK" 2>/dev/null || CREEDENGO_GJSON_BAK=""
+        fi
+        cat > "$CREEDENGO_GJSON" <<EOF
+{
+  "sdk": {
+    "version": "$SDK_PIN_VERSION",
+    "rollForward": "latestMinor",
+    "allowPrerelease": true
+  }
+}
+EOF
+        CREEDENGO_GJSON_WRITTEN=true
+        echo -e "  ${CYAN}📌 Pinned SDK ${SDK_PIN_VERSION} via temporary global.json (matches tool TFM)${NC}"
+      fi
+
+      echo -e "  ${CYAN}▶ creedengo-cli analyze \"$CREEDENGO_TARGET\" \"$CLI_OUT\"${NC}"
+      # Run from the target's directory so MSBuildLocator picks up our global.json.
+      # Output format is inferred from the extension (.json | .html | .csv)
+      ( cd "$CREEDENGO_TARGET_DIR" && "$CREEDENGO_CLI_BIN" analyze "$CREEDENGO_TARGET" "$CLI_OUT" ) 2>&1 | tail -40 || true
+
+      # Cleanup our temporary global.json (restore the user's original if any).
+      if [ "$CREEDENGO_GJSON_WRITTEN" = true ]; then
+        rm -f "$CREEDENGO_GJSON" 2>/dev/null || true
+        if [ -n "$CREEDENGO_GJSON_BAK" ] && [ -f "$CREEDENGO_GJSON_BAK" ]; then
+          mv "$CREEDENGO_GJSON_BAK" "$CREEDENGO_GJSON" 2>/dev/null || true
+        fi
+      fi
+
+      if [ -s "$CLI_OUT" ]; then
+        mkdir -p "$REPORTS_DIR"
+        echo -e "  ${CYAN}▶ Converting to dashboard schema → reports/creedengo-report.json${NC}"
+        if python3 "$SCRIPT_DIR/creedengo-cli-to-report.py" \
+             --input  "$CLI_OUT" \
+             --output "$REPORTS_DIR/creedengo-report.json" \
+             --appname "$APPNAME" \
+             --project "$CREEDENGO_TARGET" \
+             --tool-version "$CREEDENGO_TOOL_VERSION"; then
+          CSHARP_DIRECT_DONE=true
+          echo -e "  ${GREEN}✓ Creedengo C# analysis completed via .NET tool — SonarQube steps will be skipped${NC}"
+        else
+          echo -e "  ${YELLOW}⚠ Conversion failed — falling back to SonarQube path${NC}"
+        fi
+        rm -f "$CLI_OUT" 2>/dev/null
+      else
+        echo -e "  ${YELLOW}⚠ creedengo-cli produced no output — falling back to SonarQube path${NC}"
+      fi
+    fi
+  fi
+  fi  # ── end of "if ! command -v dotnet ... else" ──
+  echo ""
+fi
 
 ###############################################################################
 # Step 4: Start SonarQube container with all plugins
 ###############################################################################
+if [ "$CSHARP_DIRECT_DONE" = true ]; then
+  echo -e "${CYAN}⏩ Skipping Steps 4–11 (SonarQube) — using Creedengo .NET tool report${NC}"
+  echo ""
+elif [ "$CSHARP_DIRECT_PLANNED" = true ]; then
+  # Defensive: csharp project was planned for the .NET tool but the analysis
+  # did NOT complete (Creedengo.Tool install failed online + offline backup,
+  # creedengo-cli crashed, conversion failed, …). The user explicitly asked
+  # to NEVER fall back to SonarQube for a .NET project — that pipeline can
+  # only run Java/Python/JS plugins on a C# repo, never eco-design rules. So
+  # we abort here with a clear message instead of silently scanning nothing.
+  echo ""
+  echo -e "${RED}❌ Creedengo .NET fast path failed and CSHARP_DIRECT_PLANNED=true${NC}"
+  echo -e "${YELLOW}   The user requested no SonarQube fallback for .NET projects, so we${NC}"
+  echo -e "${YELLOW}   are aborting instead of running an analysis that would never apply${NC}"
+  echo -e "${YELLOW}   any C# eco-design rules.${NC}"
+  echo -e "${YELLOW}   💡 Likely causes:${NC}"
+  echo -e "${YELLOW}      • Creedengo.Tool could not be installed (no internet + no .nupkg backup in${NC}"
+  echo -e "${YELLOW}        .creedengo/.creedengo.tool/) — see that directory's README.md${NC}"
+  echo -e "${YELLOW}      • creedengo-cli analyze produced no output (build error in your project?)${NC}"
+  echo -e "${YELLOW}      • The conversion script failed (unsupported JSON shape from the tool)${NC}"
+  exit 1
+else
 echo -e "${YELLOW}━━━ 🐳 Starting SonarQube with Creedengo plugins ━━━${NC}"
 
 # ── PURGE all previous SonarQube / Creedengo containers (clean slate) ──
@@ -1405,6 +2156,8 @@ EXTRACT_ARGS=(
 # Admin login/password is the most reliable for all API endpoints.
 EXTRACT_ARGS+=(--sonar-user "admin" --sonar-password "$SONAR_PASS")
 "${EXTRACT_ARGS[@]}" || { echo -e "${RED}❌ Extraction failed${NC}"; exit 1; }
+
+fi  # ── end of "if [ \"$CSHARP_DIRECT_DONE\" = true ] (skip) else (Sonar pipeline)" ──
 
 ###############################################################################
 # Step 12: Embed detection metadata in report

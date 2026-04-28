@@ -1,6 +1,6 @@
 {
-  "appname": "apigreenscoreanalyzer",
-  "timestamp": "2026-04-28T20:22:57Z",
+  "appname": "dotcreedgreen",
+  "timestamp": "2026-04-28T23:16:50Z",
   "service_base_url": "https://localhost:7179",
   "service_base_urls": [
     "https://localhost:7179"
@@ -802,109 +802,109 @@
   "totals": {
     "endpoints_discovered": 11,
     "endpoints_measured": 11,
-    "total_bytes": 3717,
-    "total_time_s": 0.43053299999999994,
-    "energy_total_wh": 0.003197516060590744
+    "total_bytes": 3720,
+    "total_time_s": 0.42847799999999997,
+    "energy_total_wh": 0.003183412865320841
   },
   "endpoints": [
     {
       "http_code": 200,
       "size_download": 237,
-      "time_total": 0.027264,
-      "speed_download": 8692,
+      "time_total": 0.027024,
+      "speed_download": 8769,
       "energy_network_wh": 1.3243407011032103e-05,
-      "energy_server_wh": 0.00018933333333333332,
-      "energy_total_wh": 0.00020257674034436542
+      "energy_server_wh": 0.00018766666666666666,
+      "energy_total_wh": 0.00020091007367769876
     },
     {
       "http_code": 200,
       "size_download": 219,
-      "time_total": 0.02808,
-      "speed_download": 7799,
+      "time_total": 0.03079,
+      "speed_download": 7112,
       "energy_network_wh": 1.2237578630447386e-05,
-      "energy_server_wh": 0.000195,
-      "energy_total_wh": 0.00020723757863044738
+      "energy_server_wh": 0.00021381944444444443,
+      "energy_total_wh": 0.00022605702307489182
     },
     {
       "http_code": 200,
-      "size_download": 226,
-      "time_total": 0.033689,
-      "speed_download": 6708,
-      "energy_network_wh": 1.2628734111785887e-05,
-      "energy_server_wh": 0.00023395138888888885,
-      "energy_total_wh": 0.00024658012300067474
+      "size_download": 228,
+      "time_total": 0.029332,
+      "speed_download": 7772,
+      "energy_network_wh": 1.2740492820739746e-05,
+      "energy_server_wh": 0.00020369444444444444,
+      "energy_total_wh": 0.0002164349372651842
     },
     {
       "http_code": 200,
       "size_download": 735,
-      "time_total": 0.098864,
-      "speed_download": 7434,
+      "time_total": 0.099201,
+      "speed_download": 7409,
       "energy_network_wh": 4.10713255405426e-05,
-      "energy_server_wh": 0.0006865555555555555,
-      "energy_total_wh": 0.0007276268810960981
+      "energy_server_wh": 0.0006888958333333332,
+      "energy_total_wh": 0.0007299671588738758
     },
     {
       "http_code": 200,
       "size_download": 316,
-      "time_total": 0.03198,
-      "speed_download": 9881,
+      "time_total": 0.039337,
+      "speed_download": 8033,
       "energy_network_wh": 1.7657876014709473e-05,
-      "energy_server_wh": 0.00022208333333333333,
-      "energy_total_wh": 0.0002397412093480428
+      "energy_server_wh": 0.0002731736111111111,
+      "energy_total_wh": 0.00029083148712582055
     },
     {
       "http_code": 415,
       "size_download": 176,
-      "time_total": 0.042232,
-      "speed_download": 4167,
+      "time_total": 0.033449,
+      "speed_download": 5261,
       "energy_network_wh": 9.834766387939451e-06,
-      "energy_server_wh": 0.0002932777777777778,
-      "energy_total_wh": 0.00030311254416571723
+      "energy_server_wh": 0.0002322847222222222,
+      "energy_total_wh": 0.00024211948861016167
     },
     {
       "http_code": 200,
       "size_download": 81,
-      "time_total": 0.032669,
-      "speed_download": 2479,
+      "time_total": 0.035389,
+      "speed_download": 2288,
       "energy_network_wh": 4.526227712631225e-06,
-      "energy_server_wh": 0.00022686805555555551,
-      "energy_total_wh": 0.00023139428326818674
+      "energy_server_wh": 0.0002457569444444444,
+      "energy_total_wh": 0.0002502831721570756
     },
     {
       "http_code": 415,
       "size_download": 176,
-      "time_total": 0.037994,
-      "speed_download": 4632,
+      "time_total": 0.030614,
+      "speed_download": 5749,
       "energy_network_wh": 9.834766387939451e-06,
-      "energy_server_wh": 0.00026384722222222223,
-      "energy_total_wh": 0.0002736819886101617
+      "energy_server_wh": 0.0002125972222222222,
+      "energy_total_wh": 0.00022243198861016166
     },
     {
       "http_code": 200,
       "size_download": 238,
-      "time_total": 0.032304,
-      "speed_download": 7367,
+      "time_total": 0.032544,
+      "speed_download": 7313,
       "energy_network_wh": 1.3299286365509033e-05,
-      "energy_server_wh": 0.00022433333333333333,
-      "energy_total_wh": 0.00023763261969884236
+      "energy_server_wh": 0.00022599999999999996,
+      "energy_total_wh": 0.000239299286365509
     },
     {
       "http_code": 415,
       "size_download": 176,
-      "time_total": 0.030648,
-      "speed_download": 5742,
+      "time_total": 0.033832,
+      "speed_download": 5202,
       "energy_network_wh": 9.834766387939451e-06,
-      "energy_server_wh": 0.00021283333333333332,
-      "energy_total_wh": 0.00022266809972127277
+      "energy_server_wh": 0.00023494444444444444,
+      "energy_total_wh": 0.00024477921083238387
     },
     {
       "http_code": 200,
-      "size_download": 1137,
-      "time_total": 0.034809,
-      "speed_download": 32673,
-      "energy_network_wh": 6.353482604026794e-05,
-      "energy_server_wh": 0.00024172916666666665,
-      "energy_total_wh": 0.0003052639927069346
+      "size_download": 1138,
+      "time_total": 0.036966,
+      "speed_download": 30784,
+      "energy_network_wh": 6.359070539474487e-05,
+      "energy_server_wh": 0.0002567083333333333,
+      "energy_total_wh": 0.00032029903872807816
     }
   ]
 }
