@@ -790,7 +790,19 @@ $("btn-discover").addEventListener("click", async () => {
     state.resources = data.resources || [];
     state.perResource = {};
     for (const r of state.resources) {
-      state.perResource[resKey(r)] = {selected:true, calls:3, payload:""};
+      // Pre-fill the payload textarea with the example shipped in the
+      // OpenAPI spec (requestBody.content[*].example / examples[].value /
+      // schema.example). Falls back to an empty string when the spec
+      // doesn't ship any example for this operation.
+      let defaultPayload = "";
+      if (r.hasBody && r.exampleBody !== null && r.exampleBody !== undefined) {
+        try {
+          defaultPayload = (typeof r.exampleBody === "string")
+            ? r.exampleBody
+            : JSON.stringify(r.exampleBody, null, 2);
+        } catch { defaultPayload = ""; }
+      }
+      state.perResource[resKey(r)] = {selected:true, calls:3, payload: defaultPayload};
     }
     renderTargetsSummary(data.targets || []);
     if (state.resources.length === 0) {
@@ -929,7 +941,11 @@ function renderResources(){
         </td>
         <td><input type="number" min="1" max="20" value="${cfg.calls}" class="input-calls in-calls"></td>
         <td>${showPayload
-          ? `<textarea class="input-payload in-payload" placeholder='{"key":"value"}'>${escHtml(cfg.payload||"")}</textarea>`
+          ? `<textarea class="input-payload in-payload" placeholder='{"key":"value"}'>${escHtml(cfg.payload||"")}</textarea>${
+              (r.exampleBody !== null && r.exampleBody !== undefined)
+                ? `<div style="color:var(--txt-3);font-size:.68rem;margin-top:.2rem">✨ Pré-rempli depuis l'exemple OpenAPI</div>`
+                : ``
+            }`
           : `<span style="color:var(--txt-3);font-size:.74rem">—</span>`}
         </td>
       </tr>`;

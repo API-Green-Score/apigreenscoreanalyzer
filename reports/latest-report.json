@@ -1,18 +1,18 @@
 {
-  "appname": "javcreedgreen",
+  "appname": "optex",
   "report": {
-    "timestamp": "2026-04-29T11:11:26Z",
+    "timestamp": "2026-04-29T13:38:23Z",
     "green_score": {
-      "total": 9,
+      "total": 34,
       "max": 100,
-      "grade": "E",
+      "grade": "D",
       "breakdown": {
         "DE11_pagination": 5,
         "DE08_fields": 2,
         "DE01_compression": 0,
-        "DE02_DE03_cache": 0,
+        "DE02_DE03_cache": 15,
         "DE06_delta": 1,
-        "range_206": 0,
+        "range_206": 10,
         "AR02_format_cbor": 1,
         "LO01_observability": 0,
         "US07_rate_limit": 0
@@ -28,13 +28,15 @@
           "note": "Gzip not detected"
         },
         "DE02_DE03_cache": {
-          "note": "ETag/304 not detected"
+          "http_code": 304,
+          "note": "ETag + 304 supported (OpenAPI spec declares 304 Not Modified response)"
         },
         "DE06_delta": {
           "note": "Delta endpoint(s) found: 2"
         },
         "range_206": {
-          "note": "Range not supported"
+          "http_code": 206,
+          "note": "Range/206 supported (OpenAPI operation GET /reactive/books/{id}/summary declares 206 response)"
         },
         "AR02_format_cbor": {
           "note": "Binary format on 2 endpoint(s)"
@@ -463,81 +465,45 @@
             {
               "method": "GET",
               "path": "/books/{id}",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
+              "matched": true,
+              "reason": "OpenAPI spec declares 304 Not Modified response"
             },
             {
               "method": "GET",
               "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
+              "matched": true,
+              "reason": "OpenAPI spec declares 304 Not Modified response"
             },
             {
               "method": "GET",
               "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
+              "matched": true,
+              "reason": "OpenAPI spec declares 304 Not Modified response"
             },
             {
               "method": "GET",
               "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
+              "matched": true,
+              "reason": "OpenAPI spec declares 304 Not Modified response"
             },
             {
               "method": "GET",
               "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "No ETag header in HEAD/GET response"
+              "matched": true,
+              "reason": "OpenAPI spec declares 304 Not Modified response"
             },
             {
               "method": "GET",
               "path": "/books/async/{id}",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI spec declares 304 Not Modified response"
             }
           ],
-          "validated": false,
-          "score": 0,
-          "matched_count": 0,
+          "validated": true,
+          "score": 15,
+          "matched_count": 6,
           "candidate_count": 6,
-          "suggestions": [
-            {
-              "target": "GET /books/{id}",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            },
-            {
-              "target": "GET /reactive/books/{id}/summary",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            },
-            {
-              "target": "GET /books/{id}/summary",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            },
-            {
-              "target": "GET /reactive/books/{id}",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            },
-            {
-              "target": "GET /books/noCache/{id}",
-              "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-              "priority": "high",
-              "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-              "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-            }
-          ]
+          "suggestions": []
         },
         "DE06_delta": {
           "id": "DE06",
@@ -685,126 +651,111 @@
             {
               "method": "GET",
               "path": "/books/{id}",
-              "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/reactive/books/{id}/summary",
-              "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/books/{id}/summary",
-              "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
-            },
-            {
-              "method": "GET",
-              "path": "/reactive/books/{id}",
-              "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
-            },
-            {
-              "method": "GET",
-              "path": "/books/noCache/{id}",
-              "matched": false,
-              "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/reactive/books",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+            },
+            {
+              "method": "GET",
+              "path": "/reactive/books/{id}",
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/reactive/books/select",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/reactive/books/changes",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/reactive/books/cbor",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/reactive/books/cacheable",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/books",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/books/select",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+            },
+            {
+              "method": "GET",
+              "path": "/books/noCache/{id}",
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/books/changes",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/books/cbor",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/books/batch",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/books/async",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             },
             {
               "method": "GET",
               "path": "/books/async/{id}",
-              "matched": false,
-              "reason": "Not individually tested"
+              "matched": true,
+              "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
             }
           ],
-          "validated": false,
-          "score": 0,
-          "matched_count": 0,
+          "validated": true,
+          "score": 10,
+          "matched_count": 17,
           "candidate_count": 17,
-          "suggestions": [
-            {
-              "target": "GET /books/{id}",
-              "action": "Support HTTP Range header for partial content (206)",
-              "priority": "low",
-              "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
-              "how": "For JSON endpoints, Range/206 is rarely useful.\nFocus on the file download endpoint(s) instead."
-            },
-            {
-              "target": "GET /reactive/books/{id}/summary",
-              "action": "Support HTTP Range header for partial content (206)",
-              "priority": "low",
-              "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
-              "how": "For JSON endpoints, Range/206 is rarely useful.\nFocus on the file download endpoint(s) instead."
-            }
-          ]
+          "suggestions": []
         },
         "AR02_format_cbor": {
           "id": "AR02",
@@ -1358,158 +1309,158 @@
         "range_206": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.118449,
+          "time_total": 0.007417,
           "speed_download": 0
         },
         "fields_filter": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.035832,
+          "time_total": 0.004078,
           "speed_download": 0
         },
         "delta_changes": {
-          "http_code": 400,
-          "size_download": 207,
-          "time_total": 0.003224,
-          "speed_download": 64208
+          "http_code": 200,
+          "size_download": 0,
+          "time_total": 0.008375,
+          "speed_download": 0
         },
         "cbor_format": {
           "http_code": 429,
           "size_download": 13,
-          "time_total": 0.020222,
-          "speed_download": 659
+          "time_total": 0.004844,
+          "speed_download": 2752
         },
         "full_payload": {
-          "http_code": 400,
-          "size_download": 389,
-          "time_total": 0.004286,
-          "speed_download": 90764
+          "http_code": 200,
+          "size_download": 209,
+          "time_total": 0.00541,
+          "speed_download": 38630
         }
       }
     },
     "auto_discovery": {
-      "base_url": "http://localhost:8080",
+      "base_url": "http://localhost:8081",
       "endpoints_discovered": 20,
       "endpoints_measured": 20,
       "all_measurements": {
         "get:/books/{id}": {
           "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.09226,
-          "speed_download": 1994
+          "size_download": 207,
+          "time_total": 0.005605,
+          "speed_download": 36934
         },
         "put:/books/{id}": {
-          "http_code": 400,
-          "size_download": 316,
-          "time_total": 0.009089,
-          "speed_download": 34768
+          "http_code": 200,
+          "size_download": 209,
+          "time_total": 0.00541,
+          "speed_download": 38630
         },
         "get:/reactive/books/{id}/summary": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.118449,
+          "time_total": 0.007417,
           "speed_download": 0
         },
         "post:/reactive/books/{id}/summary": {
-          "http_code": 400,
-          "size_download": 389,
-          "time_total": 0.004286,
-          "speed_download": 90764
+          "http_code": 200,
+          "size_download": 0,
+          "time_total": 0.014976,
+          "speed_download": 0
         },
         "get:/books/{id}/summary": {
           "http_code": 200,
-          "size_download": 34,
-          "time_total": 0.003722,
-          "speed_download": 9134
+          "size_download": 36,
+          "time_total": 0.002036,
+          "speed_download": 17685
         },
         "post:/books/{id}/summary": {
-          "http_code": 400,
-          "size_download": 343,
-          "time_total": 0.007484,
-          "speed_download": 45833
+          "http_code": 200,
+          "size_download": 207,
+          "time_total": 0.002094,
+          "speed_download": 98845
         },
         "get:/reactive/books": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.053203,
+          "time_total": 0.006381,
           "speed_download": 0
         },
         "get:/reactive/books/{id}": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.013803,
+          "time_total": 0.004524,
           "speed_download": 0
         },
         "get:/reactive/books/select": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.035832,
+          "time_total": 0.004078,
           "speed_download": 0
         },
         "get:/reactive/books/changes": {
-          "http_code": 400,
-          "size_download": 207,
-          "time_total": 0.003224,
-          "speed_download": 64208
+          "http_code": 200,
+          "size_download": 0,
+          "time_total": 0.008375,
+          "speed_download": 0
         },
         "get:/reactive/books/cbor": {
           "http_code": 429,
           "size_download": 13,
-          "time_total": 0.020222,
-          "speed_download": 659
+          "time_total": 0.004844,
+          "speed_download": 2752
         },
         "get:/reactive/books/cacheable": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001145,
-          "speed_download": 17466
+          "time_total": 0.001493,
+          "speed_download": 13396
         },
         "get:/books": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001655,
-          "speed_download": 12081
+          "time_total": 0.001397,
+          "speed_download": 14314
         },
         "get:/books/select": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.002439,
-          "speed_download": 8199
+          "time_total": 0.000753,
+          "speed_download": 20000
         },
         "get:/books/noCache/{id}": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.00125,
-          "speed_download": 15998
+          "time_total": 0.000536,
+          "speed_download": 20000
         },
         "get:/books/changes": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001031,
-          "speed_download": 19406
+          "time_total": 0.000588,
+          "speed_download": 20000
         },
         "get:/books/cbor": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001277,
-          "speed_download": 15667
+          "time_total": 0.000946,
+          "speed_download": 20000
         },
         "get:/books/batch": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000834,
+          "time_total": 0.000722,
           "speed_download": 20000
         },
         "get:/books/async": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001997,
-          "speed_download": 10012
+          "time_total": 0.000743,
+          "speed_download": 20000
         },
         "get:/books/async/{id}": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000905,
+          "time_total": 0.000767,
           "speed_download": 20000
         }
       },
@@ -1518,260 +1469,260 @@
           "method": "GET",
           "path": "/books/{id}",
           "operationId": "byId",
-          "summary": "",
+          "summary": "Get a book by id with ETag/Last-Modified (DE02/DE03)",
           "tags": [
             "book-controller"
           ],
           "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.09226,
-          "speed_download": 1994
+          "size_download": 207,
+          "time_total": 0.005605,
+          "speed_download": 36934
         },
         {
           "method": "PUT",
           "path": "/books/{id}",
           "operationId": "updateBook",
-          "summary": "",
+          "summary": "Replace an existing book (full update)",
           "tags": [
             "book-controller"
           ],
-          "http_code": 400,
-          "size_download": 316,
-          "time_total": 0.009089,
-          "speed_download": 34768
+          "http_code": 200,
+          "size_download": 209,
+          "time_total": 0.00541,
+          "speed_download": 38630
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}/summary",
           "operationId": "summaryRange",
-          "summary": "",
+          "summary": "Get reactive book summary, supports Range requests (206 Partial Content)",
           "tags": [
             "book-reactive-controller"
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.118449,
+          "time_total": 0.007417,
           "speed_download": 0
         },
         {
           "method": "POST",
           "path": "/reactive/books/{id}/summary",
           "operationId": "updateSummary",
-          "summary": "",
-          "tags": [
-            "book-reactive-controller"
-          ],
-          "http_code": 400,
-          "size_download": 389,
-          "time_total": 0.004286,
-          "speed_download": 90764
-        },
-        {
-          "method": "GET",
-          "path": "/books/{id}/summary",
-          "operationId": "summaryRange_1",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 200,
-          "size_download": 34,
-          "time_total": 0.003722,
-          "speed_download": 9134
-        },
-        {
-          "method": "POST",
-          "path": "/books/{id}/summary",
-          "operationId": "updateSummary_1",
-          "summary": "",
-          "tags": [
-            "book-controller"
-          ],
-          "http_code": 400,
-          "size_download": 343,
-          "time_total": 0.007484,
-          "speed_download": 45833
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books",
-          "operationId": "allBooksWithoutCache",
-          "summary": "",
+          "summary": "Update only the summary field of a reactive book",
           "tags": [
             "book-reactive-controller"
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.053203,
+          "time_total": 0.014976,
+          "speed_download": 0
+        },
+        {
+          "method": "GET",
+          "path": "/books/{id}/summary",
+          "operationId": "summaryRange_1",
+          "summary": "Get book summary, supports Range requests (206 Partial Content)",
+          "tags": [
+            "book-controller"
+          ],
+          "http_code": 200,
+          "size_download": 36,
+          "time_total": 0.002036,
+          "speed_download": 17685
+        },
+        {
+          "method": "POST",
+          "path": "/books/{id}/summary",
+          "operationId": "updateSummary_1",
+          "summary": "Update only the summary field of a book",
+          "tags": [
+            "book-controller"
+          ],
+          "http_code": 200,
+          "size_download": 207,
+          "time_total": 0.002094,
+          "speed_download": 98845
+        },
+        {
+          "method": "GET",
+          "path": "/reactive/books",
+          "operationId": "allBooksWithoutCache",
+          "summary": "List reactive books with pagination (DE11)",
+          "tags": [
+            "book-reactive-controller"
+          ],
+          "http_code": 200,
+          "size_download": 0,
+          "time_total": 0.006381,
           "speed_download": 0
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}",
           "operationId": "byId_1",
-          "summary": "",
+          "summary": "Get a reactive book by id with ETag/Last-Modified (DE02/DE03)",
           "tags": [
             "book-reactive-controller"
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.013803,
+          "time_total": 0.004524,
           "speed_download": 0
         },
         {
           "method": "GET",
           "path": "/reactive/books/select",
           "operationId": "select",
-          "summary": "",
+          "summary": "List reactive books with field selection (DE08/US01)",
           "tags": [
             "book-reactive-controller"
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.035832,
+          "time_total": 0.004078,
           "speed_download": 0
         },
         {
           "method": "GET",
           "path": "/reactive/books/changes",
           "operationId": "changes",
-          "summary": "",
+          "summary": "List reactive books changed since a given timestamp (DE06)",
           "tags": [
             "book-reactive-controller"
           ],
-          "http_code": 400,
-          "size_download": 207,
-          "time_total": 0.003224,
-          "speed_download": 64208
+          "http_code": 200,
+          "size_download": 0,
+          "time_total": 0.008375,
+          "speed_download": 0
         },
         {
           "method": "GET",
           "path": "/reactive/books/cbor",
           "operationId": "getBooksCbor",
-          "summary": "",
+          "summary": "List reactive books encoded as CBOR (AR02 binary format)",
           "tags": [
             "book-reactive-controller"
           ],
           "http_code": 429,
           "size_download": 13,
-          "time_total": 0.020222,
-          "speed_download": 659
+          "time_total": 0.004844,
+          "speed_download": 2752
         },
         {
           "method": "GET",
           "path": "/reactive/books/cacheable",
           "operationId": "allBooks",
-          "summary": "",
+          "summary": "List all reactive books (cached)",
           "tags": [
             "book-reactive-controller"
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001145,
-          "speed_download": 17466
+          "time_total": 0.001493,
+          "speed_download": 13396
         },
         {
           "method": "GET",
           "path": "/books",
           "operationId": "all",
-          "summary": "",
+          "summary": "List books with pagination (DE11)",
           "tags": [
             "book-controller"
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001655,
-          "speed_download": 12081
+          "time_total": 0.001397,
+          "speed_download": 14314
         },
         {
           "method": "GET",
           "path": "/books/select",
           "operationId": "select_1",
-          "summary": "",
+          "summary": "List books with field selection (DE08/US01)",
           "tags": [
             "book-controller"
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.002439,
-          "speed_download": 8199
+          "time_total": 0.000753,
+          "speed_download": 20000
         },
         {
           "method": "GET",
           "path": "/books/noCache/{id}",
           "operationId": "byId_2",
-          "summary": "",
+          "summary": "Get a book by id (no cache)",
           "tags": [
             "book-controller"
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.00125,
-          "speed_download": 15998
+          "time_total": 0.000536,
+          "speed_download": 20000
         },
         {
           "method": "GET",
           "path": "/books/changes",
           "operationId": "changes_1",
-          "summary": "",
+          "summary": "List books changed since a given timestamp (DE06)",
           "tags": [
             "book-controller"
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001031,
-          "speed_download": 19406
+          "time_total": 0.000588,
+          "speed_download": 20000
         },
         {
           "method": "GET",
           "path": "/books/cbor",
           "operationId": "getBooksCbor_1",
-          "summary": "",
+          "summary": "List books encoded as CBOR (AR02 binary format)",
           "tags": [
             "book-controller"
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001277,
-          "speed_download": 15667
+          "time_total": 0.000946,
+          "speed_download": 20000
         },
         {
           "method": "GET",
           "path": "/books/batch",
           "operationId": "batch",
-          "summary": "",
+          "summary": "Batch fetch books by ids (AR02)",
           "tags": [
             "book-controller"
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000834,
+          "time_total": 0.000722,
           "speed_download": 20000
         },
         {
           "method": "GET",
           "path": "/books/async",
           "operationId": "getBooksAsync",
-          "summary": "",
+          "summary": "List books asynchronously (CompletableFuture)",
           "tags": [
             "book-controller"
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001997,
-          "speed_download": 10012
+          "time_total": 0.000743,
+          "speed_download": 20000
         },
         {
           "method": "GET",
           "path": "/books/async/{id}",
           "operationId": "getBookByIdAsync",
-          "summary": "",
+          "summary": "Get a book by id asynchronously",
           "tags": [
             "book-controller"
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000905,
+          "time_total": 0.000767,
           "speed_download": 20000
         }
       ]

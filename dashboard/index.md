@@ -1,14 +1,14 @@
 # 🌿 Green API Score Dashboard
 
-> 📦 **Application : javcreedgreen**
+> 📦 **Application : optex**
 >
 > **Devoxx France 2026 — Green Architecture : moins de gras, plus d'impact !**
 
-📅 *Dernière analyse : 2026-04-29T11:11:26Z*
+📅 *Dernière analyse : 2026-04-29T13:38:23Z*
 
 ---
 
-## 🔴 Green Score : **9/100** — Grade **E** 📉
+## 🔴 Green Score : **34/100** — Grade **D** 📉
 
 ### 📋 Détail par règle
 
@@ -17,9 +17,9 @@
 | ⚠️ | DE11 Pagination | 5 | 15 | 4/11 | Pagination on 4/11 collection endpoint(s) |
 | ⚠️ | DE08 Filtrage champs | 2 | 15 | 2/17 | Field filtering on 2 endpoint(s) |
 | ❌ | DE01 Compression | 0 | 15 | 0/20 | Gzip not detected |
-| ❌ | DE02/03 Cache ETag | 0 | 15 | 0/6 | ETag/304 not detected |
+| ✅ | DE02/03 Cache ETag | 15 | 15 | 6/6 | ETag + 304 supported (OpenAPI spec declares 304 Not Modified response) |
 | ⚠️ | DE06 Delta | 1 | 10 | 2/17 | Delta endpoint(s) found: 2 |
-| ❌ | 206 Range | 0 | 10 | 0/17 | Range not supported |
+| ✅ | 206 Range | 10 | 10 | 17/17 | Range/206 supported (OpenAPI operation GET /reactive/books/{id}/summary declares 206 response) |
 | ❌ | LO01 Observabilité | 0 | 5 | 0/5 | No health endpoint |
 | ❌ | US07 Rate Limit | 0 | 5 | 0/20 | Assumed present (API running, no explicit headers) |
 | ⚠️ | AR02 CBOR | 1 | 10 | 2/20 | Binary format on 2 endpoint(s) |
@@ -28,41 +28,41 @@
 
 | Méthode | Endpoint | Taille | Temps | HTTP |
 |:-------:|----------|-------:|------:|-----:|
-| GET | `/books/{id}` | 184 B | 0.092s | 200 |
-| PUT | `/books/{id}` | 316 B | 0.009s | 400 |
-| GET | `/reactive/books/{id}/summary` | 0 B | 0.118s | 200 |
-| POST | `/reactive/books/{id}/summary` | 389 B | 0.004s | 400 |
-| GET | `/books/{id}/summary` | 34 B | 0.004s | 200 |
-| POST | `/books/{id}/summary` | 343 B | 0.007s | 400 |
-| GET | `/reactive/books` | 0 B | 0.053s | 200 |
-| GET | `/reactive/books/{id}` | 0 B | 0.014s | 200 |
-| GET | `/reactive/books/select` | 0 B | 0.036s | 200 |
-| GET | `/reactive/books/changes` | 207 B | 0.003s | 400 |
-| GET | `/reactive/books/cbor` | 13 B | 0.020s | 429 |
+| GET | `/books/{id}` | 207 B | 0.006s | 200 |
+| PUT | `/books/{id}` | 209 B | 0.005s | 200 |
+| GET | `/reactive/books/{id}/summary` | 0 B | 0.007s | 200 |
+| POST | `/reactive/books/{id}/summary` | 0 B | 0.015s | 200 |
+| GET | `/books/{id}/summary` | 36 B | 0.002s | 200 |
+| POST | `/books/{id}/summary` | 207 B | 0.002s | 200 |
+| GET | `/reactive/books` | 0 B | 0.006s | 200 |
+| GET | `/reactive/books/{id}` | 0 B | 0.005s | 200 |
+| GET | `/reactive/books/select` | 0 B | 0.004s | 200 |
+| GET | `/reactive/books/changes` | 0 B | 0.008s | 200 |
+| GET | `/reactive/books/cbor` | 13 B | 0.005s | 429 |
 | GET | `/reactive/books/cacheable` | 20 B | 0.001s | 429 |
-| GET | `/books` | 20 B | 0.002s | 429 |
-| GET | `/books/select` | 20 B | 0.002s | 429 |
+| GET | `/books` | 20 B | 0.001s | 429 |
+| GET | `/books/select` | 20 B | 0.001s | 429 |
 | GET | `/books/noCache/{id}` | 20 B | 0.001s | 429 |
 | GET | `/books/changes` | 20 B | 0.001s | 429 |
 | GET | `/books/cbor` | 20 B | 0.001s | 429 |
 | GET | `/books/batch` | 20 B | 0.001s | 429 |
-| GET | `/books/async` | 20 B | 0.002s | 429 |
+| GET | `/books/async` | 20 B | 0.001s | 429 |
 | GET | `/books/async/{id}` | 20 B | 0.001s | 429 |
 
 ### 🔑 Métriques clés
 
 - **Endpoints mesurés** : 20
-- **Transfert total** : 1.7 KB
-- **Transfert moyen / endpoint** : 83 B
-- **Temps moyen** : 0.019s
-- **⚡ Énergie totale / appel** : 0.0027 Wh
-- **🌍 CO₂ / appel** : 0.00014 g (France — 53 gCO₂/kWh)
+- **Transfert total** : 852 B
+- **Transfert moyen / endpoint** : 42 B
+- **Temps moyen** : 0.004s
+- **⚡ Énergie totale / appel** : 0.0006 Wh
+- **🌍 CO₂ / appel** : 0.00003 g (France — 53 gCO₂/kWh)
 
 ### 💡 Suggestions d'amélioration
 
-> **Score actuel : 9/100** — Score potentiel avec toutes les suggestions : **100/100** (+91 pts possibles)
+> **Score actuel : 34/100** — Score potentiel avec toutes les suggestions : **100/100** (+66 pts possibles)
 
-🔴 Haute priorité : 13 | 🟡 Moyenne : 8 | ⚪ Basse : 4 | **Total : 25 suggestions**
+🔴 Haute priorité : 8 | 🟡 Moyenne : 8 | ⚪ Basse : 2 | **Total : 18 suggestions**
 
 #### 🗜️ DE01 — Compression Gzip (❌ Non validé — +15 pts possibles)
 
@@ -89,56 +89,6 @@ Option 2 — Nginx (if reverse proxy):
   gzip_comp_level 6;
 
 Both options apply to ALL endpoints automatically.
-```
-</details>
-
-#### 💾 DE02/03 — Cache ETag/304 (❌ Non validé — +15 pts possibles)
-
-> Les ressources unitaires doivent supporter ETag + If-None-Match -> 304. (0/6 endpoints validés)
-
-| Priorité | Cible | Action | Impact |
-|:--------:|-------|--------|--------|
-| 🔴 Haute | `GET /books/{id}` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
-| 🔴 Haute | `GET /reactive/books/{id}/summary` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
-| 🔴 Haute | `GET /books/{id}/summary` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
-| 🔴 Haute | `GET /reactive/books/{id}` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
-| 🔴 Haute | `GET /books/noCache/{id}` | Add ETag support and If-None-Match → 304 Not Modified | +2.5 pts/endpoint (total gap: 15 pts) — avoids resending unchanged resources, saves bandwidth |
-
-<details><summary>🔧 Comment implémenter</summary>
-
-```
-Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:
-
-  Option A — Global filter (easiest):
-  @Bean
-  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {
-    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();
-    reg.setFilter(new ShallowEtagHeaderFilter());
-    reg.addUrlPatterns("/api/*");
-    return reg;
-  }
-
-  Option B — Manual per endpoint:
-  String etag = '"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '"';
-  if (request.checkNotModified(etag)) return null; // → 304
-  return ResponseEntity.ok().eTag(etag).body(body);
-```
-</details>
-
-#### ✂️ 206 — Range / Partial Content (❌ Non validé — +10 pts possibles)
-
-> Supporter le header Range pour les gros payloads. (0/17 endpoints validés)
-
-| Priorité | Cible | Action | Impact |
-|:--------:|-------|--------|--------|
-| ⚪ Basse | `GET /books/{id}` | Support HTTP Range header for partial content (206) | +10 pts — enables resumable downloads and partial fetches |
-| ⚪ Basse | `GET /reactive/books/{id}/summary` | Support HTTP Range header for partial content (206) | +10 pts — enables resumable downloads and partial fetches |
-
-<details><summary>🔧 Comment implémenter</summary>
-
-```
-For JSON endpoints, Range/206 is rarely useful.
-Focus on the file download endpoint(s) instead.
 ```
 </details>
 

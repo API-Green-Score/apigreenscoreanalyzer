@@ -1916,20 +1916,43 @@ Examples:
         )
 
     # ── Step 2b: Load test scenario (Green Score data) ──
-    # Scenario can be served by any of the targets; try them in order.
+    # Resolution order (first match wins):
+    #   1) GREEN_INTERACTIVE_SCENARIO env var → JSON file written by the
+    #      interactive dashboard bridge (greenapianalyzer-server.py). It
+    #      carries the user's per-endpoint payload tweaks from the UI, so it
+    #      MUST take precedence over server-side scenarios and OpenAPI
+    #      examples to honour the user's intent.
+    #   2) HTTP scenario served by a target on /api/test/green-score/scenario
+    #      (legacy contract used by the demo backend).
+    # When no scenario is found we still fall back to the OpenAPI examples
+    # pre-extracted on each endpoint (``_example_body`` / ``_example_path_params``).
     scenario = None
-    for cand_base in [s[0] for s in sources if s[0]]:
-        scenario_url = cand_base.rstrip("/") + "/api/test/green-score/scenario"
+    interactive_scenario_path = os.environ.get("GREEN_INTERACTIVE_SCENARIO", "").strip()
+    if interactive_scenario_path and os.path.isfile(interactive_scenario_path):
         try:
-            sc_status, sc_body, _ = http_get(scenario_url, headers=auth_headers, timeout=10)
-            if sc_status == 200 and sc_body:
-                scenario = json.loads(sc_body.decode("utf-8", errors="replace"))
-                n_params = len(scenario.get("pathParams", {}))
-                n_bodies = len(scenario.get("requestBodies", {}))
-                log(f"Loaded test scenario from {cand_base}: {n_params} path mappings, {n_bodies} request bodies", "OK")
-                break
+            with open(interactive_scenario_path, "r", encoding="utf-8") as f:
+                scenario = json.load(f)
+            n_params = len(scenario.get("pathParams", {}) or {})
+            n_bodies = len(scenario.get("requestBodies", {}) or {})
+            log(f"Loaded interactive scenario from {interactive_scenario_path}: "
+                f"{n_params} path mappings, {n_bodies} request bodies", "OK")
         except Exception as e:
-            log(f"No test scenario on {cand_base} ({e})", "INFO")
+            log(f"Failed to load interactive scenario {interactive_scenario_path}: {e}", "WARN")
+            scenario = None
+    if scenario is None:
+        # Scenario can be served by any of the targets; try them in order.
+        for cand_base in [s[0] for s in sources if s[0]]:
+            scenario_url = cand_base.rstrip("/") + "/api/test/green-score/scenario"
+            try:
+                sc_status, sc_body, _ = http_get(scenario_url, headers=auth_headers, timeout=10)
+                if sc_status == 200 and sc_body:
+                    scenario = json.loads(sc_body.decode("utf-8", errors="replace"))
+                    n_params = len(scenario.get("pathParams", {}))
+                    n_bodies = len(scenario.get("requestBodies", {}))
+                    log(f"Loaded test scenario from {cand_base}: {n_params} path mappings, {n_bodies} request bodies", "OK")
+                    break
+            except Exception as e:
+                log(f"No test scenario on {cand_base} ({e})", "INFO")
 
     # Build exclusion set from scenario
     exclude_set = set()
@@ -1964,6 +1987,11 @@ Examples:
         ep_query = {}
         for k, v in (ep.get("_example_query_params") or {}).items():
             ep_query[k] = user_params.get(k, v)
+        # Scenario query overrides (written by the interactive bridge)
+        if scenario:
+            scen_q = (scenario.get("queryParams") or {}).get(f"{ep['method']}:{ep['path']}")
+            if isinstance(scen_q, dict):
+                ep_query.update(scen_q)
 
         url = build_url(ep.get("_base_url") or base_url, ep["path"], ep_params, ep_query)
 

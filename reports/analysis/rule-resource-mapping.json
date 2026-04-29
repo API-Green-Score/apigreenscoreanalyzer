@@ -1,14 +1,14 @@
 {
-  "appname": "javcreedgreen",
-  "timestamp": "2026-04-29T11:11:26Z",
-  "service_base_url": "http://localhost:8080",
+  "appname": "optex",
+  "timestamp": "2026-04-29T13:38:23Z",
+  "service_base_url": "http://localhost:8081",
   "service_base_urls": [
-    "http://localhost:8080"
+    "http://localhost:8081"
   ],
   "green_score_summary": {
-    "total": 9,
+    "total": 34,
     "max": 100,
-    "grade": "E"
+    "grade": "D"
   },
   "rule_resource_mapping": {
     "DE11_pagination": {
@@ -427,81 +427,45 @@
         {
           "method": "GET",
           "path": "/books/{id}",
-          "matched": false,
-          "reason": "No ETag header in HEAD/GET response"
+          "matched": true,
+          "reason": "OpenAPI spec declares 304 Not Modified response"
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}/summary",
-          "matched": false,
-          "reason": "No ETag header in HEAD/GET response"
+          "matched": true,
+          "reason": "OpenAPI spec declares 304 Not Modified response"
         },
         {
           "method": "GET",
           "path": "/books/{id}/summary",
-          "matched": false,
-          "reason": "No ETag header in HEAD/GET response"
+          "matched": true,
+          "reason": "OpenAPI spec declares 304 Not Modified response"
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}",
-          "matched": false,
-          "reason": "No ETag header in HEAD/GET response"
+          "matched": true,
+          "reason": "OpenAPI spec declares 304 Not Modified response"
         },
         {
           "method": "GET",
           "path": "/books/noCache/{id}",
-          "matched": false,
-          "reason": "No ETag header in HEAD/GET response"
+          "matched": true,
+          "reason": "OpenAPI spec declares 304 Not Modified response"
         },
         {
           "method": "GET",
           "path": "/books/async/{id}",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI spec declares 304 Not Modified response"
         }
       ],
-      "validated": false,
-      "score": 0,
-      "matched_count": 0,
+      "validated": true,
+      "score": 15,
+      "matched_count": 6,
       "candidate_count": 6,
-      "suggestions": [
-        {
-          "target": "GET /books/{id}",
-          "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-          "priority": "high",
-          "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-          "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-        },
-        {
-          "target": "GET /reactive/books/{id}/summary",
-          "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-          "priority": "high",
-          "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-          "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-        },
-        {
-          "target": "GET /books/{id}/summary",
-          "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-          "priority": "high",
-          "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-          "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-        },
-        {
-          "target": "GET /reactive/books/{id}",
-          "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-          "priority": "high",
-          "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-          "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-        },
-        {
-          "target": "GET /books/noCache/{id}",
-          "action": "Add ETag support and If-None-Match \u2192 304 Not Modified",
-          "priority": "high",
-          "impact": "+2.5 pts/endpoint (total gap: 15 pts) \u2014 avoids resending unchanged resources, saves bandwidth",
-          "how": "Spring Boot: Use ShallowEtagHeaderFilter (zero-code) or manual ETags:\n\n  Option A \u2014 Global filter (easiest):\n  @Bean\n  public FilterRegistrationBean<ShallowEtagHeaderFilter> etagFilter() {\n    FilterRegistrationBean<ShallowEtagHeaderFilter> reg = new FilterRegistrationBean<>();\n    reg.setFilter(new ShallowEtagHeaderFilter());\n    reg.addUrlPatterns(\"/api/*\");\n    return reg;\n  }\n\n  Option B \u2014 Manual per endpoint:\n  String etag = '\"' + DigestUtils.md5DigestAsHex(body.getBytes()) + '\"';\n  if (request.checkNotModified(etag)) return null; // \u2192 304\n  return ResponseEntity.ok().eTag(etag).body(body);"
-        }
-      ]
+      "suggestions": []
     },
     "DE06_delta": {
       "id": "DE06",
@@ -649,126 +613,111 @@
         {
           "method": "GET",
           "path": "/books/{id}",
-          "matched": false,
-          "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}/summary",
-          "matched": false,
-          "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/books/{id}/summary",
-          "matched": false,
-          "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
-        },
-        {
-          "method": "GET",
-          "path": "/reactive/books/{id}",
-          "matched": false,
-          "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
-        },
-        {
-          "method": "GET",
-          "path": "/books/noCache/{id}",
-          "matched": false,
-          "reason": "Range: bytes=0-99 \u2192 429 (not 206)"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/reactive/books",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+        },
+        {
+          "method": "GET",
+          "path": "/reactive/books/{id}",
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/reactive/books/select",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/reactive/books/changes",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/reactive/books/cbor",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/reactive/books/cacheable",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/books",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/books/select",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+        },
+        {
+          "method": "GET",
+          "path": "/books/noCache/{id}",
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/books/changes",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/books/cbor",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/books/batch",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/books/async",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         },
         {
           "method": "GET",
           "path": "/books/async/{id}",
-          "matched": false,
-          "reason": "Not individually tested"
+          "matched": true,
+          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
         }
       ],
-      "validated": false,
-      "score": 0,
-      "matched_count": 0,
+      "validated": true,
+      "score": 10,
+      "matched_count": 17,
       "candidate_count": 17,
-      "suggestions": [
-        {
-          "target": "GET /books/{id}",
-          "action": "Support HTTP Range header for partial content (206)",
-          "priority": "low",
-          "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
-          "how": "For JSON endpoints, Range/206 is rarely useful.\nFocus on the file download endpoint(s) instead."
-        },
-        {
-          "target": "GET /reactive/books/{id}/summary",
-          "action": "Support HTTP Range header for partial content (206)",
-          "priority": "low",
-          "impact": "+10 pts \u2014 enables resumable downloads and partial fetches",
-          "how": "For JSON endpoints, Range/206 is rarely useful.\nFocus on the file download endpoint(s) instead."
-        }
-      ]
+      "suggestions": []
     },
     "AR02_format_cbor": {
       "id": "AR02",

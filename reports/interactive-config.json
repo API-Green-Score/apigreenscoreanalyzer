@@ -1,88 +1,215 @@
 {
   "targets": [
-    "https://localhost:7179"
+    "http://localhost:8081"
   ],
   "swaggers": [
-    "https://localhost:7179/swagger/v1/swagger.json"
+    "http://localhost:8081/v3/api-docs"
   ],
-  "appname": "",
+  "appname": "optex",
   "endpoints": [
     {
-      "target": "https://localhost:7179",
+      "target": "http://localhost:8081",
       "method": "GET",
-      "path": "/actuator",
+      "path": "/books/1",
       "calls": 3,
-      "payload": ""
+      "payload": "",
+      "pathParams": {
+        "id": 1
+      },
+      "pathTemplate": "/books/{id}"
     },
     {
-      "target": "https://localhost:7179",
-      "method": "GET",
-      "path": "/actuator/info",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "https://localhost:7179",
-      "method": "GET",
-      "path": "/actuator/metrics",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "https://localhost:7179",
-      "method": "GET",
-      "path": "/",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "https://localhost:7179",
-      "method": "GET",
-      "path": "/Products",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "https://localhost:7179",
-      "method": "POST",
-      "path": "/Products",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "https://localhost:7179",
-      "method": "GET",
-      "path": "/Products/{id}",
-      "calls": 3,
-      "payload": ""
-    },
-    {
-      "target": "https://localhost:7179",
+      "target": "http://localhost:8081",
       "method": "PUT",
-      "path": "/Products/{id}",
+      "path": "/books/1",
       "calls": 3,
-      "payload": ""
+      "payload": "{\n  \"id\": 1,\n  \"title\": \"Updated Book Title\",\n  \"author\": \"Updated Author\",\n  \"published_date\": 2024,\n  \"pages\": 250,\n  \"summary\": \"Updated summary describing the book.\",\n  \"lastModified\": \"2025-01-01T12:00:00Z\",\n  \"version\": 2\n}",
+      "pathParams": {
+        "id": 1
+      },
+      "pathTemplate": "/books/{id}"
     },
     {
-      "target": "https://localhost:7179",
+      "target": "http://localhost:8081",
       "method": "GET",
-      "path": "/Scores/leaderboard",
+      "path": "/reactive/books/1/summary",
       "calls": 3,
-      "payload": ""
+      "payload": "",
+      "pathParams": {
+        "id": 1
+      },
+      "pathTemplate": "/reactive/books/{id}/summary"
     },
     {
-      "target": "https://localhost:7179",
+      "target": "http://localhost:8081",
       "method": "POST",
-      "path": "/Scores/calculate",
+      "path": "/reactive/books/1/summary",
       "calls": 3,
-      "payload": ""
+      "payload": "{\n  \"summary\": \"Updated summary text for the book.\"\n}",
+      "pathParams": {
+        "id": 1
+      },
+      "pathTemplate": "/reactive/books/{id}/summary"
     },
     {
-      "target": "https://localhost:7179",
+      "target": "http://localhost:8081",
       "method": "GET",
-      "path": "/WeatherForecast",
+      "path": "/books/1/summary",
       "calls": 3,
-      "payload": ""
+      "payload": "",
+      "pathParams": {
+        "id": 1
+      },
+      "pathTemplate": "/books/{id}/summary"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "POST",
+      "path": "/books/1/summary",
+      "calls": 3,
+      "payload": "{\n  \"summary\": \"Updated summary text for the book.\"\n}",
+      "pathParams": {
+        "id": 1
+      },
+      "pathTemplate": "/books/{id}/summary"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/reactive/books?page=0&size=20",
+      "calls": 3,
+      "payload": "",
+      "queryParams": {
+        "page": 0,
+        "size": 20
+      },
+      "pathTemplate": "/reactive/books"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/reactive/books/1",
+      "calls": 3,
+      "payload": "",
+      "pathParams": {
+        "id": 1
+      },
+      "pathTemplate": "/reactive/books/{id}"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/reactive/books/select",
+      "calls": 3,
+      "payload": "",
+      "pathTemplate": "/reactive/books/select"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/reactive/books/changes?since=2025-01-01T00%3A00%3A00Z",
+      "calls": 3,
+      "payload": "",
+      "queryParams": {
+        "since": "2025-01-01T00:00:00Z"
+      },
+      "pathTemplate": "/reactive/books/changes"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/reactive/books/cbor",
+      "calls": 3,
+      "payload": "",
+      "pathTemplate": "/reactive/books/cbor"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/reactive/books/cacheable",
+      "calls": 3,
+      "payload": "",
+      "pathTemplate": "/reactive/books/cacheable"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/books?page=0&size=20",
+      "calls": 3,
+      "payload": "",
+      "queryParams": {
+        "page": 0,
+        "size": 20
+      },
+      "pathTemplate": "/books"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/books/select",
+      "calls": 3,
+      "payload": "",
+      "pathTemplate": "/books/select"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/books/noCache/1",
+      "calls": 3,
+      "payload": "",
+      "pathParams": {
+        "id": 1
+      },
+      "pathTemplate": "/books/noCache/{id}"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/books/changes?since=2025-01-01T00%3A00%3A00Z",
+      "calls": 3,
+      "payload": "",
+      "queryParams": {
+        "since": "2025-01-01T00:00:00Z"
+      },
+      "pathTemplate": "/books/changes"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/books/cbor",
+      "calls": 3,
+      "payload": "",
+      "pathTemplate": "/books/cbor"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/books/batch?ids=1%2C2%2C3",
+      "calls": 3,
+      "payload": "",
+      "queryParams": {
+        "ids": "1,2,3"
+      },
+      "pathTemplate": "/books/batch"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/books/async",
+      "calls": 3,
+      "payload": "",
+      "pathTemplate": "/books/async"
+    },
+    {
+      "target": "http://localhost:8081",
+      "method": "GET",
+      "path": "/books/async/1",
+      "calls": 3,
+      "payload": "",
+      "pathParams": {
+        "id": 1
+      },
+      "pathTemplate": "/books/async/{id}"
     }
   ],
   "repeat": 3

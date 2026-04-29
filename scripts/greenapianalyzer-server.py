@@ -90,6 +90,145 @@ def _parse_spec(raw: bytes, ctype: str) -> dict | None:
         return None
 
 
+# ─── OpenAPI example extraction (mirrors green-api-auto-discover.py) ──────
+# We duplicate a tiny subset here so the bridge stays dependency-free and
+# self-contained. Keep both implementations in sync.
+
+_REF_MAX_DEPTH = 6
+
+
+def _resolve_ref(spec: dict, ref: str) -> dict:
+    if not isinstance(ref, str) or not ref.startswith("#/"):
+        return {}
+    node = spec
+    for part in ref[2:].split("/"):
+        part = part.replace("~1", "/").replace("~0", "~")
+        if isinstance(node, dict) and part in node:
+            node = node[part]
+        else:
+            return {}
+    return node if isinstance(node, dict) else {}
+
+
+def _deref(spec, node, _seen=None, _depth=0):
+    if not isinstance(node, dict):
+        return node
+    ref = node.get("$ref")
+    if not ref or _depth >= _REF_MAX_DEPTH:
+        return node
+    seen = _seen or set()
+    if ref in seen:
+        return {}
+    return _deref(spec, _resolve_ref(spec, ref), seen | {ref}, _depth + 1)
+
+
+def _scalar_for_type(schema):
+    if not isinstance(schema, dict):
+        return None
+    t = schema.get("type")
+    fmt = schema.get("format", "")
+    if t == "string":
+        if fmt == "date":      return "2024-01-01"
+        if fmt == "date-time": return "2024-01-01T00:00:00Z"
+        if fmt == "uuid":      return "00000000-0000-0000-0000-000000000000"
+        if fmt == "email":     return "user@example.com"
+        if fmt in ("byte", "binary", "password"): return ""
+        return "string"
+    if t == "integer": return 1
+    if t == "number":  return 1.0
+    if t == "boolean": return True
+    if t == "array":   return []
+    if t == "object":  return {}
+    return None
+
+
+def _example_from_schema(spec, schema, _depth=0):
+    if _depth > _REF_MAX_DEPTH or not isinstance(schema, dict):
+        return None
+    schema = _deref(spec, schema, _depth=_depth)
+    if "example" in schema:  return schema["example"]
+    if "default" in schema:  return schema["default"]
+    if isinstance(schema.get("enum"), list) and schema["enum"]:
+        return schema["enum"][0]
+    for key in ("oneOf", "anyOf", "allOf"):
+        branches = schema.get(key)
+        if isinstance(branches, list) and branches:
+            if key == "allOf":
+                merged = {}
+                for sub in branches:
+                    sub_ex = _example_from_schema(spec, sub, _depth + 1)
+                    if isinstance(sub_ex, dict):
+                        merged.update(sub_ex)
+                if merged:
+                    return merged
+            else:
+                ex = _example_from_schema(spec, branches[0], _depth + 1)
+                if ex is not None:
+                    return ex
+    t = schema.get("type")
+    if t == "object" or "properties" in schema:
+        out = {}
+        props = schema.get("properties") or {}
+        required = set(schema.get("required") or [])
+        for name, sub in props.items():
+            sub_ex = _example_from_schema(spec, sub, _depth + 1)
+            if name in required:
+                out[name] = sub_ex if sub_ex is not None else _scalar_for_type(sub)
+            elif sub_ex is not None:
+                out[name] = sub_ex
+        return out
+    if t == "array":
+        item_ex = _example_from_schema(spec, schema.get("items") or {}, _depth + 1)
+        return [item_ex] if item_ex is not None else []
+    return _scalar_for_type(schema)
+
+
+def _param_example(spec, param):
+    param = _deref(spec, param)
+    if not isinstance(param, dict):
+        return None
+    if "example" in param:
+        return param["example"]
+    examples = param.get("examples")
+    if isinstance(examples, dict) and examples:
+        first = _deref(spec, next(iter(examples.values())))
+        if isinstance(first, dict) and "value" in first:
+            return first["value"]
+    schema = param.get("schema") or {}
+    if param.get("type") and not schema:  # Swagger 2.0 inline
+        schema = {k: param[k] for k in ("type", "format", "enum", "default", "example")
+                  if k in param}
+    return _example_from_schema(spec, schema)
+
+
+def _request_body_example(spec, op):
+    rb = _deref(spec, op.get("requestBody") or {})
+    content = rb.get("content") if isinstance(rb, dict) else None
+    if isinstance(content, dict) and content:
+        media = (
+            content.get("application/json")
+            or next((v for k, v in content.items() if "json" in k.lower()), None)
+            or next(iter(content.values()))
+        )
+        media = _deref(spec, media or {})
+        if "example" in media:
+            return media["example"]
+        examples = media.get("examples")
+        if isinstance(examples, dict) and examples:
+            first = _deref(spec, next(iter(examples.values())))
+            if isinstance(first, dict) and "value" in first:
+                return first["value"]
+        return _example_from_schema(spec, media.get("schema") or {})
+    # Swagger 2.0 — body via parameters[in=body]
+    for p in op.get("parameters") or []:
+        p = _deref(spec, p)
+        if isinstance(p, dict) and p.get("in") == "body":
+            if "example" in p:
+                return p["example"]
+            return _example_from_schema(spec, p.get("schema") or {})
+    return None
+
+
 def _discover_swagger_for(base_url: str, bearer: str) -> tuple[str, dict | None]:
     """Return (resolved_swagger_url, spec_dict_or_None) for a base URL."""
     base = base_url.rstrip("/")
@@ -114,7 +253,14 @@ def _discover_swagger_for(base_url: str, bearer: str) -> tuple[str, dict | None]
 
 
 def _extract_resources(target: str, spec: dict) -> list[dict]:
-    """Flatten an OpenAPI spec into a list of {target, method, path, summary, …}."""
+    """Flatten an OpenAPI spec into a list of {target, method, path, summary, …}.
+
+    Each resource is also enriched with example data extracted from the spec
+    so the interactive dashboard can pre-fill defaults the user can tweak:
+      - ``examplePathParams``   : dict {name: value} from path params
+      - ``exampleQueryParams``  : dict {name: value} from required query params
+      - ``exampleBody``         : best-effort JSON body for POST/PUT/PATCH
+    """
     out: list[dict] = []
     base_path = ""
     if spec.get("swagger") == "2.0":
@@ -124,11 +270,42 @@ def _extract_resources(target: str, spec: dict) -> list[dict]:
         if not isinstance(ops, dict):
             continue
         full_path = (base_path + path) if base_path else path
+        # Path-level parameters apply to every operation
+        path_level_params = ops.get("parameters") if isinstance(ops.get("parameters"), list) else []
         for method in ("get", "post", "put", "patch", "delete", "head"):
             if method not in ops or not isinstance(ops.get(method), dict):
                 continue
             op = ops[method]
             tags = op.get("tags") or []
+            params = list(op.get("parameters") or [])
+            seen_names = {(_deref(spec, p) or {}).get("name") for p in params}
+            for p in path_level_params:
+                p_name = (_deref(spec, p) or {}).get("name")
+                if p_name not in seen_names:
+                    params.append(p)
+
+            example_path_params: dict = {}
+            example_query_params: dict = {}
+            for p in params:
+                p_d = _deref(spec, p)
+                if not isinstance(p_d, dict):
+                    continue
+                p_in = p_d.get("in")
+                p_name = p_d.get("name")
+                if not p_name:
+                    continue
+                ex = _param_example(spec, p_d)
+                if ex is None:
+                    continue
+                if p_in == "path":
+                    example_path_params[p_name] = ex
+                elif p_in == "query" and p_d.get("required"):
+                    example_query_params[p_name] = ex
+
+            example_body = None
+            if method in ("post", "put", "patch"):
+                example_body = _request_body_example(spec, op)
+
             out.append({
                 "target": target,
                 "method": method.upper(),
@@ -137,6 +314,9 @@ def _extract_resources(target: str, spec: dict) -> list[dict]:
                 "summary": op.get("summary", "") or op.get("description", "")[:140],
                 "tags": tags,
                 "hasBody": method in ("post", "put", "patch"),
+                "examplePathParams": example_path_params,
+                "exampleQueryParams": example_query_params,
+                "exampleBody": example_body,
             })
     return out
 
@@ -312,8 +492,106 @@ class Handler(BaseHTTPRequestHandler):
         max_calls = max(calls_values) if calls_values else 3
         max_calls = max(1, min(max_calls, 20))
 
+        # ── Hydrate empty payloads from the OpenAPI examples ─────────────
+        # Even when the dashboard ships an empty `payload` (e.g. user cleared
+        # the textarea, or an older cached UI didn't pre-fill it), we still
+        # want the persisted config + scenario to reflect the example bodies
+        # advertised by the spec for body-bearing methods (POST/PUT/PATCH).
+        # We re-discover each unique target once and look up each endpoint
+        # in the resulting resource list.
+        body_methods = {"post", "put", "patch"}
+        # Collect unique targets to (re-)discover specs for. Cheap because the
+        # bridge is local and the user just queried the same targets via
+        # /api/discover seconds ago.
+        unique_targets = sorted({(ep.get("target") or "").rstrip("/")
+                                 for ep in endpoints
+                                 if ep.get("target")} | set(targets))
+        # target → {(METHOD, path): resource_dict}
+        spec_index: dict[str, dict] = {}
+        for tgt in unique_targets:
+            if not tgt:
+                continue
+            try:
+                _swurl, _spec = _discover_swagger_for(tgt, bearer)
+            except Exception:
+                _spec = None
+            if not _spec:
+                continue
+            try:
+                resources = _extract_resources(tgt, _spec)
+            except Exception:
+                resources = []
+            spec_index[tgt] = {
+                (r.get("method", "").upper(), r.get("path", "")): r for r in resources
+            }
+
+        for ep in endpoints:
+            mtd = (ep.get("method") or "").upper()
+            pth = ep.get("path") or ""
+            tgt = (ep.get("target") or "").rstrip("/")
+            res = spec_index.get(tgt, {}).get((mtd, pth))
+            if not res:
+                continue
+            # Body hydration (only for body-bearing methods)
+            if mtd.lower() in body_methods:
+                cur = ep.get("payload")
+                if (not isinstance(cur, str)) or not cur.strip():
+                    eb = res.get("exampleBody")
+                    if eb is not None:
+                        try:
+                            ep["payload"] = (eb if isinstance(eb, str)
+                                             else json.dumps(eb, indent=2, ensure_ascii=False))
+                        except Exception:
+                            ep["payload"] = str(eb)
+            # Carry through path / query example dicts so they end up in the
+            # persisted config and the scenario for the analyzer.
+            if not ep.get("pathParams") and res.get("examplePathParams"):
+                ep["pathParams"] = dict(res["examplePathParams"])
+            if not ep.get("queryParams") and res.get("exampleQueryParams"):
+                ep["queryParams"] = dict(res["exampleQueryParams"])
+
         # Persist the user's per-endpoint configuration alongside the report
         # for future reference / debugging — does NOT modify the analyzer.
+        # We expand path placeholders ({id} → 1) and append query strings
+        # using the OpenAPI examples so the persisted file is human-readable
+        # and self-explanatory. The original templated path is preserved
+        # under ``pathTemplate`` for traceability. The scenario file built
+        # below still uses the templated paths (the analyzer matches them
+        # against the OpenAPI spec).
+        from urllib.parse import urlencode, quote_plus
+        import re as _re
+
+        def _resolve_path(template, path_params, query_params):
+            if not isinstance(template, str):
+                return template
+            out = template
+            if isinstance(path_params, dict):
+                out = _re.sub(
+                    r"\{([^}]+)\}",
+                    lambda m: str(path_params.get(m.group(1), m.group(0))),
+                    out,
+                )
+            if isinstance(query_params, dict) and query_params:
+                flat = {}
+                for k, v in query_params.items():
+                    if v is None:
+                        continue
+                    flat[k] = json.dumps(v) if isinstance(v, (dict, list)) else v
+                if flat:
+                    sep = "&" if "?" in out else "?"
+                    out = out + sep + urlencode(flat, quote_via=quote_plus)
+            return out
+
+        endpoints_persisted = []
+        for ep in endpoints:
+            ep_copy = dict(ep)
+            tmpl = ep_copy.get("path", "")
+            ep_copy["pathTemplate"] = tmpl
+            ep_copy["path"] = _resolve_path(
+                tmpl, ep_copy.get("pathParams"), ep_copy.get("queryParams")
+            )
+            endpoints_persisted.append(ep_copy)
+
         REPORTS.mkdir(exist_ok=True)
         cfg_path = REPORTS / "interactive-config.json"
         with cfg_path.open("w", encoding="utf-8") as f:
@@ -321,9 +599,49 @@ class Handler(BaseHTTPRequestHandler):
                 "targets": targets,
                 "swaggers": swaggers,
                 "appname": appname,
-                "endpoints": endpoints,
+                "endpoints": endpoints_persisted,
                 "repeat": max_calls,
             }, f, indent=2, ensure_ascii=False)
+
+        # ── Build a "scenario" file consumed by the analyzer ──
+        # The Python analyzer (green-api-auto-discover.py) honours a JSON
+        # scenario with shape {pathParams: {<path>: {<name>: <value>}},
+        # requestBodies: {<METHOD>:<path>: <payload>}}.  We translate the
+        # user's UI choices into that shape so:
+        #   • payloads typed in the textarea (or pre-filled from the OpenAPI
+        #     example and possibly tweaked) are actually sent on POST/PUT/PATCH
+        #   • path/query example values resolved by the dashboard are honoured
+        # The analyzer reads this file when GREEN_INTERACTIVE_SCENARIO is set.
+        scenario = {"pathParams": {}, "requestBodies": {}, "queryParams": {}}
+        for ep in endpoints:
+            mtd = (ep.get("method") or "").lower().strip()
+            pth = ep.get("path") or ""
+            if not mtd or not pth:
+                continue
+            # Body — only meaningful for POST/PUT/PATCH. Try JSON first so
+            # the analyzer can re-serialise; fall back to the raw string.
+            payload_raw = ep.get("payload")
+            if mtd in ("post", "put", "patch") and isinstance(payload_raw, str) and payload_raw.strip():
+                key = f"{mtd}:{pth}"
+                try:
+                    scenario["requestBodies"][key] = json.loads(payload_raw)
+                except Exception:
+                    scenario["requestBodies"][key] = payload_raw
+            # Path params (carried through from /api/discover when present)
+            ep_path_params = ep.get("pathParams") or ep.get("examplePathParams")
+            if isinstance(ep_path_params, dict) and ep_path_params:
+                scenario["pathParams"][pth] = {
+                    str(k): v for k, v in ep_path_params.items()
+                }
+            # Required query params (same idea, optional in scenario shape)
+            ep_query_params = ep.get("queryParams") or ep.get("exampleQueryParams")
+            if isinstance(ep_query_params, dict) and ep_query_params:
+                scenario["queryParams"][f"{mtd}:{pth}"] = {
+                    str(k): v for k, v in ep_query_params.items()
+                }
+        scenario_path = REPORTS / ".interactive-scenario.json"
+        with scenario_path.open("w", encoding="utf-8") as f:
+            json.dump(scenario, f, indent=2, ensure_ascii=False)
 
         cmd = ["bash", str(ANALYZER_SH),
                "--targets", ",".join(targets),
@@ -357,6 +675,7 @@ class Handler(BaseHTTPRequestHandler):
                     cmd, cwd=str(ROOT),
                     stdout=lf, stderr=subprocess.STDOUT,
                     text=True, timeout=900,
+                    env={**os.environ, "GREEN_INTERACTIVE_SCENARIO": str(scenario_path)},
                 )
         except subprocess.TimeoutExpired:
             try: running_marker.unlink()

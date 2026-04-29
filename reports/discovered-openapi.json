@@ -1,54 +1,1244 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "info": {
-    "title": "demo",
-    "version": "1"
+    "title": "OpenAPI definition",
+    "version": "v0"
   },
+  "servers": [
+    {
+      "url": "http://localhost:8081",
+      "description": "Generated server url"
+    }
+  ],
   "paths": {
-    "/users/{userId}": {
+    "/books/{id}": {
       "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "Get a book by id with ETag/Last-Modified (DE02/DE03)",
+        "operationId": "byId",
         "parameters": [
           {
-            "name": "userId",
+            "name": "id",
             "in": "path",
+            "description": "Book identifier",
             "required": true,
             "schema": {
-              "type": "string",
-              "example": "u-42"
-            }
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
           },
           {
-            "name": "fields",
-            "in": "query",
-            "required": true,
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Conditional GET ETag",
+            "required": false,
             "schema": {
-              "type": "string",
-              "example": "id,name"
-            }
+              "type": "string"
+            },
+            "example": "1"
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "description": "Conditional GET timestamp (RFC 1123)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Wed, 01 Jan 2025 12:00:00 GMT"
           }
         ],
         "responses": {
           "200": {
-            "description": "ok"
+            "description": "Book found",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "book": {
+                    "description": "book",
+                    "value": {
+                      "id": 1,
+                      "title": "Book 1",
+                      "author": "Author 1",
+                      "published_date": 1921,
+                      "pages": 101,
+                      "summary": "Auto-generated book 1.",
+                      "lastModified": "2025-01-01T12:00:00Z",
+                      "version": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified (conditional GET)"
+          },
+          "404": {
+            "description": "Book not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "Replace an existing book (full update)",
+        "operationId": "updateBook",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "Full book payload to replace the existing resource",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Book"
+              },
+              "examples": {
+                "bookUpdate": {
+                  "description": "bookUpdate",
+                  "value": {
+                    "id": 1,
+                    "title": "Updated Book Title",
+                    "author": "Updated Author",
+                    "published_date": 2024,
+                    "pages": 250,
+                    "summary": "Updated summary describing the book.",
+                    "lastModified": "2025-01-01T12:00:00Z",
+                    "version": 2
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Book replaced",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "updated": {
+                    "description": "updated",
+                    "value": {
+                      "id": 1,
+                      "title": "Book 1",
+                      "author": "Author 1",
+                      "published_date": 1921,
+                      "pages": 101,
+                      "summary": "Auto-generated book 1.",
+                      "lastModified": "2025-01-01T12:00:00Z",
+                      "version": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found"
           }
         }
       }
     },
-    "/orders": {
+    "/reactive/books/{id}/summary": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "summary": "Get reactive book summary, supports Range requests (206 Partial Content)",
+        "operationId": "summaryRange",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "description": "Byte range, e.g. bytes=0-9",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bytes=0-9"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full summary text",
+            "content": {
+              "text/plain": {
+                "examples": {
+                  "summary": {
+                    "description": "summary",
+                    "value": "Auto-generated book 1."
+                  }
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Partial summary (Range satisfied)",
+            "content": {
+              "text/plain": {
+                "examples": {
+                  "partial": {
+                    "description": "partial",
+                    "value": "Auto-gener"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found"
+          }
+        }
+      },
       "post": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "summary": "Update only the summary field of a reactive book",
+        "operationId": "updateSummary",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
         "requestBody": {
-          "required": true,
+          "description": "Object containing the new summary text",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Order"
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "examples": {
+                "summaryUpdate": {
+                  "description": "summaryUpdate",
+                  "value": {
+                    "summary": "Updated summary text for the book."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated book",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "updated": {
+                    "description": "updated",
+                    "value": {
+                      "id": 1,
+                      "title": "Book 1",
+                      "author": "Author 1",
+                      "published_date": 1921,
+                      "pages": 101,
+                      "summary": "Auto-generated book 1.",
+                      "lastModified": "2025-01-01T12:00:00Z",
+                      "version": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found"
+          }
+        }
+      }
+    },
+    "/books/{id}/summary": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "Get book summary, supports Range requests (206 Partial Content)",
+        "operationId": "summaryRange_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "description": "Byte range, e.g. bytes=0-9",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bytes=0-9"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full summary text",
+            "content": {
+              "text/plain": {
+                "examples": {
+                  "summary": {
+                    "description": "summary",
+                    "value": "Auto-generated book 1."
+                  }
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Partial summary (Range satisfied)",
+            "content": {
+              "text/plain": {
+                "examples": {
+                  "partial": {
+                    "description": "partial",
+                    "value": "Auto-gener"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "Update only the summary field of a book",
+        "operationId": "updateSummary_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "Object containing the new summary text",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "examples": {
+                "summaryUpdate": {
+                  "description": "summaryUpdate",
+                  "value": {
+                    "summary": "Updated summary text for the book."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated book",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "updated": {
+                    "description": "updated",
+                    "value": {
+                      "id": 1,
+                      "title": "Book 1",
+                      "author": "Author 1",
+                      "published_date": 1921,
+                      "pages": 101,
+                      "summary": "Auto-generated book 1.",
+                      "lastModified": "2025-01-01T12:00:00Z",
+                      "version": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found"
+          }
+        }
+      }
+    },
+    "/reactive/books": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "summary": "List reactive books with pagination (DE11)",
+        "operationId": "allBooksWithoutCache",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (max 100)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of books",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "books": {
+                    "description": "books",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1",
+                        "published_date": 1921,
+                        "pages": 101,
+                        "summary": "Auto-generated book 1.",
+                        "lastModified": "2025-01-01T12:00:00Z",
+                        "version": 1
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2",
+                        "published_date": 1922,
+                        "pages": 202,
+                        "summary": "Auto-generated book 2.",
+                        "lastModified": "2025-01-02T12:00:00Z",
+                        "version": 1
+                      }
+                    ]
+                  }
+                }
               }
             }
           }
-        },
+        }
+      }
+    },
+    "/reactive/books/{id}": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "summary": "Get a reactive book by id with ETag/Last-Modified (DE02/DE03)",
+        "operationId": "byId_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Conditional GET ETag",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1"
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "description": "Conditional GET timestamp (RFC 1123)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Wed, 01 Jan 2025 12:00:00 GMT"
+          }
+        ],
         "responses": {
-          "201": {
-            "description": "created"
+          "200": {
+            "description": "Book found",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "book": {
+                    "description": "book",
+                    "value": {
+                      "id": 1,
+                      "title": "Book 1",
+                      "author": "Author 1",
+                      "published_date": 1921,
+                      "pages": 101,
+                      "summary": "Auto-generated book 1.",
+                      "lastModified": "2025-01-01T12:00:00Z",
+                      "version": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified (conditional GET)"
+          },
+          "404": {
+            "description": "Book not found"
+          }
+        }
+      }
+    },
+    "/reactive/books/select": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "summary": "List reactive books with field selection (DE08/US01)",
+        "operationId": "select",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Whitelisted comma-separated fields (id,title,author,published_date,pages,summary)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "id,title,author"
+            },
+            "example": "id,title,author"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (max 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Books with only the selected fields",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "select": {
+                    "description": "select",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1"
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reactive/books/changes": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "summary": "List reactive books changed since a given timestamp (DE06)",
+        "operationId": "changes",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "ISO-8601 timestamp; only books modified after this instant are returned",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2025-01-01T00:00:00Z"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Books modified after the given instant",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "changes": {
+                    "description": "changes",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1",
+                        "published_date": 1921,
+                        "pages": 101,
+                        "summary": "Auto-generated book 1.",
+                        "lastModified": "2025-01-01T12:00:00Z",
+                        "version": 1
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2",
+                        "published_date": 1922,
+                        "pages": 202,
+                        "summary": "Auto-generated book 2.",
+                        "lastModified": "2025-01-02T12:00:00Z",
+                        "version": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reactive/books/cbor": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "summary": "List reactive books encoded as CBOR (AR02 binary format)",
+        "operationId": "getBooksCbor",
+        "responses": {
+          "200": {
+            "description": "Books in CBOR binary format (decoded preview shown as JSON)",
+            "content": {
+              "application/cbor": {
+                "examples": {
+                  "cborDecodedPreview": {
+                    "description": "cborDecodedPreview",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1",
+                        "published_date": 1921,
+                        "pages": 101,
+                        "summary": "Auto-generated book 1.",
+                        "lastModified": "2025-01-01T12:00:00Z",
+                        "version": 1
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2",
+                        "published_date": 1922,
+                        "pages": 202,
+                        "summary": "Auto-generated book 2.",
+                        "lastModified": "2025-01-02T12:00:00Z",
+                        "version": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reactive/books/cacheable": {
+      "get": {
+        "tags": [
+          "book-reactive-controller"
+        ],
+        "summary": "List all reactive books (cached)",
+        "operationId": "allBooks",
+        "responses": {
+          "200": {
+            "description": "Cached books",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "books": {
+                    "description": "books",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1",
+                        "published_date": 1921,
+                        "pages": 101,
+                        "summary": "Auto-generated book 1.",
+                        "lastModified": "2025-01-01T12:00:00Z",
+                        "version": 1
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2",
+                        "published_date": 1922,
+                        "pages": 202,
+                        "summary": "Auto-generated book 2.",
+                        "lastModified": "2025-01-02T12:00:00Z",
+                        "version": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "List books with pagination (DE11)",
+        "operationId": "all",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (max 100)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of books",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "books": {
+                    "description": "books",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1",
+                        "published_date": 1921,
+                        "pages": 101,
+                        "summary": "Auto-generated book 1.",
+                        "lastModified": "2025-01-01T12:00:00Z",
+                        "version": 1
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2",
+                        "published_date": 1922,
+                        "pages": 202,
+                        "summary": "Auto-generated book 2.",
+                        "lastModified": "2025-01-02T12:00:00Z",
+                        "version": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/select": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "List books with field selection (DE08/US01)",
+        "operationId": "select_1",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Whitelisted comma-separated fields (id,title,author,published_date,pages,summary)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "id,title,author"
+            },
+            "example": "id,title,author"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (max 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Books with only the selected fields",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "select": {
+                    "description": "select",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1"
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/noCache/{id}": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "Get a book by id (no cache)",
+        "operationId": "byId_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Book found",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "book": {
+                    "description": "book",
+                    "value": {
+                      "id": 1,
+                      "title": "Book 1",
+                      "author": "Author 1",
+                      "published_date": 1921,
+                      "pages": 101,
+                      "summary": "Auto-generated book 1.",
+                      "lastModified": "2025-01-01T12:00:00Z",
+                      "version": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found"
+          }
+        }
+      }
+    },
+    "/books/changes": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "List books changed since a given timestamp (DE06)",
+        "operationId": "changes_1",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "ISO-8601 timestamp; only books modified after this instant are returned",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2025-01-01T00:00:00Z"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Books modified after the given instant",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "changes": {
+                    "description": "changes",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1",
+                        "published_date": 1921,
+                        "pages": 101,
+                        "summary": "Auto-generated book 1.",
+                        "lastModified": "2025-01-01T12:00:00Z",
+                        "version": 1
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2",
+                        "published_date": 1922,
+                        "pages": 202,
+                        "summary": "Auto-generated book 2.",
+                        "lastModified": "2025-01-02T12:00:00Z",
+                        "version": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/cbor": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "List books encoded as CBOR (AR02 binary format)",
+        "operationId": "getBooksCbor_1",
+        "responses": {
+          "200": {
+            "description": "Books in CBOR binary format (decoded preview shown as JSON)",
+            "content": {
+              "application/cbor": {
+                "examples": {
+                  "cborDecodedPreview": {
+                    "description": "cborDecodedPreview",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1",
+                        "published_date": 1921,
+                        "pages": 101,
+                        "summary": "Auto-generated book 1.",
+                        "lastModified": "2025-01-01T12:00:00Z",
+                        "version": 1
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2",
+                        "published_date": 1922,
+                        "pages": 202,
+                        "summary": "Auto-generated book 2.",
+                        "lastModified": "2025-01-02T12:00:00Z",
+                        "version": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/batch": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "Batch fetch books by ids (AR02)",
+        "operationId": "batch",
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "description": "Comma-separated list of book ids (1..100)",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "maxItems": 100,
+              "minItems": 1
+            },
+            "example": "1,2,3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Books found for the requested ids",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "batch": {
+                    "description": "batch",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1",
+                        "published_date": 1921,
+                        "pages": 101,
+                        "summary": "Auto-generated book 1.",
+                        "lastModified": "2025-01-01T12:00:00Z",
+                        "version": 1
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2",
+                        "published_date": 1922,
+                        "pages": 202,
+                        "summary": "Auto-generated book 2.",
+                        "lastModified": "2025-01-02T12:00:00Z",
+                        "version": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/async": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "List books asynchronously (CompletableFuture)",
+        "operationId": "getBooksAsync",
+        "responses": {
+          "200": {
+            "description": "All books (async)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "books": {
+                    "description": "books",
+                    "value": [
+                      {
+                        "id": 1,
+                        "title": "Book 1",
+                        "author": "Author 1",
+                        "published_date": 1921,
+                        "pages": 101,
+                        "summary": "Auto-generated book 1.",
+                        "lastModified": "2025-01-01T12:00:00Z",
+                        "version": 1
+                      },
+                      {
+                        "id": 2,
+                        "title": "Book 2",
+                        "author": "Author 2",
+                        "published_date": 1922,
+                        "pages": 202,
+                        "summary": "Auto-generated book 2.",
+                        "lastModified": "2025-01-02T12:00:00Z",
+                        "version": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/async/{id}": {
+      "get": {
+        "tags": [
+          "book-controller"
+        ],
+        "summary": "Get a book by id asynchronously",
+        "operationId": "getBookByIdAsync",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book identifier",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Book found (async)",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "book": {
+                    "description": "book",
+                    "value": {
+                      "id": 1,
+                      "title": "Book 1",
+                      "author": "Author 1",
+                      "published_date": 1921,
+                      "pages": 101,
+                      "summary": "Auto-generated book 1.",
+                      "lastModified": "2025-01-01T12:00:00Z",
+                      "version": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found"
           }
         }
       }
@@ -56,23 +1246,64 @@
   },
   "components": {
     "schemas": {
-      "Order": {
+      "Book": {
         "type": "object",
-        "required": [
-          "sku",
-          "qty"
-        ],
+        "description": "Book resource",
+        "example": {
+          "id": 1,
+          "title": "Book 1",
+          "author": "Author 1",
+          "published_date": 1921,
+          "pages": 101,
+          "summary": "Auto-generated book 1.",
+          "lastModified": "2025-01-01T12:00:00Z",
+          "version": 1
+        },
         "properties": {
-          "sku": {
-            "type": "string",
-            "example": "ABC-123"
-          },
-          "qty": {
+          "id": {
             "type": "integer",
-            "default": 2
+            "format": "int64",
+            "description": "Unique identifier of the book",
+            "example": 1
           },
-          "notes": {
-            "type": "string"
+          "title": {
+            "type": "string",
+            "description": "Title of the book",
+            "example": "Book 1"
+          },
+          "author": {
+            "type": "string",
+            "description": "Author of the book",
+            "example": "Author 1"
+          },
+          "published_date": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Year the book was published",
+            "example": 1921
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of pages",
+            "example": 101
+          },
+          "summary": {
+            "type": "string",
+            "description": "Summary of the book",
+            "example": "Auto-generated book 1."
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last modification timestamp (ISO-8601)",
+            "example": "2025-01-01T12:00:00Z"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Optimistic locking version, used for ETag",
+            "example": 1
           }
         }
       }
