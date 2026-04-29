@@ -1,13 +1,13 @@
 {
-  "appname": "optex",
-  "timestamp": "2026-04-29T13:38:23Z",
-  "service_base_url": "http://localhost:8081",
+  "appname": "optcreedjavaarchinfr",
+  "timestamp": "2026-04-29T20:43:43Z",
+  "service_base_url": "http://localhost:8080",
   "service_base_urls": [
-    "http://localhost:8081"
+    "http://localhost:8080"
   ],
   "green_score_summary": {
-    "total": 34,
-    "max": 100,
+    "total": 39,
+    "max": 123,
     "grade": "D"
   },
   "rule_resource_mapping": {
@@ -720,7 +720,7 @@
       "suggestions": []
     },
     "AR02_format_cbor": {
-      "id": "AR02",
+      "id": "BIN01",
       "label": "Format binaire (CBOR)",
       "description": "Un endpoint en format binaire (CBOR, protobuf...) doit exister.",
       "max_pts": 10,
@@ -1058,6 +1058,189 @@
           "how": "Option 1 \u2014 Spring Boot filter:\n  Add a HandlerInterceptor or OncePerRequestFilter that adds:\n    X-RateLimit-Limit: 100\n    X-RateLimit-Remaining: 97\n    X-RateLimit-Reset: 1620000000\n\nOption 2 \u2014 Use Bucket4j + Spring Boot Starter:\n  <dependency>com.bucket4j:bucket4j-spring-boot-starter</dependency>\n  Configure rate limits in application.yml per endpoint.\n\nOption 3 \u2014 Nginx:\n  limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;\n  location /api/ { limit_req zone=api burst=20; }\n  add_header X-RateLimit-Limit 100;"
         }
       ]
+    },
+    "AR01_event_driven": {
+      "id": "AR01",
+      "label": "Architecture \u00e9v\u00e9nementielle",
+      "description": "Utiliser une architecture \u00e9v\u00e9nementielle (callbacks, webhooks, AsyncAPI, SSE, WebSocket, broker) pour \u00e9viter le polling.",
+      "max_pts": 6,
+      "category": "architecture",
+      "validated": false,
+      "score": 0,
+      "matched_count": 0,
+      "candidate_count": 20,
+      "candidates": [],
+      "evidence": [],
+      "recommendations": [
+        "Aucun signal EDA d\u00e9tect\u00e9 mais 7 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor)."
+      ],
+      "migration_advice": [
+        {
+          "endpoint": {
+            "method": "PUT",
+            "path": "/books/{id}"
+          },
+          "condition": "mutating-without-callback",
+          "evidence": "Mutation declared but no OAS callbacks/webhooks",
+          "suggestion": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
+          "target_pattern": "Domain Event publication"
+        },
+        {
+          "endpoint": {
+            "method": "POST",
+            "path": "/reactive/books/{id}/summary"
+          },
+          "condition": "mutating-without-callback",
+          "evidence": "Mutation declared but no OAS callbacks/webhooks",
+          "suggestion": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
+          "target_pattern": "Domain Event publication"
+        },
+        {
+          "endpoint": {
+            "method": "POST",
+            "path": "/books/{id}/summary"
+          },
+          "condition": "mutating-without-callback",
+          "evidence": "Mutation declared but no OAS callbacks/webhooks",
+          "suggestion": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
+          "target_pattern": "Domain Event publication"
+        },
+        {
+          "endpoint": {
+            "method": "GET",
+            "path": "/reactive/books/changes"
+          },
+          "condition": "polling-path-token",
+          "evidence": "Path matches /(changes|since|events|notifications|updates|polls)/",
+          "suggestion": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
+          "target_pattern": "SSE or AsyncAPI subscription"
+        },
+        {
+          "endpoint": {
+            "method": "GET",
+            "path": "/reactive/books/changes"
+          },
+          "condition": "long-polling-query",
+          "evidence": "Query params suggesting long-poll: since",
+          "suggestion": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
+          "target_pattern": "WebSocket or SSE"
+        },
+        {
+          "endpoint": {
+            "method": "GET",
+            "path": "/books/changes"
+          },
+          "condition": "polling-path-token",
+          "evidence": "Path matches /(changes|since|events|notifications|updates|polls)/",
+          "suggestion": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
+          "target_pattern": "SSE or AsyncAPI subscription"
+        },
+        {
+          "endpoint": {
+            "method": "GET",
+            "path": "/books/changes"
+          },
+          "condition": "long-polling-query",
+          "evidence": "Query params suggesting long-poll: since",
+          "suggestion": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
+          "target_pattern": "WebSocket or SSE"
+        }
+      ],
+      "duplicates": [],
+      "detected_provider": null
+    },
+    "AR02_runtime_close": {
+      "id": "AR02",
+      "label": "Runtime proche du consommateur",
+      "description": "D\u00e9ployer l'API au plus pr\u00e8s des consommateurs (CDN, edge, anycast multi-r\u00e9gions).",
+      "max_pts": 7,
+      "category": "architecture",
+      "validated": false,
+      "score": 0,
+      "matched_count": 0,
+      "candidate_count": 20,
+      "candidates": [],
+      "evidence": [
+        {
+          "kind": "tls_skip",
+          "where": "n/a",
+          "value": "no HTTPS target available"
+        }
+      ],
+      "recommendations": [
+        "Aucun signal d'edge/CDN cross-valid\u00e9 (runtime + HEAD). Mettre l'API derri\u00e8re un edge/CDN multi-r\u00e9gions (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) pour rapprocher le runtime des consommateurs.",
+        "La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r\u00e9gionales (ex: eu-west, us-east) pour documenter un d\u00e9ploiement multi-r\u00e9gions.",
+        "Activer HTTPS sur la cible pour permettre la mesure de latence TLS et b\u00e9n\u00e9ficier d'un edge/CDN moderne."
+      ],
+      "migration_advice": [],
+      "duplicates": [],
+      "detected_provider": null
+    },
+    "AR03_unique_api": {
+      "id": "AR03",
+      "label": "Une seule API par besoin",
+      "description": "\u00c9viter la duplication d'APIs servant le m\u00eame besoin (double infrastructure = double empreinte).",
+      "max_pts": 3,
+      "category": "architecture",
+      "validated": true,
+      "score": 3,
+      "matched_count": 20,
+      "candidate_count": 20,
+      "candidates": [],
+      "evidence": [
+        {
+          "kind": "info",
+          "where": "scope",
+          "value": "1 OpenAPI spec(s) analys\u00e9e(s) \u2014 pas de duplication"
+        }
+      ],
+      "recommendations": [],
+      "migration_advice": [],
+      "duplicates": [],
+      "detected_provider": null
+    },
+    "AR04_scalable_infra": {
+      "id": "AR04",
+      "label": "Infrastructure scalable",
+      "description": "Pr\u00e9f\u00e9rer une infrastructure auto-scalable (HPA, KEDA, autoscale, serverless).",
+      "max_pts": 5,
+      "category": "infrastructure",
+      "validated": false,
+      "score": 0,
+      "matched_count": 0,
+      "candidate_count": 20,
+      "candidates": [],
+      "evidence": [],
+      "recommendations": [
+        "Aucun signal d'auto-scaling d\u00e9tect\u00e9 dans les fichiers IaC/build.",
+        "Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, ou d\u00e9ployer en serverless (Azure Functions, AWS Lambda, Cloud Run)."
+      ],
+      "migration_advice": [],
+      "duplicates": [],
+      "detected_provider": null
+    },
+    "AR05_cloud_footprint": {
+      "id": "AR05",
+      "label": "Dashboard d'empreinte cloud",
+      "description": "Suivre l'empreinte carbone via le dashboard natif du provider cloud.",
+      "max_pts": 2,
+      "category": "infrastructure",
+      "validated": true,
+      "score": 2,
+      "matched_count": 20,
+      "candidate_count": 20,
+      "candidates": [],
+      "evidence": [
+        {
+          "kind": "attestation",
+          "where": "operator",
+          "value": "--cloud-footprint-confirmed"
+        }
+      ],
+      "recommendations": [],
+      "migration_advice": [],
+      "duplicates": [],
+      "detected_provider": null
     }
   },
   "endpoint_rules": {
@@ -1068,7 +1251,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/reactive/books/select": [
       "DE11_pagination",
@@ -1077,7 +1265,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/reactive/books/changes": [
       "DE11_pagination",
@@ -1086,7 +1279,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/reactive/books/cbor": [
       "DE11_pagination",
@@ -1095,7 +1293,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/reactive/books/cacheable": [
       "DE11_pagination",
@@ -1104,7 +1307,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books": [
       "DE11_pagination",
@@ -1113,7 +1321,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books/select": [
       "DE11_pagination",
@@ -1122,7 +1335,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books/changes": [
       "DE11_pagination",
@@ -1131,7 +1349,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books/cbor": [
       "DE11_pagination",
@@ -1140,7 +1363,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books/batch": [
       "DE11_pagination",
@@ -1149,7 +1377,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books/async": [
       "DE11_pagination",
@@ -1158,7 +1391,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books/{id}": [
       "DE08_fields",
@@ -1167,7 +1405,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/reactive/books/{id}/summary": [
       "DE08_fields",
@@ -1176,7 +1419,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books/{id}/summary": [
       "DE08_fields",
@@ -1185,7 +1433,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/reactive/books/{id}": [
       "DE08_fields",
@@ -1194,7 +1447,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books/noCache/{id}": [
       "DE08_fields",
@@ -1203,7 +1461,12 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/books/async/{id}": [
       "DE08_fields",
@@ -1212,22 +1475,42 @@
       "DE06_delta",
       "range_206",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "put:/books/{id}": [
       "DE01_compression",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "post:/reactive/books/{id}/summary": [
       "DE01_compression",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "post:/books/{id}/summary": [
       "DE01_compression",
       "AR02_format_cbor",
-      "US07_rate_limit"
+      "US07_rate_limit",
+      "AR01_event_driven",
+      "AR02_runtime_close",
+      "AR03_unique_api",
+      "AR04_scalable_infra",
+      "AR05_cloud_footprint"
     ],
     "get:/actuator/health": [
       "LO01_observability"

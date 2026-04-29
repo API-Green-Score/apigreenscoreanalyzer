@@ -574,6 +574,27 @@ http://localhost:8081"></textarea>
       </div>
 
       <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
+        <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">🌍 Règles d'architecture (AR02 / AR05)</legend>
+        <div class="row">
+          <div>
+            <label for="loc-consumer-region">Région du consommateur (code ISO ou Azure)</label>
+            <input type="text" id="loc-consumer-region" placeholder="eu-west-1 / francecentral / FR">
+            <div class="hint">Utilisée par AR02 pour comparer la distance avec la région d'hébergement de l'API.</div>
+          </div>
+          <div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:24px">
+              <input type="checkbox" id="loc-enable-geoip" style="width:auto"> Activer la résolution <strong>GeoIP</strong>
+            </label>
+            <div class="hint">Tente de localiser l'API via DNS / GeoIP (peut nécessiter un accès réseau sortant).</div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+              <input type="checkbox" id="loc-cloud-footprint-confirmed" style="width:auto"> J'ai vérifié l'<strong>empreinte cloud</strong> (AR05)
+            </label>
+            <div class="hint">Confirme que le fournisseur cloud / la région sont validés (désactive le warning AR05).</div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
         <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">📦 Dépôt Git (optionnel — pour Creedengo)</legend>
         <label for="loc-git-repo">URL du dépôt</label>
         <input type="text" id="loc-git-repo" placeholder="https://github.com/owner/repo.git">
@@ -1153,7 +1174,9 @@ function _sgRender(panelId){
 
   // Empty state
   if (all.length === 0) {
-    const total = gs.total || 0, max = gs.max || 100;
+    const total = gs.total || 0;
+    const rulesMaxSum = rules.reduce((s, r) => s + (r.max_pts || 0), 0);
+    const max = rulesMaxSum > 0 ? rulesMaxSum : (gs.max || 100);
     const pct = max > 0 ? Math.round(total/max*100) : 0;
     const isMax = total >= max;
     return `<div class="sg-summary" style="justify-content:center;text-align:center;padding:24px 16px">
@@ -1172,10 +1195,17 @@ function _sgRender(panelId){
   }
 
   // Summary bar
-  const total = gs.total || 0, max = gs.max || 100;
-  let gain = 0;
-  for (const r of rules) gain += Math.max(0, r.max_pts - r.score);
-  const potential = Math.min(total + gain, max);
+  // Scale the progress bar on the *actual* total possible score (sum of
+  // every rule's max_pts) instead of a hard-coded 100. This makes room for
+  // additive families (e.g. AR01..AR05 architecture rules, +23 pts) and
+  // keeps "potentiel de gain = score total possible − score actuel".
+  const total = gs.total || 0;
+  const rulesMaxSum = rules.reduce((s, r) => s + (r.max_pts || 0), 0);
+  // Prefer the rules-based total (it always reflects what the analyzer
+  // produced); fall back to gs.max, then to 100 only as a last resort.
+  const max = rulesMaxSum > 0 ? rulesMaxSum : (gs.max || 100);
+  const gain = Math.max(0, max - total);
+  const potential = total + gain;          // == max by construction
   const curPct = max > 0 ? (total/max*100) : 0;
   const potPct = max > 0 ? (potential/max*100) : 0;
 
@@ -1607,6 +1637,9 @@ $("loc-btn-analyze").addEventListener("click", async () => {
   const stack       = ($("loc-stack")?.value || "auto").trim();
   const sourceDir   = ($("loc-source-dir")?.value || "").trim();
   const buildAndRun = $("loc-build-and-run")?.checked || false;
+  const consumerRegion          = ($("loc-consumer-region")?.value || "").trim();
+  const enableGeoip             = $("loc-enable-geoip")?.checked || false;
+  const cloudFootprintConfirmed = $("loc-cloud-footprint-confirmed")?.checked || false;
 
   if (targets.length === 0 && !gitRepo && !buildAndRun) {
     return setStatus("loc-status","error","Veuillez fournir au moins une URL d'API, un dépôt Git, <em>ou</em> activer Build &amp; run.");
@@ -1632,6 +1665,7 @@ $("loc-btn-analyze").addEventListener("click", async () => {
       creedengo, debug, gitKeep,
       gitRepo, gitBranch, gitSubdir,
       stack, sourceDir, buildAndRun,
+      consumerRegion, enableGeoip, cloudFootprintConfirmed,
     }, { timeoutMs: 10 * 60 * 1000 });   // 10 min — match server timeout
     if (!ok || !data.ok) {
       const detail = data.log ? `<details class="log"><summary>📜 Logs start.sh</summary><pre>${escHtml(data.log)}</pre></details>` : "";

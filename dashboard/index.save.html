@@ -2826,7 +2826,13 @@ function renderSuggestions(report) {
         document.getElementById('suggestions-count-badge').textContent = '0';
         const gs = report.green_score || {};
         const currentScore = gs.total || 0;
-        const maxScore = gs.max || 100;
+        // Compute the actual max from every rule reported by the analyzer
+        // (suggestions or not) so the score still scales correctly when AR
+        // rules have been validated and only emit no extra suggestion.
+        const allRulesMaxSum = rrm
+          ? Object.values(rrm).reduce((s, r) => s + (r.max_pts || 0), 0)
+          : 0;
+        const maxScore = allRulesMaxSum > 0 ? allRulesMaxSum : (gs.max || 100);
         const pct = maxScore > 0 ? Math.round((currentScore / maxScore) * 100) : 0;
         const isMax = currentScore >= maxScore;
 
@@ -2854,14 +2860,16 @@ function renderSuggestions(report) {
     document.getElementById('suggestions-count-badge').textContent = allSuggestions.length;
 
     // ── Summary bar: current vs potential score ──
+    // Scale on the *actual* total possible score (sum of every rule's
+    // max_pts) instead of a hard-coded 100. This makes room for additive
+    // rule families (e.g. AR01..AR05 architecture rules, +23 pts) and keeps
+    // "potentiel = score total possible − score actuel".
     const gs = report.green_score;
     const currentScore = gs.total || 0;
-    const maxScore = gs.max || 100;
-    let potentialGain = 0;
-    for (const r of rulesWithSuggestions) {
-        potentialGain += Math.max(0, r.max_pts - r.score);
-    }
-    const potentialScore = Math.min(currentScore + potentialGain, maxScore);
+    const rulesMaxSum = rulesWithSuggestions.reduce((s, r) => s + (r.max_pts || 0), 0);
+    const maxScore = rulesMaxSum > 0 ? rulesMaxSum : (gs.max || 100);
+    const potentialGain = Math.max(0, maxScore - currentScore);
+    const potentialScore = currentScore + potentialGain;   // == maxScore
     const currentPct = maxScore > 0 ? (currentScore / maxScore * 100) : 0;
     const potentialPct = maxScore > 0 ? (potentialScore / maxScore * 100) : 0;
 

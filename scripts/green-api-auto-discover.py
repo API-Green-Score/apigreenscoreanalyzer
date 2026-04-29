@@ -2154,6 +2154,16 @@ Examples:
 
         for arch_key, arch_res in arch_results.items():
             meta = GREEN_RULES.get(arch_key, {})
+            # Architecture/Infra rules are *global*: a single check validates
+            # the property for the whole API. To stay consistent with the
+            # per-endpoint rule reporting (which shows "matched/candidates"),
+            # we expose every discovered endpoint as a "candidate" of the AR
+            # rule and either count them all matched (rule validated → all
+            # endpoints benefit) or none (rule failed). This makes the CLI
+            # rendering print e.g. "AR05  2/2  (20/20 resources)" instead of
+            # the misleading "(0/0 resources)".
+            ar_total = len(endpoints) if isinstance(endpoints, list) else 0
+            ar_matched = ar_total if arch_res.get("matched") else 0
             rule_mapping_full[arch_key] = {
                 "id": meta.get("id", arch_res.get("rule_id", arch_key)),
                 "label": meta.get("label", arch_key),
@@ -2162,8 +2172,8 @@ Examples:
                 "category": arch_res.get("category", meta.get("category", "architecture")),
                 "validated": bool(arch_res.get("matched")),
                 "score": int(arch_res.get("score", 0)),
-                "matched_count": 1 if arch_res.get("matched") else 0,
-                "candidate_count": max(1, len(arch_res.get("candidates", []))),
+                "matched_count": ar_matched,
+                "candidate_count": ar_total,
                 "candidates": arch_res.get("candidates", []),
                 "evidence": arch_res.get("evidence", []),
                 "recommendations": arch_res.get("recommendations", []),
@@ -2177,6 +2187,21 @@ Examples:
             details_full[arch_key] = {
                 "note": " | ".join(arch_res.get("recommendations", []))[:300]
             }
+
+        # Architecture/Infra rules apply globally → register them on every
+        # discovered endpoint's rule list so the dashboard "rules per
+        # endpoint" view (and CSV/JSON consumers) reflect that the rule
+        # is relevant to every resource, even though it is validated once.
+        if arch_results:
+            arch_keys = list(arch_results.keys())
+            for ep in (endpoints if isinstance(endpoints, list) else []):
+                ep_key = f"{(ep.get('method') or '').lower()}:{ep.get('path') or ''}"
+                if not ep_key.strip(":"):
+                    continue
+                lst = endpoint_rules_full.setdefault(ep_key, [])
+                for ak in arch_keys:
+                    if ak not in lst:
+                        lst.append(ak)
 
         # Refresh totals & grade with the new 123-pts budget.
         legacy_total = sum(v for k, v in scores_full.items() if k not in arch_results)

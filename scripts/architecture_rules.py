@@ -530,6 +530,136 @@ def _jaccard(a: set, b: set) -> float:
     return len(a & b) / len(union) if union else 0.0
 
 
+def evaluate_AR03(specs_per_target: list, thresholds: dict | None = None) -> dict:
+    """AR03 — Une seule API par besoin.
+
+    Detects duplicated APIs that serve the same business need (double
+    infrastructure = double carbon footprint). Two complementary checks:
+
+      1. **Cross-target duplication** (when ≥ 2 OpenAPI specs are merged in
+         the same run): for each pair of specs, compute three independent
+         similarity metrics — operation-signature Jaccard, tag Jaccard, and
+         description-bow cosine — and flag the pair as duplicate when at
+         least two of them exceed their thresholds (cross-validation).
+      2. **Intra-spec duplication**: within a single spec, normalise paths
+         (strip ``/v\\d+`` prefix and ``{name}`` placeholders) and report
+         distinct operations that collapse to the same normalised signature
+         — typically a v1/v2 cohabitation that should be deprecated.
+
+    Score = max_pts when no duplicate is found, 0 otherwise. The list of
+    detected duplicates is exposed under ``duplicates`` for the dashboard.
+    """
+    max_pts = ARCH_RULES["AR03_unique_api"]["max_pts"]
+    thr = thresholds or {}
+    sig_thr  = float(thr.get("ar03_signature_jaccard", 0.50))
+    tag_thr  = float(thr.get("ar03_tag_jaccard",       0.40))
+    bow_thr  = float(thr.get("ar03_summary_cosine",    0.55))
+
+    duplicates: list[dict] = []
+    evidence:   list[dict] = []
+    recommendations: list[str] = []
+
+    # ── 1) Cross-target duplication ──────────────────────────────────────
+    # specs_per_target = [(base_url, spec_dict), ...]
+    pairs = []
+    n = len(specs_per_target)
+    for i in range(n):
+        bi, si = specs_per_target[i]
+        sigs_i = _all_operation_signatures(si)
+        tags_i = _all_tags(si)
+        bow_i  = _summary_tokens(si)
+        for j in range(i + 1, n):
+            bj, sj = specs_per_target[j]
+            sigs_j = _all_operation_signatures(sj)
+            tags_j = _all_tags(sj)
+            bow_j  = _summary_tokens(sj)
+            sig_sim = _jaccard(sigs_i, sigs_j)
+            tag_sim = _jaccard(tags_i, tags_j)
+            bow_sim = _cosine_bow(bow_i, bow_j)
+            hits = (sig_sim >= sig_thr) + (tag_sim >= tag_thr) + (bow_sim >= bow_thr)
+            metrics = {
+                "left": bi, "right": bj,
+                "signature_jaccard": round(sig_sim, 3),
+                "tag_jaccard":       round(tag_sim, 3),
+                "summary_cosine":    round(bow_sim, 3),
+                "matched_signals":   int(hits),
+            }
+            pairs.append(metrics)
+            # Cross-validation: ≥ 2 independent similarity signals required
+            if hits >= 2:
+                duplicates.append({**metrics, "kind": "cross-target"})
+
+    # ── 2) Intra-spec duplication (v1/v2 cohabitation) ──────────────────
+    for base_url, spec in specs_per_target:
+        bucket: dict[tuple, list[str]] = {}
+        for path, ops in (spec.get("paths") or {}).items():
+            if not isinstance(ops, dict):
+                continue
+            for method, op in ops.items():
+                if method not in ("get", "post", "put", "patch", "delete", "head"):
+                    continue
+                if not isinstance(op, dict):
+                    continue
+                norm = _normalise_path(path)
+                key = (method.upper(), norm)
+                bucket.setdefault(key, []).append(path)
+        for (mtd, norm), originals in bucket.items():
+            uniq = sorted(set(originals))
+            if len(uniq) >= 2:
+                dup = {
+                    "kind": "intra-spec",
+                    "base_url": base_url,
+                    "method": mtd,
+                    "normalised_path": norm,
+                    "duplicate_paths": uniq,
+                }
+                duplicates.append(dup)
+                evidence.append({"kind": "intra-spec", "where": base_url,
+                                 "value": f"{mtd} {' ⇄ '.join(uniq)}"})
+
+    # ── Build evidence + recommendations ─────────────────────────────────
+    for d in duplicates:
+        if d["kind"] == "cross-target":
+            evidence.append({"kind": "cross-target", "where": d["left"],
+                             "value": (
+                                 f"{d['left']} ⇄ {d['right']} "
+                                 f"(sig={d['signature_jaccard']}, "
+                                 f"tag={d['tag_jaccard']}, "
+                                 f"bow={d['summary_cosine']})"
+                             )})
+            recommendations.append(
+                f"APIs très proches détectées entre **{d['left']}** et "
+                f"**{d['right']}**. Mutualiser pour éviter la double "
+                f"infrastructure (et la double empreinte carbone)."
+            )
+        else:
+            recommendations.append(
+                f"Cohabitation de versions sur **{d['base_url']}** : "
+                f"{d['method']} {' ⇄ '.join(d['duplicate_paths'])}. "
+                "Déprécier explicitement l'ancienne version pour "
+                "supprimer le runtime redondant."
+            )
+
+    matched = (len(duplicates) == 0)
+    score = max_pts if matched else 0
+    if matched and n <= 1 and not duplicates:
+        evidence.append({"kind": "info", "where": "scope",
+                         "value": f"{n} OpenAPI spec(s) analysée(s) — pas de duplication"})
+
+    return {
+        "rule_id": "AR03",
+        "score": score,
+        "max_pts": max_pts,
+        "matched": matched,
+        "category": "architecture",
+        "candidates": [],
+        "evidence": evidence,
+        "duplicates": duplicates,
+        "recommendations": recommendations,
+        "pairs_metrics": pairs,
+    }
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # AR02 — Runtime close to the consumer (Phase 3)
 # ═══════════════════════════════════════════════════════════════════════════
@@ -885,11 +1015,14 @@ def evaluate_AR05(measurements: dict, base_urls: list[str],
                   cloud_dashboards: dict, footprint_confirmed: bool) -> dict:
     """AR05 — Cloud Footprint Dashboard.
 
-    Score = max_pts only when:
-      • a cloud provider is detected (by edge headers), AND
-      • observability is exposed (actuator/prometheus reachable), AND
-      • the operator confirmed the dashboard is being used
-        (``--cloud-footprint-confirmed`` CLI flag).
+    Score = max_pts in either of the two cases below:
+      • the operator confirmed actively using the cloud-provider footprint
+        dashboard (``--cloud-footprint-confirmed`` CLI flag) — explicit
+        human attestation is a sufficient strong signal on its own; or
+      • auto-detection: a cloud provider is detected (via edge headers) AND
+        observability is exposed (actuator/prometheus reachable) — two
+        independent corroborating signals satisfy the cross-validation rule
+        without manual confirmation.
 
     Otherwise the rule is *informational*: 0 points but rendered with the
     deep-link to the provider-native dashboard so teams can act on it.
@@ -916,8 +1049,12 @@ def evaluate_AR05(measurements: dict, base_urls: list[str],
     for h in obs_hits:
         evidence.append({"kind": "observability", "where": h["base_url"],
                          "value": h["url"]})
+    if footprint_confirmed:
+        evidence.append({"kind": "attestation", "where": "operator",
+                         "value": "--cloud-footprint-confirmed"})
 
-    matched = bool(canonical and obs_hits and footprint_confirmed)
+    auto_detected = bool(canonical and obs_hits)
+    matched = bool(footprint_confirmed or auto_detected)
     score = max_pts if matched else 0
 
     recommendations: list[str] = []
@@ -928,21 +1065,17 @@ def evaluate_AR05(measurements: dict, base_urls: list[str],
                 f"Cloud détecté: **{canonical.upper()}**. "
                 f"Activez et consultez régulièrement le dashboard d'empreinte: {url}"
             )
-    else:
+    elif not footprint_confirmed:
         recommendations.append(
             "Aucun cloud provider détecté via les en-têtes HTTP. "
             "Si l'API est hébergée sur AWS/Azure/GCP/OVH, vérifiez l'exposition "
-            "des en-têtes edge ou confirmez l'usage du dashboard manuellement."
+            "des en-têtes edge ou confirmez l'usage du dashboard manuellement "
+            "via ``--cloud-footprint-confirmed``."
         )
-    if not obs_hits:
+    if not obs_hits and not footprint_confirmed:
         recommendations.append(
             "Aucune télémétrie standard détectée (/actuator/metrics, /metrics, "
             "/q/metrics). Exposez les métriques pour alimenter le dashboard."
-        )
-    if canonical and obs_hits and not footprint_confirmed:
-        recommendations.append(
-            "Confirmez l'usage actif du dashboard d'empreinte avec "
-            "``--cloud-footprint-confirmed`` pour valider AR05."
         )
 
     return {

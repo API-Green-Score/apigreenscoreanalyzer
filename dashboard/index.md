@@ -1,14 +1,14 @@
 # 🌿 Green API Score Dashboard
 
-> 📦 **Application : optex**
+> 📦 **Application : optcreedjavaarchinfr**
 >
 > **Devoxx France 2026 — Green Architecture : moins de gras, plus d'impact !**
 
-📅 *Dernière analyse : 2026-04-29T13:38:23Z*
+📅 *Dernière analyse : 2026-04-29T20:43:43Z*
 
 ---
 
-## 🔴 Green Score : **34/100** — Grade **D** 📉
+## 🔴 Green Score : **39/100** — Grade **D** 📉
 
 ### 📋 Détail par règle
 
@@ -28,17 +28,17 @@
 
 | Méthode | Endpoint | Taille | Temps | HTTP |
 |:-------:|----------|-------:|------:|-----:|
-| GET | `/books/{id}` | 207 B | 0.006s | 200 |
-| PUT | `/books/{id}` | 209 B | 0.005s | 200 |
-| GET | `/reactive/books/{id}/summary` | 0 B | 0.007s | 200 |
-| POST | `/reactive/books/{id}/summary` | 0 B | 0.015s | 200 |
+| GET | `/books/{id}` | 184 B | 0.014s | 200 |
+| PUT | `/books/{id}` | 209 B | 0.007s | 200 |
+| GET | `/reactive/books/{id}/summary` | 0 B | 0.031s | 200 |
+| POST | `/reactive/books/{id}/summary` | 0 B | 0.019s | 200 |
 | GET | `/books/{id}/summary` | 36 B | 0.002s | 200 |
 | POST | `/books/{id}/summary` | 207 B | 0.002s | 200 |
-| GET | `/reactive/books` | 0 B | 0.006s | 200 |
-| GET | `/reactive/books/{id}` | 0 B | 0.005s | 200 |
-| GET | `/reactive/books/select` | 0 B | 0.004s | 200 |
-| GET | `/reactive/books/changes` | 0 B | 0.008s | 200 |
-| GET | `/reactive/books/cbor` | 13 B | 0.005s | 429 |
+| GET | `/reactive/books` | 0 B | 0.011s | 200 |
+| GET | `/reactive/books/{id}` | 0 B | 0.004s | 200 |
+| GET | `/reactive/books/select` | 0 B | 0.006s | 200 |
+| GET | `/reactive/books/changes` | 0 B | 0.011s | 200 |
+| GET | `/reactive/books/cbor` | 13 B | 0.004s | 429 |
 | GET | `/reactive/books/cacheable` | 20 B | 0.001s | 429 |
 | GET | `/books` | 20 B | 0.001s | 429 |
 | GET | `/books/select` | 20 B | 0.001s | 429 |
@@ -52,15 +52,15 @@
 ### 🔑 Métriques clés
 
 - **Endpoints mesurés** : 20
-- **Transfert total** : 852 B
-- **Transfert moyen / endpoint** : 42 B
-- **Temps moyen** : 0.004s
-- **⚡ Énergie totale / appel** : 0.0006 Wh
-- **🌍 CO₂ / appel** : 0.00003 g (France — 53 gCO₂/kWh)
+- **Transfert total** : 829 B
+- **Transfert moyen / endpoint** : 41 B
+- **Temps moyen** : 0.006s
+- **⚡ Énergie totale / appel** : 0.0009 Wh
+- **🌍 CO₂ / appel** : 0.00005 g (France — 53 gCO₂/kWh)
 
 ### 💡 Suggestions d'amélioration
 
-> **Score actuel : 34/100** — Score potentiel avec toutes les suggestions : **100/100** (+66 pts possibles)
+> **Score actuel : 39/123** — Score potentiel avec toutes les suggestions : **105/123** (+66 pts possibles)
 
 🔴 Haute priorité : 8 | 🟡 Moyenne : 8 | ⚪ Basse : 2 | **Total : 18 suggestions**
 
@@ -283,7 +283,7 @@ Alternative (Protobuf):
 - **Formule du score** : (1 − 2/17) × 100 = **88/100**
 - **Effort de remédiation** : 12h20min
 
-- **Lignes de code** : 718
+- **Lignes de code** : 942
 
 ### 🏷️ Catégories éco-design
 
@@ -317,21 +317,22 @@ Alternative (Protobuf):
 
 ---
 
-### 🔧 Issues SonarQube générales (hors écodesign) — 10 issues
+### 🔧 Issues SonarQube générales (hors écodesign) — 15 issues
 
 > Ces issues proviennent des règles SonarQube standard (qualité de code, bugs, sécurité). Elles ne sont **pas** comptabilisées dans le score Creedengo.
 
 | Sévérité | Nombre |
 |:--------:|-------:|
 | 🟠 Critique | 2 |
-| 🟡 Majeur | 2 |
+| 🟡 Majeur | 7 |
 | ⚪ Mineur | 5 |
 | 🔵 Info | 1 |
-| **Total** | **10** |
+| **Total** | **15** |
 
 | Sévérité | Règle | Issues |
 |:--------:|-------|-------:|
 | 🟠 CRITICAL | **S1192** — S1192 | 2 |
+| 🟡 MAJOR | **S6126** — S6126 | 5 |
 | 🟡 MAJOR | **S108** — S108 | 1 |
 | 🟡 MAJOR | **S107** — S107 | 1 |
 | ⚪ MINOR | **S1170** — S1170 | 2 |
@@ -340,9 +341,9 @@ Alternative (Protobuf):
 | ⚪ MINOR | **S1319** — S1319 | 1 |
 | 🔵 INFO | **S1135** — S1135 | 1 |
 
-- **Effort de remédiation SonarQube** : 1h02min
+- **Effort de remédiation SonarQube** : 1h12min
 
-📅 *2026-04-29T11:14:54Z*
+📅 *2026-04-29T20:46:09Z*
 
 ---
 
