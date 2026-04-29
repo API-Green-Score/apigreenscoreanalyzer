@@ -1,79 +1,371 @@
 extends: [[spectral:oas, recommended]]
 
+# =========================================================================
+#  Green API Score - Spectral Rules (static OpenAPI lint)
+#
+#  Ce fichier est COMPLEMENTAIRE au runtime analyzer
+#  (scripts/green-api-auto-discover.py). Les regles ci-dessous ne valident
+#  que ce qui est observable statiquement dans la spec OpenAPI.
+#
+#  Les preuves dynamiques (compression reelle, ETag/304 effectif, /changes
+#  qui repond, runtime regionalement proche, scalabilite, dashboard cloud)
+#  restent a la charge du runtime analyzer.
+#
+#  Convention: la `description` de chaque regle debute par
+#    [<categorie>] <ID>  -  <libelle>
+#  ou <categorie> in { data-efficiency, usage, logs-observability,
+#                      architecture, infrastructure, style }
+#  pour rester aligne avec le champ `category` du dictionnaire
+#  GREEN_RULES cote script Python (green-api-auto-discover.py).
+# =========================================================================
+
+aliases:
+  GET_OPERATIONS:
+    - "$.paths[*].get"
+  ALL_OPERATIONS:
+    - "$.paths[*][get,post,put,patch,delete]"
+  COLLECTION_GETS:
+    # paths whose final segment is NOT a path parameter (= collections)
+    - "$.paths[?(!@property.match(/\\{[^}]+\\}\\s*$/))].get"
+  ITEM_GETS:
+    # paths whose final segment IS a path parameter (= ressource unitaire)
+    - "$.paths[?(@property.match(/\\{[^}]+\\}\\s*$/))].get"
+
 rules:
-  # ═══════════════════════════════════════════════════════════
-  #  🌿 Green API Score — Spectral Rules
-  #  Règles de linting OpenAPI pour l'éco-conception d'API
-  # ═══════════════════════════════════════════════════════════
+  # -----------------------------------------------------------------------
+  #  DATA EFFICIENCY (DE)
+  # -----------------------------------------------------------------------
 
-  # DE11 — Pagination obligatoire sur les collections
+  # DE11 - Pagination obligatoire sur les GET de collection
   green-api-pagination:
-    description: "DE11 — Les endpoints de collection GET doivent supporter la pagination (page/size ou limit/offset)"
+    description: "[data-efficiency] DE11 - Les GET de collection doivent supporter la pagination (page/size, limit/offset, cursor)."
     severity: warn
-    given: "$.paths[*].get"
+    given: "#COLLECTION_GETS"
     then:
-      - field: parameters
-        function: truthy
-    message: "{{description}} — Ajoutez des paramètres page/size sur les GET de collection."
-
-  # DE08 — Filtrage de champs
-  green-api-fields-filter:
-    description: "DE08 — Les endpoints GET devraient supporter un paramètre 'fields' pour le filtrage de champs"
-    severity: info
-    given: "$.paths[*].get.parameters[*]"
-    then:
-      field: name
-      function: pattern
+      function: schema
       functionOptions:
-        notMatch: "^$"
-    message: "Pensez à ajouter un paramètre 'fields' pour réduire le payload (DE08)."
+        schema:
+          type: object
+          required: [parameters]
+          properties:
+            parameters:
+              type: array
+              contains:
+                type: object
+                required: [name]
+                properties:
+                  name:
+                    type: string
+                    pattern: "^(page|size|limit|offset|pageSize|pageNumber|cursor|after|before)$"
+    message: "{{description}} Aucun parametre de pagination detecte sur ce GET de collection."
 
-  # DE01 — Format de réponse
-  green-api-response-format:
-    description: "DE01 — Les réponses doivent utiliser application/json (ou application/cbor)"
-    severity: warn
-    given: "$.paths[*][*].responses[*].content"
+  # DE08 - Filtrage / projection de champs
+  green-api-fields-filter:
+    description: "[data-efficiency] DE08 - Les GET devraient exposer un parametre de projection (fields, select, _fields, view)."
+    severity: info
+    given: "#GET_OPERATIONS"
     then:
-      field: "application/json"
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [parameters]
+          properties:
+            parameters:
+              type: array
+              contains:
+                type: object
+                required: [name]
+                properties:
+                  name:
+                    type: string
+                    pattern: "^(fields|select|_fields|sparse|view)$"
+    message: "{{description}}"
+
+  # DE01 - Format de reponse JSON (et tolerance CBOR/protobuf)
+  green-api-response-format:
+    description: "[data-efficiency] DE01 - Les reponses 2xx doivent exposer application/json (application/cbor / application/x-protobuf toleres en complement)."
+    severity: warn
+    given: "$.paths[*][*].responses[?(@property.match(/^2\\d\\d$/))].content"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required: ["application/json"]
+            - required: ["application/cbor"]
+            - required: ["application/x-protobuf"]
+            - required: ["application/protobuf"]
+    message: "{{description}}"
+
+  # DE01 - Compression : header Content-Encoding documente sur les 200
+  green-api-compression-header:
+    description: "[data-efficiency] DE01 - Documentez le header Content-Encoding (gzip/br) ou Vary sur les reponses 200 pour signaler la compression."
+    severity: info
+    given: "$.paths[*][*].responses.200"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [headers]
+          properties:
+            headers:
+              type: object
+              propertyNames:
+                pattern: "(?i)^(content-encoding|vary)$"
+    message: "{{description}}"
+
+  # DE02/DE03 - Cache : ETag sur les ressources unitaires
+  green-api-etag-header:
+    description: "[data-efficiency] DE02/DE03 - Les GET unitaires (/.../{id}) doivent documenter le header ETag dans la reponse 200."
+    severity: warn
+    given: "#ITEM_GETS"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [responses]
+          properties:
+            responses:
+              type: object
+              required: ["200"]
+              properties:
+                "200":
+                  type: object
+                  required: [headers]
+                  properties:
+                    headers:
+                      type: object
+                      anyOf:
+                        - required: [ETag]
+                        - required: [etag]
+    message: "{{description}}"
+
+  # DE02/DE03 - Reponse 304 Not Modified pour les ressources unitaires
+  green-api-not-modified-304:
+    description: "[data-efficiency] DE02/DE03 - Les GET unitaires (/.../{id}) doivent declarer la reponse 304 Not Modified."
+    severity: info
+    given: "#ITEM_GETS"
+    then:
+      field: "responses.304"
       function: truthy
     message: "{{description}}"
 
-  # DE02/DE03 — Cache headers
-  green-api-cache-headers:
-    description: "DE02/DE03 — Les réponses 200 devraient documenter les headers de cache (ETag, Cache-Control)"
+  # DE06 - Delta / Changes (presence d'un endpoint de synchronisation incrementale)
+  green-api-delta-endpoint:
+    description: "[data-efficiency] DE06 - La spec devrait exposer un endpoint de delta (/changes, /sync, /delta)."
     severity: info
-    given: "$.paths[*].get.responses.200.headers"
+    given: "$"
     then:
-      function: truthy
-    message: "Documentez les headers ETag et Cache-Control dans vos réponses 200 (DE02/DE03)."
+      field: paths
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          # "il existe au moins une path-key contenant changes / sync / delta"
+          # encode via:  not(toutes les cles ne matchent pas)
+          not:
+            propertyNames:
+              not:
+                pattern: "(?i)(changes|/sync(\\b|$|/)|delta)"
+    message: "{{description}}"
 
-  # Pas de descriptions vides
-  green-api-operation-description:
-    description: "Chaque opération doit avoir une description"
-    severity: warn
-    given: "$.paths[*][get,post,put,patch,delete]"
+  # 206 - Range / Partial Content : si un endpoint accepte 'Range', il doit declarer 206
+  green-api-range-206:
+    description: "[data-efficiency] 206 - Si l'operation accepte un header Range, elle doit declarer la reponse 206 Partial Content."
+    severity: info
+    given: "$.paths[*][get,head][?(@.parameters && @.parameters[?(@.name && @.name.match(/^range$/i))])]"
     then:
-      field: description
+      field: "responses.206"
       function: truthy
-    message: "Ajoutez une description à cette opération pour la documentation."
+    message: "{{description}}"
 
-  # Réponses d'erreur documentées
+  # BIN01 - Format binaire (CBOR / protobuf) - encouragement non bloquant
+  green-api-binary-format:
+    description: "[data-efficiency] BIN01 - Pensez a exposer au moins un endpoint en format binaire (application/cbor, application/x-protobuf) pour reduire le payload."
+    severity: hint
+    given: "$.paths[*][*].responses[*].content"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required: ["application/cbor"]
+            - required: ["application/x-protobuf"]
+            - required: ["application/protobuf"]
+            - required: ["application/octet-stream"]
+            - required: ["application/x-ndjson"]
+            - required: ["text/event-stream"]
+            # tolere les schemas JSON pour ne pas spammer (regle indicative)
+            - required: ["application/json"]
+    message: "{{description}}"
+
+  # -----------------------------------------------------------------------
+  #  USAGE (US)
+  # -----------------------------------------------------------------------
+
+  # US07 - Rate limiting : reponse 429 documentee
+  green-api-rate-limit-429:
+    description: "[usage] US07 - Les operations doivent documenter la reponse 429 Too Many Requests."
+    severity: info
+    given: "#ALL_OPERATIONS"
+    then:
+      field: "responses.429"
+      function: truthy
+    message: "{{description}}"
+
+  # US07 - Rate limiting : header Retry-After / X-RateLimit-* sur la 429
+  green-api-retry-after-header:
+    description: "[usage] US07 - La reponse 429 doit documenter au moins un header Retry-After ou X-RateLimit-*."
+    severity: info
+    given: "$.paths[*][*].responses.429"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [headers]
+          properties:
+            headers:
+              type: object
+              propertyNames:
+                pattern: "(?i)^retry-after$|^x-ratelimit-(limit|remaining|reset)$"
+    message: "{{description}}"
+
+  # US07 - 404 documentee sur les operations qui ciblent une ressource
   green-api-error-responses:
-    description: "US07 — Documentez les réponses d'erreur (400, 404, 500)"
+    description: "[usage] US07 - Documentez la reponse 404 sur les operations qui ciblent une ressource."
     severity: info
-    given: "$.paths[*][*].responses"
+    given: "$.paths[*][get,put,patch,delete].responses"
     then:
       field: "404"
       function: truthy
-    message: "Documentez la réponse 404 pour améliorer l'observabilité (US07)."
+    message: "{{description}}"
 
-  # Pas de payload excessif dans les exemples
+  # -----------------------------------------------------------------------
+  #  LOGS & OBSERVABILITY (LO)
+  # -----------------------------------------------------------------------
+
+  # LO01 - Observabilite : la spec devrait exposer health/metrics/actuator
+  green-api-observability-endpoint:
+    description: "[logs-observability] LO01 - La spec devrait exposer un endpoint d'observabilite (/health, /actuator, /metrics, /readiness, /liveness)."
+    severity: info
+    given: "$"
+    then:
+      field: paths
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          not:
+            propertyNames:
+              not:
+                pattern: "(?i)(health|actuator|metrics|readiness|liveness|ping)"
+    message: "{{description}}"
+
+  # -----------------------------------------------------------------------
+  #  ARCHITECTURE (AR)
+  # -----------------------------------------------------------------------
+
+  # AR01 - Architecture evenementielle : callbacks OpenAPI, webhooks ou SSE
+  green-api-event-driven-callbacks:
+    description: "[architecture] AR01 - Preferez une architecture evenementielle (callbacks OpenAPI, webhooks, text/event-stream) plutot que du polling."
+    severity: info
+    given: "$"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            # callbacks OpenAPI 3 dans components
+            - properties:
+                components:
+                  type: object
+                  required: [callbacks]
+              required: [components]
+            # webhooks OpenAPI 3.1
+            - required: [webhooks]
+            # SSE: presence d'un endpoint stream/events/sse/subscribe/notifications
+            - properties:
+                paths:
+                  type: object
+                  not:
+                    propertyNames:
+                      not:
+                        pattern: "(?i)(stream|events|sse|subscribe|notifications?)"
+              required: [paths]
+    message: "{{description}}"
+
+  # -----------------------------------------------------------------------
+  #  STYLE / DOCUMENTATION (transverse)
+  # -----------------------------------------------------------------------
+
+  # Toute operation doit avoir une description
+  green-api-operation-description:
+    description: "[style] Chaque operation doit avoir une description (documentation)."
+    severity: warn
+    given: "#ALL_OPERATIONS"
+    then:
+      field: description
+      function: truthy
+    message: "{{description}}"
+
+  # Toute operation doit avoir un operationId stable
+  green-api-operation-id:
+    description: "[style] Chaque operation doit avoir un operationId stable (generation de clients, tracabilite)."
+    severity: warn
+    given: "#ALL_OPERATIONS"
+    then:
+      field: operationId
+      function: truthy
+    message: "{{description}}"
+
+  # Toute operation doit avoir au moins une reponse 2xx
+  green-api-success-2xx:
+    description: "[style] Chaque operation doit declarer au moins une reponse 2xx."
+    severity: warn
+    given: "#ALL_OPERATIONS"
+    then:
+      field: responses
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required: ["200"]
+            - required: ["201"]
+            - required: ["202"]
+            - required: ["204"]
+            - required: ["2XX"]
+    message: "{{description}}"
+
+  # DELETE devrait retourner 204 (pas de payload de retour)
+  green-api-delete-204:
+    description: "[data-efficiency] Les operations DELETE devraient retourner 204 No Content (pas de payload de retour)."
+    severity: info
+    given: "$.paths[*].delete"
+    then:
+      field: "responses.204"
+      function: truthy
+    message: "{{description}}"
+
+  # -----------------------------------------------------------------------
+  #  Surcharges des regles spectral:oas
+  # -----------------------------------------------------------------------
+
   oas3-valid-media-example:
     severity: warn
-
-  # Info obligatoire
   info-contact:
     severity: warn
   info-description:
+    severity: warn
+  operation-tag-defined:
+    severity: info
+  no-$ref-siblings:
     severity: warn
 
