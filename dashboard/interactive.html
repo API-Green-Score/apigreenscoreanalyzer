@@ -1172,11 +1172,17 @@ function _sgRender(panelId){
     for (const s of sgs) all.push({...s, ruleKey: k});
   }
 
+  // Total possible — sum of *every* rule's max_pts in the report (not just
+  // the ones with suggestions, which excludes already-validated rules and
+  // would shrink the denominator). This must match the hero score and the
+  // index.html / index.save.html dashboards.
+  const allRulesMaxSum = Object.values(rrm || {})
+    .reduce((s, r) => s + ((r && r.max_pts) || 0), 0);
+
   // Empty state
   if (all.length === 0) {
     const total = gs.total || 0;
-    const rulesMaxSum = rules.reduce((s, r) => s + (r.max_pts || 0), 0);
-    const max = rulesMaxSum > 0 ? rulesMaxSum : (gs.max || 100);
+    const max = allRulesMaxSum > 0 ? allRulesMaxSum : (gs.max || 100);
     const pct = max > 0 ? Math.round(total/max*100) : 0;
     const isMax = total >= max;
     return `<div class="sg-summary" style="justify-content:center;text-align:center;padding:24px 16px">
@@ -1194,16 +1200,9 @@ function _sgRender(panelId){
     </div>`;
   }
 
-  // Summary bar
-  // Scale the progress bar on the *actual* total possible score (sum of
-  // every rule's max_pts) instead of a hard-coded 100. This makes room for
-  // additive families (e.g. AR01..AR05 architecture rules, +23 pts) and
-  // keeps "potentiel de gain = score total possible − score actuel".
+  // Summary bar — scaled on the full barème, "potentiel = total possible − actuel"
   const total = gs.total || 0;
-  const rulesMaxSum = rules.reduce((s, r) => s + (r.max_pts || 0), 0);
-  // Prefer the rules-based total (it always reflects what the analyzer
-  // produced); fall back to gs.max, then to 100 only as a last resort.
-  const max = rulesMaxSum > 0 ? rulesMaxSum : (gs.max || 100);
+  const max = allRulesMaxSum > 0 ? allRulesMaxSum : (gs.max || 100);
   const gain = Math.max(0, max - total);
   const potential = total + gain;          // == max by construction
   const curPct = max > 0 ? (total/max*100) : 0;
