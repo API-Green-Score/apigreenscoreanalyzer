@@ -217,11 +217,212 @@ def discover_swagger(base_url):
     return None, None
 
 
+# ─── OpenAPI example extraction helpers ────────────────────────────────────
+#
+# When the API spec ships examples (for parameters, request bodies, or
+# schemas), we use them to drive realistic resource calls. This is critical
+# for POST/PUT/PATCH endpoints which would otherwise fail validation with
+# 400/415, distorting the Green Score measurements.
+#
+# Resolution chain we follow (per piece of data):
+#   1. Explicit OpenAPI `example` on the field/parameter/media-type
+#   2. First entry of `examples` (OpenAPI 3 multi-example map)
+#   3. `schema.example` / `schema.default`
+#   4. Synthesised value walking the JSON Schema (object → properties)
+#
+# All `$ref` inside the spec are resolved with a tiny in-memory walker
+# (`_resolve_ref`) so we don't pull `jsonschema` / `prance` as dependencies.
+
+_REF_MAX_DEPTH = 6  # guard against cyclic schemas
+
+
+def _resolve_ref(spec, ref):
+    """Resolve a local `#/...` JSON pointer in *spec*. Returns {} on miss."""
+    if not isinstance(ref, str) or not ref.startswith("#/"):
+        return {}
+    node = spec
+    for part in ref[2:].split("/"):
+        # JSON Pointer unescape
+        part = part.replace("~1", "/").replace("~0", "~")
+        if isinstance(node, dict) and part in node:
+            node = node[part]
+        else:
+            return {}
+    return node if isinstance(node, dict) else {}
+
+
+def _deref(spec, node, _seen=None, _depth=0):
+    """Follow `$ref` once (non-recursively unwraps a single pointer)."""
+    if not isinstance(node, dict):
+        return node
+    ref = node.get("$ref")
+    if not ref or _depth >= _REF_MAX_DEPTH:
+        return node
+    seen = _seen or set()
+    if ref in seen:
+        return {}
+    seen = seen | {ref}
+    return _deref(spec, _resolve_ref(spec, ref), seen, _depth + 1)
+
+
+def _example_from_schema(spec, schema, _depth=0):
+    """Synthesize a JSON-serialisable example from a JSON Schema.
+
+    Honours, in order: ``example`` / ``default`` / ``enum[0]`` / type-aware
+    fallback. Walks ``properties`` for objects and uses the first item of
+    ``items`` for arrays. Returns ``None`` when no example can be inferred.
+    """
+    if _depth > _REF_MAX_DEPTH or not isinstance(schema, dict):
+        return None
+    schema = _deref(spec, schema, _depth=_depth)
+
+    if "example" in schema:
+        return schema["example"]
+    if "default" in schema:
+        return schema["default"]
+    if isinstance(schema.get("enum"), list) and schema["enum"]:
+        return schema["enum"][0]
+
+    # composed schemas — pick the first branch
+    for key in ("oneOf", "anyOf", "allOf"):
+        branches = schema.get(key)
+        if isinstance(branches, list) and branches:
+            if key == "allOf":
+                merged = {}
+                for sub in branches:
+                    sub_ex = _example_from_schema(spec, sub, _depth + 1)
+                    if isinstance(sub_ex, dict):
+                        merged.update(sub_ex)
+                if merged:
+                    return merged
+            else:
+                ex = _example_from_schema(spec, branches[0], _depth + 1)
+                if ex is not None:
+                    return ex
+
+    t = schema.get("type")
+    if t == "object" or "properties" in schema:
+        out = {}
+        props = schema.get("properties") or {}
+        required = set(schema.get("required") or [])
+        # Always emit required props; for optional ones we only emit when an
+        # example/default is reachable to keep the payload minimal.
+        for name, sub in props.items():
+            sub_ex = _example_from_schema(spec, sub, _depth + 1)
+            if name in required:
+                out[name] = sub_ex if sub_ex is not None else _scalar_for_type(sub)
+            elif sub_ex is not None:
+                out[name] = sub_ex
+        return out
+    if t == "array":
+        item_ex = _example_from_schema(spec, schema.get("items") or {}, _depth + 1)
+        return [item_ex] if item_ex is not None else []
+    return _scalar_for_type(schema)
+
+
+def _scalar_for_type(schema):
+    """Best-effort scalar placeholder when no example is provided."""
+    if not isinstance(schema, dict):
+        return None
+    t = schema.get("type")
+    fmt = schema.get("format", "")
+    if t == "string":
+        if fmt == "date":
+            return "2024-01-01"
+        if fmt == "date-time":
+            return "2024-01-01T00:00:00Z"
+        if fmt == "uuid":
+            return "00000000-0000-0000-0000-000000000000"
+        if fmt == "email":
+            return "user@example.com"
+        if fmt in ("byte", "binary", "password"):
+            return ""
+        return "string"
+    if t == "integer":
+        return 1
+    if t == "number":
+        return 1.0
+    if t == "boolean":
+        return True
+    if t == "array":
+        return []
+    if t == "object":
+        return {}
+    return None
+
+
+def _param_example(spec, param):
+    """Extract an example value from an OpenAPI parameter object."""
+    param = _deref(spec, param)
+    if not isinstance(param, dict):
+        return None
+    if "example" in param:
+        return param["example"]
+    examples = param.get("examples")
+    if isinstance(examples, dict) and examples:
+        first = next(iter(examples.values()))
+        first = _deref(spec, first)
+        if isinstance(first, dict) and "value" in first:
+            return first["value"]
+    schema = param.get("schema") or {}
+    if param.get("type") and not schema:  # Swagger 2.0 inline type
+        schema = {k: param[k] for k in ("type", "format", "enum", "default", "example")
+                  if k in param}
+    ex = _example_from_schema(spec, schema)
+    return ex
+
+
+def _request_body_example(spec, op):
+    """Best-effort example payload for an operation's request body.
+
+    Supports OpenAPI 3 (``requestBody.content``) and Swagger 2.0
+    (``parameters[in=body].schema``).
+    """
+    # OpenAPI 3
+    rb = _deref(spec, op.get("requestBody") or {})
+    content = rb.get("content") if isinstance(rb, dict) else None
+    if isinstance(content, dict) and content:
+        # Prefer JSON, then any media type
+        media = (
+            content.get("application/json")
+            or next((v for k, v in content.items() if "json" in k.lower()), None)
+            or next(iter(content.values()))
+        )
+        media = _deref(spec, media or {})
+        if "example" in media:
+            return media["example"]
+        examples = media.get("examples")
+        if isinstance(examples, dict) and examples:
+            first = _deref(spec, next(iter(examples.values())))
+            if isinstance(first, dict) and "value" in first:
+                return first["value"]
+        return _example_from_schema(spec, media.get("schema") or {})
+
+    # Swagger 2.0 — body comes through `parameters[in=body]`
+    for p in op.get("parameters") or []:
+        p = _deref(spec, p)
+        if isinstance(p, dict) and p.get("in") == "body":
+            if "example" in p:
+                return p["example"]
+            return _example_from_schema(spec, p.get("schema") or {})
+    return None
+
+
 def extract_endpoints(spec, base_url=""):
     """Extract all endpoints with their methods and parameters from the spec.
 
     Each endpoint is stamped with ``_base_url`` so we know which target server
     to call when measuring it (multi-target support).
+
+    We also pre-compute, from any OpenAPI ``example`` / ``examples`` /
+    ``schema.default`` shipped in the spec:
+      - ``_example_path_params`` — dict of path param → value
+      - ``_example_query_params`` — dict of *required* query param → value
+      - ``_example_body`` — JSON-serialisable payload for POST/PUT/PATCH
+
+    The runtime measurement loop uses these as a fallback when the optional
+    test scenario doesn't ship an explicit value, so resource calls are made
+    with realistic payloads instead of failing 400/415.
     """
     endpoints = []
     base_path = ""
@@ -241,6 +442,30 @@ def extract_endpoints(spec, base_url=""):
                 for p in ops["parameters"]:
                     if p.get("name") not in param_names:
                         params.append(p)
+
+            # ── Pre-compute examples from the spec ──
+            example_path_params = {}
+            example_query_params = {}
+            for p in params:
+                p_d = _deref(spec, p)
+                if not isinstance(p_d, dict):
+                    continue
+                p_in = p_d.get("in")
+                p_name = p_d.get("name")
+                if not p_name:
+                    continue
+                ex = _param_example(spec, p_d)
+                if ex is None:
+                    continue
+                if p_in == "path":
+                    example_path_params[p_name] = ex
+                elif p_in == "query" and p_d.get("required"):
+                    example_query_params[p_name] = ex
+
+            example_body = None
+            if method in ("post", "put", "patch"):
+                example_body = _request_body_example(spec, op)
+
             endpoints.append({
                 "path": full_path,
                 "method": method,
@@ -250,7 +475,11 @@ def extract_endpoints(spec, base_url=""):
                 "tags": op.get("tags", []),
                 "produces": op.get("produces", []),
                 "responses": op.get("responses", {}),
+                "requestBody": op.get("requestBody"),
                 "_base_url": base_url or "",
+                "_example_path_params": example_path_params,
+                "_example_query_params": example_query_params,
+                "_example_body": example_body,
             })
     return endpoints
 
@@ -439,10 +668,31 @@ def measure_endpoint(url, method="GET", headers=None, repeat=3, timeout=30, body
     }
 
 
-def build_url(base, path, user_params):
-    """Build a callable URL, filling path params and required query params."""
+def build_url(base, path, user_params, query_params=None):
+    """Build a callable URL, filling path params and required query params.
+
+    *query_params* (optional) is a dict of query name → value appended as a
+    query string. Existing ``?`` in *path* is preserved.
+    """
     filled = re.sub(r"\{([^}]+)\}", lambda m: str(user_params.get(m.group(1), "1")), path)
     url = base.rstrip("/") + (filled if filled.startswith("/") else "/" + filled)
+    if query_params:
+        try:
+            from urllib.parse import urlencode, quote_plus
+            # Stringify non-scalar values as JSON so arrays/objects survive.
+            flat = {}
+            for k, v in query_params.items():
+                if isinstance(v, (dict, list)):
+                    flat[k] = json.dumps(v)
+                elif v is None:
+                    continue
+                else:
+                    flat[k] = v
+            if flat:
+                sep = "&" if "?" in url else "?"
+                url = url + sep + urlencode(flat, quote_via=quote_plus)
+        except Exception:
+            pass
     return url
 
 
@@ -1634,8 +1884,17 @@ Examples:
         log("DRY-RUN mode — listing endpoints:")
         for e in filtered_eps:
             ep_base = e.get("_base_url") or base_url or "http://localhost"
-            url = build_url(ep_base, e["path"], user_params)
-            print(f"  {e['method'].upper():6s} {e['path']:50s} -> {url}")
+            ep_params = {}
+            ep_params.update(e.get("_example_path_params") or {})
+            ep_params.update(user_params)
+            ep_query = {}
+            for k, v in (e.get("_example_query_params") or {}).items():
+                ep_query[k] = user_params.get(k, v)
+            url = build_url(ep_base, e["path"], ep_params, ep_query)
+            body_tag = ""
+            if e["method"] in ("post", "put", "patch") and e.get("_example_body") is not None:
+                body_tag = "  [example body ✓]"
+            print(f"  {e['method'].upper():6s} {e['path']:50s} -> {url}{body_tag}")
         sys.exit(0)
 
     # ── Step 2: Spectral Linting (always runs unless --skip-spectral) ──
@@ -1692,19 +1951,30 @@ Examples:
     endpoint_reports = []
 
     for i, ep in enumerate(filtered_eps, 1):
-        # ── Resolve path params (scenario-specific > user > default "1") ──
-        ep_params = dict(user_params)
+        # ── Resolve path params (scenario > user > OpenAPI example > "1") ──
+        ep_params = {}
+        ep_params.update(ep.get("_example_path_params") or {})  # weakest
+        ep_params.update(user_params)                           # CLI overrides
         if scenario:
             path_specific = scenario.get("pathParams", {}).get(ep["path"], {})
-            ep_params.update(path_specific)
+            ep_params.update(path_specific)                     # strongest
 
-        url = build_url(ep.get("_base_url") or base_url, ep["path"], ep_params)
+        # ── Required query params from OpenAPI examples (no scenario hook
+        #    for these yet; user_params can still override via plain key=val).
+        ep_query = {}
+        for k, v in (ep.get("_example_query_params") or {}).items():
+            ep_query[k] = user_params.get(k, v)
 
-        # ── Resolve request body for POST/PUT ──
+        url = build_url(ep.get("_base_url") or base_url, ep["path"], ep_params, ep_query)
+
+        # ── Resolve request body (scenario > OpenAPI example) ──
         ep_body = None
-        if scenario and ep["method"] in ("post", "put", "patch"):
-            body_key = f"{ep['method']}:{ep['path']}"
-            ep_body = scenario.get("requestBodies", {}).get(body_key)
+        if ep["method"] in ("post", "put", "patch"):
+            if scenario:
+                body_key = f"{ep['method']}:{ep['path']}"
+                ep_body = scenario.get("requestBodies", {}).get(body_key)
+            if ep_body is None:
+                ep_body = ep.get("_example_body")
 
         # ── Use repeat=1 for stateful methods (POST/PUT/DELETE/PATCH) ──
         ep_repeat = args.repeat if ep["method"] == "get" else 1
