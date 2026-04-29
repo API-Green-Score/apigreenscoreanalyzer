@@ -3,31 +3,32 @@
     "bash",
     "/Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/scripts/start.sh",
     "--appname",
-    "dotcreedgreen",
+    "javcreedgreen",
     "--targets",
-    "https://localhost:7179",
+    "http://localhost:8080",
     "--creedengo",
     "--git-repo",
-    "https://github.com/thiernodialloAFA/dotnetapitest1",
+    "https://github.com/thiernodialloAFA/green-api-workshop-final",
     "--git-branch",
-    "main",
-    "--stack",
-    "dotnet"
+    "feat/devoxx-creedengo",
+    "--source-dir",
+    ".",
+    "--build-and-run"
   ],
   "request": {
     "targets": [
-      "https://localhost:7179"
+      "http://localhost:8080"
     ],
     "bearer": "",
-    "appname": "dotcreedgreen",
+    "appname": "javcreedgreen",
     "creedengo": true,
     "debug": false,
     "gitKeep": false,
-    "gitRepo": "https://github.com/thiernodialloAFA/dotnetapitest1",
-    "gitBranch": "main",
+    "gitRepo": "https://github.com/thiernodialloAFA/green-api-workshop-final",
+    "gitBranch": "feat/devoxx-creedengo",
     "gitSubdir": "",
-    "stack": "dotnet",
-    "sourceDir": "",
-    "buildAndRun": false
+    "stack": "auto",
+    "sourceDir": ".",
+    "buildAndRun": true
   }
 }
