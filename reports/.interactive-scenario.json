@@ -1,0 +1,59 @@
+{
+  "pathParams": {
+    "/books/{id}": {
+      "id": 1
+    },
+    "/reactive/books/{id}/summary": {
+      "id": 1
+    },
+    "/books/{id}/summary": {
+      "id": 1
+    },
+    "/reactive/books/{id}": {
+      "id": 1
+    },
+    "/books/noCache/{id}": {
+      "id": 1
+    },
+    "/books/async/{id}": {
+      "id": 1
+    }
+  },
+  "requestBodies": {
+    "put:/books/{id}": {
+      "id": 1,
+      "title": "Updated Book Title",
+      "author": "Updated Author",
+      "published_date": 2024,
+      "pages": 250,
+      "summary": "Updated summary describing the book.",
+      "lastModified": "2025-01-01T12:00:00Z",
+      "version": 2
+    },
+    "post:/reactive/books/{id}/summary": {
+      "summary": "Updated summary text for the book."
+    },
+    "post:/books/{id}/summary": {
+      "summary": "Updated summary text for the book."
+    }
+  },
+  "queryParams": {
+    "get:/reactive/books": {
+      "page": 0,
+      "size": 20
+    },
+    "get:/reactive/books/changes": {
+      "since": "2025-01-01T00:00:00Z"
+    },
+    "get:/books": {
+      "page": 0,
+      "size": 20
+    },
+    "get:/books/changes": {
+      "since": "2025-01-01T00:00:00Z"
+    },
+    "get:/books/batch": {
+      "ids": "1,2,3"
+    }
+  }
+}
