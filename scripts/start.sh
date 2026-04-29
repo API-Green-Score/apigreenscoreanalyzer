@@ -23,6 +23,13 @@
 #                              Repeat or use --swaggers <csv>.
 #    --swaggers <csv>          Comma-separated list of OpenAPI specs.
 #
+#    --consumer-region <ISO2>     ISO-3166 alpha-2 region of API consumers
+#                                 (e.g. FR, US). Drives AR02 distance scoring.
+#    --enable-geoip               Enable optional GeoIP lookup (ipinfo.io) for
+#                                 AR02 anycast/ASN cross-validation.
+#    --cloud-footprint-confirmed  Confirm that the cloud provider's carbon
+#                                 dashboard is actively used (validates AR05).
+#
 #    All discovered swaggers are merged into a single discovery resource and
 #    analyzed in one run.
 #
@@ -50,6 +57,11 @@ SOURCE_DIR=""         # local source folder for --build-and-run / --creedengo
 BUILD_AND_RUN=false   # if true: build + start the API locally before health-checks
 APP_PID=""            # PID of the locally-launched app (when --build-and-run)
 APP_LOG=""            # log file of the locally-launched app
+
+# AR02 Phase 3 / AR04 Phase 2 controls (forwarded to green-api-auto-discover.py)
+CONSUMER_REGION="${CONSUMER_REGION:-}"   # ISO-3166 alpha-2 (e.g. FR, US) — AR02
+ENABLE_GEOIP="${ENABLE_GEOIP:-false}"    # true → ipinfo.io lookup for AR02
+CLOUD_FOOTPRINT_CONFIRMED="${CLOUD_FOOTPRINT_CONFIRMED:-false}"  # AR05 confirmation
 
 # Git checkout (when --git-repo is provided): we clone the repo here in start.sh
 # so the same working copy can drive --build-and-run AND be analyzed by Creedengo
@@ -110,6 +122,19 @@ while [ $i -lt ${#args[@]} ]; do
       ;;
     --source-dir=*)
       SOURCE_DIR="${args[$i]#--source-dir=}"
+      ;;
+    --consumer-region)
+      i=$((i + 1))
+      CONSUMER_REGION="${args[$i]:-}"
+      ;;
+    --consumer-region=*)
+      CONSUMER_REGION="${args[$i]#--consumer-region=}"
+      ;;
+    --enable-geoip)
+      ENABLE_GEOIP=true
+      ;;
+    --cloud-footprint-confirmed)
+      CLOUD_FOOTPRINT_CONFIRMED=true
       ;;
     --build-and-run)
       BUILD_AND_RUN=true
@@ -1092,6 +1117,28 @@ if [ ${#SWAGGERS[@]} -gt 0 ]; then
   SWAGGER_URL_JOINED=$(IFS=','; echo "${SWAGGERS[*]}")
   export SWAGGER_URL="$SWAGGER_URL_JOINED"
   echo "📜 Swaggers fournis (${#SWAGGERS[@]}): $SWAGGER_URL"
+fi
+
+# ── AR02 / AR04 / AR05 propagation ──
+# SOURCE_DIR is consumed by the wrapper to enable Phase 2 (AR04 IaC scan
+# + AR01 broker-deps cross-validation) and is auto-derived from --git-repo
+# clones. CONSUMER_REGION / ENABLE_GEOIP drive AR02 Phase 3 (anycast +
+# distance-aware TLS latency). CLOUD_FOOTPRINT_CONFIRMED validates AR05.
+if [ -n "${SOURCE_DIR:-}" ]; then
+  export SOURCE_DIR
+  echo "📂 Source dir (AR04/AR01 deps scan): $SOURCE_DIR"
+fi
+if [ -n "${CONSUMER_REGION:-}" ]; then
+  export CONSUMER_REGION
+  echo "🌍 Région consommateur (AR02): $CONSUMER_REGION"
+fi
+if [ "${ENABLE_GEOIP:-false}" = "true" ]; then
+  export ENABLE_GEOIP=true
+  echo "🛰️  GeoIP activé (AR02 anycast/ASN cross-check via ipinfo.io)"
+fi
+if [ "${CLOUD_FOOTPRINT_CONFIRMED:-false}" = "true" ]; then
+  export CLOUD_FOOTPRINT_CONFIRMED=true
+  echo "✅ Cloud footprint dashboard confirmé (AR05)"
 fi
 echo ""
 

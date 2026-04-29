@@ -1052,11 +1052,60 @@ document.querySelectorAll(".step").forEach(s => {
 //   Mirrors the look & behavior of the full dashboard (index.html).
 //   Reused by both Remote and Local Green Score result tabs.
 // ════════════════════════════════════════════════════════════════
-const _SG_RULE_ICONS = {
-  DE11_pagination:"📄", DE08_fields:"🔍", DE01_compression:"🗜️",
-  DE02_DE03_cache:"💾", DE06_delta:"🔄", range_206:"✂️",
-  AR02_format_cbor:"📦", LO01_observability:"👁️", US07_rate_limit:"🚦",
+
+// ── Shared rule registry ────────────────────────────────────────
+// Single source of truth for the 14 Green API rules currently scored
+// by the backend (scripts/green-api-auto-discover.py → GREEN_RULES).
+//
+// Keys MUST match the keys emitted in `green_score.breakdown` /
+// `green_score.rule_resource_mapping` by the analyzer. If the backend
+// adds a new rule, append it here and both the Remote and Local
+// renderers will pick it up automatically.
+//
+// Note: the rule key `AR02_format_cbor` is kept for backward-compat
+// with historical reports, but its DISPLAY id was renamed `BIN01` in
+// GREEN_RULES so it doesn't collide with the new official AR02
+// ("API runtime close to consumer"). The label below reflects that.
+const RULE_REGISTRY = {
+  // Data efficiency
+  DE11_pagination:    { label: "DE11 · Pagination",          max: 15, icon: "📄", category: "data-efficiency" },
+  DE08_fields:        { label: "DE08 · Filtrage de champs",  max: 15, icon: "🔍", category: "data-efficiency" },
+  DE01_compression:   { label: "DE01 · Compression",         max: 15, icon: "🗜️", category: "data-efficiency" },
+  DE02_DE03_cache:    { label: "DE02/03 · Cache ETag/304",   max: 15, icon: "💾", category: "data-efficiency" },
+  DE06_delta:         { label: "DE06 · Delta / changes",     max: 10, icon: "🔄", category: "data-efficiency" },
+  range_206:          { label: "206 · Range / Partial",      max: 10, icon: "✂️", category: "data-efficiency" },
+  AR02_format_cbor:   { label: "BIN01 · Format binaire",     max: 10, icon: "📦", category: "data-efficiency" },
+  // Logs & observability
+  LO01_observability: { label: "LO01 · Observabilité",       max:  5, icon: "👁️", category: "logs-observability" },
+  // Usage
+  US07_rate_limit:    { label: "US07 · Rate limit",          max:  5, icon: "🚦", category: "usage" },
+  // Architecture (APIGreenScore official AR rules — +23 pts on top of legacy 100 pts)
+  AR01_event_driven:  { label: "AR01 · Event-driven",        max:  6, icon: "📡", category: "architecture" },
+  AR02_runtime_close: { label: "AR02 · Runtime proche",      max:  7, icon: "🌍", category: "architecture" },
+  AR03_unique_api:    { label: "AR03 · Une API par besoin",  max:  3, icon: "🎯", category: "architecture" },
+  // Infrastructure
+  AR04_scalable_infra:{ label: "AR04 · Infra scalable",      max:  5, icon: "📈", category: "infrastructure" },
+  AR05_cloud_footprint:{label: "AR05 · Empreinte cloud",     max:  2, icon: "☁️", category: "infrastructure" },
 };
+
+// Convenience views (kept as separate consts so the rest of the
+// renderers stays readable; recomputed once at load time).
+const RULE_LABELS = Object.fromEntries(
+  Object.entries(RULE_REGISTRY).map(([k, v]) => [k, v.label])
+);
+const RULE_MAX = Object.fromEntries(
+  Object.entries(RULE_REGISTRY).map(([k, v]) => [k, v.max])
+);
+const RULE_ICONS = Object.fromEntries(
+  Object.entries(RULE_REGISTRY).map(([k, v]) => [k, v.icon])
+);
+// Total budget (for sanity checks / progress bar fallback). The backend
+// is authoritative — if a project ships a custom green-score-threshold.json
+// the `gs.max` field overrides this value.
+const RULE_TOTAL_MAX = Object.values(RULE_REGISTRY).reduce((s, v) => s + v.max, 0);
+
+// Backward-compat alias for any code that still references the old name.
+const _SG_RULE_ICONS = RULE_ICONS;
 // Per-panel state (key = panelId, value = { rrm, ruleLabels, ruleMax, gs, filter })
 const _sgPanels = {};
 
@@ -1281,21 +1330,8 @@ function renderResults(envelope, cfg, log){
   const pct = max > 0 ? Math.round((+total / max) * 100) : 0;
   const color = pct >= 80 ? "#22c55e" : pct >= 60 ? "#86efac" : pct >= 40 ? "#facc15" : pct >= 20 ? "#f97316" : "#ef4444";
 
-  const ruleLabels = {
-    DE11_pagination:    "DE11 · Pagination",
-    DE08_fields:        "DE08 · Filtrage de champs",
-    DE01_compression:   "DE01 · Compression",
-    DE02_DE03_cache:    "DE02/03 · Cache",
-    DE06_delta:         "DE06 · Delta / changes",
-    range_206:          "Range 206",
-    LO01_observability: "LO01 · Observabilité",
-    US07_rate_limit:    "US07 · Rate limit",
-    AR02_format_cbor:   "AR02 · Format CBOR",
-  };
-  const ruleMax = {
-    DE11_pagination:15, DE08_fields:15, DE01_compression:15, DE02_DE03_cache:15,
-    DE06_delta:10, range_206:10, LO01_observability:5, US07_rate_limit:5, AR02_format_cbor:10,
-  };
+  const ruleLabels = RULE_LABELS;
+  const ruleMax    = RULE_MAX;
 
   const breakdownHtml = Object.keys(ruleLabels).map(k => {
     const score = breakdown[k] ?? 0;
@@ -1652,15 +1688,8 @@ function renderLocalResults(report, creedengo, cfg, log, opts){
   if (creedengo && creedengo.report && creedengo.report.creedengo_score) {
     creedengo = creedengo.report;
   }
-  const ruleLabels = {
-    DE11_pagination:"DE11 · Pagination", DE08_fields:"DE08 · Filtrage de champs",
-    DE01_compression:"DE01 · Compression", DE02_DE03_cache:"DE02/03 · Cache",
-    DE06_delta:"DE06 · Delta / changes", range_206:"Range 206",
-    LO01_observability:"LO01 · Observabilité", US07_rate_limit:"US07 · Rate limit",
-    AR02_format_cbor:"AR02 · Format CBOR",
-  };
-  const ruleMax = {DE11_pagination:15, DE08_fields:15, DE01_compression:15, DE02_DE03_cache:15,
-    DE06_delta:10, range_206:10, LO01_observability:5, US07_rate_limit:5, AR02_format_cbor:10};
+  const ruleLabels = RULE_LABELS;
+  const ruleMax    = RULE_MAX;
 
   // ── Green Score card ─────────────────────────────────────────
   let gsCardHtml = "";

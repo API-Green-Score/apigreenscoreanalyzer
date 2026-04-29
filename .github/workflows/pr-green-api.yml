@@ -23,7 +23,7 @@ on:
       appname:
         description: "Override the application name in reports (default: repo name)"
         required: false
-        default: ""
+        default: "oprtimapi"
       bearer_token:
         description: >-
           Optional Bearer token for authenticated API endpoints.
@@ -68,6 +68,26 @@ on:
         type: boolean
         required: false
         default: false
+      consumer_region:
+        description: >-
+          ISO-3166 alpha-2 region of the API consumers (e.g. FR, US, DE).
+          Drives AR02 (runtime close to consumer) distance scoring.
+        required: false
+        default: "FR"
+      enable_geoip:
+        description: >-
+          Enable optional GeoIP lookup (ipinfo.io) to compute API-vs-consumer
+          location and anycast/ASN cross-validation for AR02.
+        type: boolean
+        required: false
+        default: true
+      cloud_footprint_confirmed:
+        description: >-
+          Confirm that the cloud provider's carbon footprint dashboard is
+          actively used (required to validate AR05).
+        type: boolean
+        required: false
+        default: true
 
 env:
   JAVA_VERSION: '21'
@@ -264,6 +284,10 @@ jobs:
       DEBUG:      ${{ github.event.inputs.debug      || 'false' }}
       # Bearer: prefer secret, fallback to manual input (logs may show value).
       BEARER_TOKEN: ${{ secrets.BEARER_TOKEN || github.event.inputs.bearer_token }}
+      # Architecture rules (AR02 Phase 3 + AR05) — wired to green-api-auto-discover.py
+      CONSUMER_REGION:           ${{ github.event.inputs.consumer_region           || '' }}
+      ENABLE_GEOIP:              ${{ github.event.inputs.enable_geoip              || 'false' }}
+      CLOUD_FOOTPRINT_CONFIRMED: ${{ github.event.inputs.cloud_footprint_confirmed || 'false' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup JDK ${{ env.JAVA_VERSION }}
@@ -402,6 +426,19 @@ jobs:
           # Optional debug
           if [ "${DEBUG:-false}" = "true" ]; then
             ARGS+=(--debug)
+          fi
+          # Architecture rules (AR02 Phase 3 + AR04 Phase 2 + AR05)
+          # SOURCE_DIR points to the checked-out repo root so AR04 can scan IaC
+          # and AR01 can cross-validate broker dependencies.
+          ARGS+=(--source-dir "$GITHUB_WORKSPACE")
+          if [ -n "${CONSUMER_REGION:-}" ]; then
+            ARGS+=(--consumer-region "$CONSUMER_REGION")
+          fi
+          if [ "${ENABLE_GEOIP:-false}" = "true" ]; then
+            ARGS+=(--enable-geoip)
+          fi
+          if [ "${CLOUD_FOOTPRINT_CONFIRMED:-false}" = "true" ]; then
+            ARGS+=(--cloud-footprint-confirmed)
           fi
           echo "🌿 Analyzing ${#T_ARR[@]} target(s): $TARGETS  (appname=$APPNAME)"
           python3 scripts/green-api-auto-discover.py \
@@ -736,6 +773,10 @@ jobs:
       APPNAME:    ${{ github.event.inputs.appname    || 'appoptim' }}
       DEBUG:      ${{ github.event.inputs.debug      || 'false' }}
       BEARER_TOKEN: ${{ secrets.BEARER_TOKEN || github.event.inputs.bearer_token }}
+      # Architecture rules (AR02 / AR04 / AR05)
+      CONSUMER_REGION:           ${{ github.event.inputs.consumer_region           || '' }}
+      ENABLE_GEOIP:              ${{ github.event.inputs.enable_geoip              || 'false' }}
+      CLOUD_FOOTPRINT_CONFIRMED: ${{ github.event.inputs.cloud_footprint_confirmed || 'false' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup JDK ${{ env.JAVA_VERSION }}
@@ -808,6 +849,17 @@ jobs:
           fi
           if [ "${DEBUG:-false}" = "true" ]; then
             ARGS+=(--debug)
+          fi
+          # Architecture rules (AR02 / AR04 / AR05)
+          ARGS+=(--source-dir "$GITHUB_WORKSPACE")
+          if [ -n "${CONSUMER_REGION:-}" ]; then
+            ARGS+=(--consumer-region "$CONSUMER_REGION")
+          fi
+          if [ "${ENABLE_GEOIP:-false}" = "true" ]; then
+            ARGS+=(--enable-geoip)
+          fi
+          if [ "${CLOUD_FOOTPRINT_CONFIRMED:-false}" = "true" ]; then
+            ARGS+=(--cloud-footprint-confirmed)
           fi
           python3 scripts/green-api-auto-discover.py \
             "${ARGS[@]}" \

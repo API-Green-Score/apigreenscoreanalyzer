@@ -8,8 +8,11 @@ shaped like the per-endpoint rules already produced by ``analyze_green_rules``
 so the dashboard can render them with the same code path.
 
 Phase 1 in this module: AR01, AR03, AR05.
-Phase 2 (AR04 + AR01 source/deps signals + AR02 TLS/anycast/GeoIP) is reachable
-through the same evaluator signature and will be added in follow-ups.
+Phase 2 in this module: AR04 (IaC + serverless deps scan via ``--source-dir``)
+and AR01 enrichment with messaging-broker dependency signals.
+Phase 3 in this module: AR02 (TLS handshake latency, CDN edge headers,
+multi-region spec, anycast ASN via optional ``--enable-geoip`` and
+consumer distance via ``--consumer-region``).
 
 Design rules — strict:
   • stdlib-only (no requests/numpy/yaml unless already optional in the parent)
@@ -25,8 +28,13 @@ from __future__ import annotations
 import json
 import os
 import re
+import socket
+import ssl
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 
@@ -522,104 +530,303 @@ def _jaccard(a: set, b: set) -> float:
     return len(a & b) / len(union) if union else 0.0
 
 
-def evaluate_AR03(specs_per_target: list[tuple[str, dict]],
-                  thresholds: dict | None = None) -> dict:
-    """AR03 — Ensure only one API fits the same need.
+# ═══════════════════════════════════════════════════════════════════════════
+# AR02 — Runtime close to the consumer (Phase 3)
+# ═══════════════════════════════════════════════════════════════════════════
 
-    Compares every pair of *targets* on three orthogonal signals:
-      1. Jaccard on operation signatures (≥ T1)
-      2. Jaccard on tags (≥ T2)
-      3. Cosine on summary BoW (≥ T3)
+# Tokens commonly embedded in regional hostnames / server URLs.
+_REGION_TOKEN_RE = re.compile(
+    r"\b("
+    r"us-?(?:east|west|central|north|south)(?:-\d)?|"
+    r"eu-?(?:west|central|north|south)(?:-\d)?|"
+    r"ap-?(?:south|southeast|northeast|east)(?:-\d)?|"
+    r"ca-?central(?:-\d)?|sa-?east(?:-\d)?|af-?south(?:-\d)?|me-?(?:south|central)(?:-\d)?|"
+    r"westeurope|northeurope|eastus2?|westus[23]?|centralus|southcentralus|"
+    r"francecentral|germanywestcentral|uksouth|ukwest|"
+    r"asia-?(?:east|southeast|south|northeast)(?:\d)?|"
+    r"europe-?(?:west|north|central)(?:\d)?"
+    r")\b",
+    flags=re.IGNORECASE,
+)
 
-    A pair triggers a duplication warning ONLY when the three thresholds are
-    crossed simultaneously (the "triplet" rule we agreed on).
-    Versioned duplicates (``/v1/...`` vs ``/v2/...``) are exempt: the
-    signature normaliser strips ``/vN`` so they collapse to the same path,
-    but they remain a *legitimate* form of duplication and we downgrade the
-    severity to a warning instead of failing the rule.
+# ASN / org tokens that strongly imply an anycast / global edge network.
+_ANYCAST_ORG_TOKENS = (
+    "cloudflare", "fastly", "akamai", "google", "amazon", "microsoft",
+    "azure", "cloudfront", "cdnetworks", "stackpath", "edgecast",
+    "incapsula", "imperva", "bunny", "keycdn",
+)
+
+
+def _tls_handshake_seconds(host: str, port: int = 443, timeout: float = 5.0,
+                           samples: int = 3) -> dict:
+    """Measure the TLS handshake duration (median over `samples` runs).
+
+    Returns ``{"median_ms": float, "samples_ms": [...], "ok": bool}``.
+    A failed probe returns ``{"ok": False, "error": "..."}``.
     """
-    th = thresholds or {}
-    T_SIG = th.get("AR03_jaccard_threshold", 0.30)
-    T_TAGS = th.get("AR03_tags_overlap_threshold", 0.50)
-    T_COS = th.get("AR03_summary_cosine_threshold", 0.40)
+    timings: list[float] = []
+    err = None
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE  # latency probe only — no PKI assertion
+    for _ in range(max(1, samples)):
+        try:
+            t0 = time.perf_counter()
+            with socket.create_connection((host, port), timeout=timeout) as raw:
+                with ctx.wrap_socket(raw, server_hostname=host) as _ssock:
+                    pass
+            timings.append((time.perf_counter() - t0) * 1000.0)
+        except Exception as e:  # noqa: BLE001
+            err = str(e)
+            break
+    if not timings:
+        return {"ok": False, "error": err or "no samples"}
+    timings.sort()
+    median = timings[len(timings) // 2]
+    return {"ok": True, "median_ms": round(median, 1),
+            "samples_ms": [round(t, 1) for t in timings]}
 
-    max_pts = ARCH_RULES["AR03_unique_api"]["max_pts"]
 
-    if len(specs_per_target) < 2:
-        return {
-            "rule_id": "AR03",
-            "score": max_pts,
-            "max_pts": max_pts,
-            "matched": True,
-            "category": "architecture",
-            "candidates": [],
-            "evidence": [{"kind": "n/a", "where": "targets",
-                          "value": f"Only {len(specs_per_target)} target — duplication not applicable"}],
-            "recommendations": ["Une seule cible analysée — comparez plusieurs APIs pour activer AR03."],
-            "duplicates": [],
-        }
+def _resolve_ips(host: str) -> list[str]:
+    """Best-effort DNS A/AAAA resolution. Returns deduped IP strings."""
+    ips: set[str] = set()
+    try:
+        for fam, _stype, _proto, _cn, sa in socket.getaddrinfo(host, None):
+            if fam in (socket.AF_INET, socket.AF_INET6) and sa and sa[0]:
+                ips.add(sa[0])
+    except Exception:
+        return []
+    return sorted(ips)
 
-    # Pre-compute features per target
-    feats = []
-    for target, spec in specs_per_target:
-        feats.append({
-            "target": target,
-            "sigs": _all_operation_signatures(spec),
-            "tags": _all_tags(spec),
-            "bow": _summary_tokens(spec),
-        })
 
-    duplicates: list[dict] = []
+def _ipinfo_lookup(ip: str, timeout: int = 4) -> dict:
+    """Optional GeoIP lookup via ipinfo.io (no API key — anonymous tier).
+
+    Returns ``{country, region, city, org}`` (best effort; empty on failure).
+    Only called when the user opts in with ``--enable-geoip``.
+    """
+    if not ip:
+        return {}
+    url = f"https://ipinfo.io/{ip}/json"
+    code, body, _ = _http_get_bytes(url, timeout=timeout)
+    if code != 200 or not body:
+        return {}
+    try:
+        return json.loads(body.decode("utf-8", errors="replace")) or {}
+    except Exception:
+        return {}
+
+
+def _spec_servers(spec: dict) -> list[str]:
+    """Return raw `servers[].url` from an OpenAPI spec (deduped, order-stable)."""
+    out: list[str] = []
+    seen: set[str] = set()
+    for s in (spec.get("servers") or []):
+        if not isinstance(s, dict):
+            continue
+        u = (s.get("url") or "").strip()
+        if u and u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
+
+
+def evaluate_AR02(spec: dict, base_urls: list[str], measurements: dict,
+                  *, consumer_region: str = "",
+                  enable_geoip: bool = False) -> dict:
+    """AR02 — Runtime close to the consumer.
+
+    Cross-validated signals (max 7 pts):
+      • CDN/edge headers (2 pts)        — confirmed by ≥1 measurement AND
+                                          a fresh HEAD probe to the base URL.
+      • Multi-region servers (2 pts)    — OAS `servers` lists ≥2 hostnames
+                                          AND distinct DNS resolution OR
+                                          recognised regional tokens.
+      • TLS handshake latency (2 pts)   — median over 3 samples vs base host.
+                                          <150 ms → 2 pts, <300 ms → 1 pt.
+      • Anycast ASN (1 pt, optional)    — only when ``enable_geoip`` is set;
+                                          ipinfo.io org/ASN matches a known
+                                          anycast/CDN provider AND the same
+                                          provider was already seen in
+                                          edge headers.
+    """
+    max_pts = ARCH_RULES["AR02_runtime_close"]["max_pts"]
+    score = 0
     evidence: list[dict] = []
-    for i in range(len(feats)):
-        for j in range(i + 1, len(feats)):
-            a, b = feats[i], feats[j]
-            j_sig = _jaccard(a["sigs"], b["sigs"])
-            j_tag = _jaccard(a["tags"], b["tags"])
-            cos = _cosine_bow(a["bow"], b["bow"])
-            if j_sig >= T_SIG and j_tag >= T_TAGS and cos >= T_COS:
-                duplicates.append({
-                    "target_a": a["target"], "target_b": b["target"],
-                    "jaccard_signatures": round(j_sig, 3),
-                    "jaccard_tags": round(j_tag, 3),
-                    "cosine_summaries": round(cos, 3),
-                })
-                evidence.append({
-                    "kind": "duplication",
-                    "where": f"{a['target']} ⇄ {b['target']}",
-                    "value": (f"sig={j_sig:.2f} (≥{T_SIG}), "
-                              f"tags={j_tag:.2f} (≥{T_TAGS}), "
-                              f"summary_cos={cos:.2f} (≥{T_COS})"),
-                })
+    recs: list[str] = []
+    candidates: list[str] = []
 
-    # Score: penalty proportional to number of duplicate pairs (capped to 0).
-    n_pairs = len(feats) * (len(feats) - 1) // 2
-    dup_ratio = len(duplicates) / n_pairs if n_pairs else 0.0
-    score = round(max_pts * (1.0 - dup_ratio))
-    matched = len(duplicates) == 0
-
-    recommendations: list[str] = []
-    if duplicates:
-        for d in duplicates:
-            recommendations.append(
-                f"Doublon probable entre {d['target_a']} et {d['target_b']} — "
-                f"fusionner ou marquer l'une comme dépréciée."
-            )
+    # ── 1) CDN / edge headers ──────────────────────────────────────────────
+    runtime_providers = _detect_cloud_providers(measurements)
+    head_providers: dict[str, list[str]] = {}
+    for base in base_urls:
+        if not base:
+            continue
+        h = _http_head_only(base, timeout=4)
+        if not h:
+            continue
+        for provider, hname, value_re in CDN_HEADER_PATTERNS:
+            v = h.get(hname)
+            if not v:
+                continue
+            if value_re == r".+" or re.search(value_re, str(v), flags=re.IGNORECASE):
+                head_providers.setdefault(provider, []).append(
+                    f"HEAD {base} → {hname}: {v}"
+                )
+    confirmed_providers = sorted(set(runtime_providers) & set(head_providers))
+    if confirmed_providers:
+        score += 2
+        candidates.extend(confirmed_providers)
+        for p in confirmed_providers:
+            for ev in (runtime_providers.get(p, [])[:2] + head_providers.get(p, [])[:1]):
+                evidence.append({"kind": "cdn_header", "where": p, "value": ev})
     else:
-        recommendations.append(
-            "Aucune duplication détectée entre les cibles analysées."
+        # informational evidence (mono-side hit) — no points
+        for p, evs in (runtime_providers or head_providers).items():
+            evidence.append({"kind": "cdn_header_uncorroborated",
+                             "where": p, "value": evs[:1]})
+        recs.append(
+            "Aucun signal d'edge/CDN cross-validé (runtime + HEAD). Mettre l'API "
+            "derrière un edge/CDN multi-régions (Cloudflare, CloudFront, "
+            "Front Door, Fastly, Akamai…) pour rapprocher le runtime des consommateurs."
         )
 
+    # ── 2) Multi-region servers (spec + DNS) ───────────────────────────────
+    servers = _spec_servers(spec)
+    server_hosts: list[str] = []
+    for u in servers:
+        try:
+            h = urllib.parse.urlparse(u).hostname
+            if h:
+                server_hosts.append(h)
+        except Exception:
+            continue
+    distinct_hosts = sorted(set(server_hosts))
+    region_tokens = sorted({m.group(1).lower()
+                            for u in servers
+                            for m in [_REGION_TOKEN_RE.search(u)] if m})
+    distinct_ips: set[str] = set()
+    for h in distinct_hosts:
+        for ip in _resolve_ips(h):
+            distinct_ips.add(ip)
+    if len(distinct_hosts) >= 2 and (len(distinct_ips) >= 2 or len(region_tokens) >= 2):
+        score += 2
+        evidence.append({"kind": "multi_region_servers", "where": "openapi.servers",
+                         "value": {"hosts": distinct_hosts,
+                                   "regions": region_tokens,
+                                   "ip_count": len(distinct_ips)}})
+    elif len(distinct_hosts) <= 1:
+        recs.append(
+            "La spec OpenAPI ne déclare qu'une seule URL de serveur. Ajouter "
+            "plusieurs entrées `servers[]` régionales (ex: eu-west, us-east) "
+            "pour documenter un déploiement multi-régions."
+        )
+    else:
+        evidence.append({"kind": "single_region_dns", "where": "dns",
+                         "value": {"hosts": distinct_hosts,
+                                   "ip_count": len(distinct_ips),
+                                   "regions": region_tokens}})
+        recs.append(
+            "Plusieurs URLs `servers[]` déclarées mais elles résolvent vers la "
+            "même région DNS. Vérifier que chaque URL pointe bien vers un "
+            "déploiement régional distinct (anycast ou DNS GSLB)."
+        )
+
+    # ── 3) TLS handshake latency ───────────────────────────────────────────
+    tls_target = next((b for b in base_urls if b and b.lower().startswith("https://")), None)
+    tls_result: dict = {}
+    if tls_target:
+        parsed = urllib.parse.urlparse(tls_target)
+        host = parsed.hostname or ""
+        port = parsed.port or 443
+        if host:
+            tls_result = _tls_handshake_seconds(host, port=port)
+    if tls_result.get("ok"):
+        ms = tls_result["median_ms"]
+        if ms < 150:
+            score += 2
+            tier = "<150ms"
+        elif ms < 300:
+            score += 1
+            tier = "<300ms"
+        else:
+            tier = ">=300ms"
+        evidence.append({"kind": "tls_handshake_latency",
+                         "where": tls_target,
+                         "value": {"median_ms": ms, "tier": tier,
+                                   "samples_ms": tls_result["samples_ms"],
+                                   "consumer_region": consumer_region or None}})
+        if ms >= 300:
+            recs.append(
+                f"Latence TLS médiane élevée ({ms} ms) depuis l'environnement "
+                f"d'analyse. Activer un edge/CDN ou rapprocher le runtime "
+                f"de la zone consommateur ({consumer_region or 'à préciser'})."
+            )
+    else:
+        if not tls_target:
+            evidence.append({"kind": "tls_skip", "where": "n/a",
+                             "value": "no HTTPS target available"})
+            recs.append(
+                "Activer HTTPS sur la cible pour permettre la mesure de "
+                "latence TLS et bénéficier d'un edge/CDN moderne."
+            )
+        elif tls_result:
+            evidence.append({"kind": "tls_handshake_failed", "where": tls_target,
+                             "value": tls_result.get("error", "unknown")})
+
+    # ── 4) Optional GeoIP / anycast cross-check ────────────────────────────
+    if enable_geoip:
+        for h in distinct_hosts[:3]:  # cap external calls
+            ips = _resolve_ips(h)
+            if not ips:
+                continue
+            info = _ipinfo_lookup(ips[0])
+            org = (info.get("org") or "").lower()
+            if not org:
+                continue
+            evidence.append({"kind": "geoip_lookup",
+                             "where": f"{h} ({ips[0]})",
+                             "value": {"country": info.get("country"),
+                                       "region": info.get("region"),
+                                       "city": info.get("city"),
+                                       "org": info.get("org")}})
+            anycast_match = next((tok for tok in _ANYCAST_ORG_TOKENS if tok in org), None)
+            if anycast_match and anycast_match in {p for p in confirmed_providers}:
+                # cross-validation: provider seen in headers AND in ASN
+                if not any(e.get("kind") == "anycast_asn" for e in evidence):
+                    score += 1
+                    evidence.append({"kind": "anycast_asn", "where": h,
+                                     "value": {"org": info.get("org"),
+                                               "matches_edge_provider": anycast_match}})
+            elif consumer_region and info.get("country") and \
+                    info.get("country", "").upper() != consumer_region.upper():
+                recs.append(
+                    f"Cible {h} hébergée en {info.get('country')} alors que les "
+                    f"consommateurs sont en {consumer_region.upper()} — envisager "
+                    "un déploiement régional plus proche."
+                )
+    elif consumer_region:
+        evidence.append({"kind": "consumer_region_declared",
+                         "where": "cli", "value": consumer_region.upper()})
+        recs.append(
+            "Activer --enable-geoip pour corréler la région des consommateurs "
+            f"({consumer_region.upper()}) avec la localisation IP de l'API."
+        )
+
+    # Cap score
+    score = min(score, max_pts)
+    matched = score >= max_pts
+
     return {
-        "rule_id": "AR03",
+        "rule_id": "AR02",
         "score": score,
         "max_pts": max_pts,
         "matched": matched,
         "category": "architecture",
-        "candidates": [],
-        "evidence": evidence,
-        "recommendations": recommendations,
-        "duplicates": duplicates,
+        "candidates": candidates,
+        "evidence": evidence[:50],
+        "recommendations": recs,
+        "signal_kinds": sorted({e["kind"] for e in evidence}),
     }
 
 
@@ -753,6 +960,293 @@ def evaluate_AR05(measurements: dict, base_urls: list[str],
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Phase 2 — Source-dir & IaC scanner (stdlib-only)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Walks an optional ``--source-dir`` once, returns ``(rel_path, content)``
+# tuples for every relevant build/IaC/deps file (capped to keep CI fast).
+# Used by ``evaluate_AR04`` (auto-scaling/serverless) and ``evaluate_AR01``
+# (messaging-broker dependency cross-validation).
+
+_PHASE2_MAX_FILES = 2000
+_PHASE2_MAX_FILE_BYTES = 512 * 1024       # 512 KB per file
+_PHASE2_SKIP_DIRS = {
+    "node_modules", "dist", "build", "target", "out", ".gradle", ".mvn",
+    "venv", ".venv", "__pycache__", "bin", "obj", ".terraform",
+    ".next", ".nuxt", "coverage", "vendor",
+}
+_PHASE2_RELEVANT_EXTS = {
+    ".yaml", ".yml", ".tf", ".tfvars", ".bicep", ".json", ".xml",
+    ".gradle", ".kts", ".csproj", ".fsproj", ".vbproj", ".props",
+    ".toml", ".txt",
+}
+_PHASE2_RELEVANT_NAMES = {
+    "Dockerfile", "Chart.yaml", "values.yaml", "values.yml",
+    "pom.xml", "build.gradle", "build.gradle.kts", "package.json",
+    "requirements.txt", "pyproject.toml", "Pipfile",
+    "serverless.yml", "serverless.yaml", "template.yaml", "template.yml",
+    "host.json", "function.json", "samconfig.toml", "azure.yaml",
+}
+
+# AR04 — auto-scaling / serverless signal regexes
+_AR04_HPA_RE = re.compile(
+    r"^\s*kind:\s*HorizontalPodAutoscaler\s*$",
+    re.MULTILINE | re.IGNORECASE)
+_AR04_KEDA_RE = re.compile(
+    r"^\s*kind:\s*Scaled(Object|Job)\s*$",
+    re.MULTILINE | re.IGNORECASE)
+_AR04_HELM_AUTOSCALE_RE = re.compile(
+    r"autoscaling[\s\S]{0,300}?enabled\s*:\s*true",
+    re.IGNORECASE)
+_AR04_TF_AUTOSCALE_RE = re.compile(
+    r'resource\s+"(aws_autoscaling_group|aws_appautoscaling_target|'
+    r"azurerm_monitor_autoscale_setting|azurerm_container_app|"
+    r"google_compute_autoscaler|google_compute_region_autoscaler|"
+    r"kubernetes_horizontal_pod_autoscaler[_v0-9]*|"
+    r"aws_lambda_function|google_cloudfunctions2?_function|"
+    r'azurerm_function_app|azurerm_linux_function_app)"',
+    re.IGNORECASE)
+_AR04_BICEP_AUTOSCALE_RE = re.compile(
+    r"(microsoft\.insights/autoscalesettings|"
+    r"autoscaleEnabled\s*[:=]\s*true|"
+    r"properties\.scale\.minReplicas|"
+    r"Microsoft\.Web/serverfarms[\s\S]{0,200}ElasticPremium)",
+    re.IGNORECASE)
+_AR04_SERVERLESS_FILES = {
+    "serverless.yml", "serverless.yaml", "template.yaml", "template.yml",
+    "host.json", "function.json", "samconfig.toml",
+}
+_AR04_FAAS_DEPS_RE = re.compile(
+    r"(azure-functions-maven-plugin|aws-lambda-java-\w+|spring-cloud-function|"
+    r"Microsoft\.Azure\.Functions[\w\.]*|Amazon\.Lambda\.[\w\.]*|"
+    r'"serverless"\s*:|"aws-lambda"\s*:|@azure/functions|'
+    r"firebase-functions|google-cloud-functions-framework|"
+    r"chalice|zappa|aws-sam-cli)",
+    re.IGNORECASE)
+
+# AR01 — messaging/broker dependency regex (cross-validation only)
+_AR01_BROKER_DEPS_RE = re.compile(
+    r"(spring-kafka|spring-cloud-stream|spring-rabbit|spring-amqp|"
+    r"activemq|pulsar-client|nats-streaming|"
+    r"kafkajs|amqplib|@nestjs/microservices|node-rdkafka|"
+    r'"mqtt"\s*:|"bull"\s*:|'
+    r"Confluent\.Kafka|RabbitMQ\.Client|MassTransit[\w\.]*|"
+    r"Azure\.Messaging\.(EventHubs|ServiceBus|EventGrid)|"
+    r"Amazon\.SimpleNotificationService|AWSSDK\.SQS|"
+    r"kafka-python|aiokafka|pika|celery|nats-py)",
+    re.IGNORECASE)
+
+
+def _phase2_walk(source_dir: str) -> list[tuple[str, str]]:
+    """Return ``[(rel_path, content), ...]`` for every relevant file.
+
+    Strict caps: ``_PHASE2_MAX_FILES`` files max, ``_PHASE2_MAX_FILE_BYTES``
+    per file, hidden dirs and well-known build outputs skipped.
+    """
+    base_p = Path(source_dir).expanduser().resolve()
+    if not base_p.is_dir():
+        return []
+    out: list[tuple[str, str]] = []
+    count = 0
+    for root, dirs, files in os.walk(base_p):
+        # prune in-place: skip hidden dirs + known build/dep outputs
+        dirs[:] = [d for d in dirs
+                   if d not in _PHASE2_SKIP_DIRS and not d.startswith(".")]
+        for fn in files:
+            if count >= _PHASE2_MAX_FILES:
+                return out
+            ext = os.path.splitext(fn)[1].lower()
+            if (fn in _PHASE2_RELEVANT_NAMES
+                    or ext in _PHASE2_RELEVANT_EXTS
+                    or fn.endswith((".csproj", ".fsproj", ".vbproj"))):
+                fp = Path(root) / fn
+                try:
+                    if fp.stat().st_size > _PHASE2_MAX_FILE_BYTES:
+                        continue
+                    text = fp.read_text(encoding="utf-8", errors="replace")
+                except Exception:
+                    continue
+                try:
+                    rel = str(fp.relative_to(base_p))
+                except ValueError:
+                    rel = str(fp)
+                out.append((rel, text))
+                count += 1
+    return out
+
+
+def _scan_broker_deps(scanned: list[tuple[str, str]]) -> list[dict]:
+    """Return AR01 supplementary evidence: messaging-broker deps in build files."""
+    if not scanned:
+        return []
+    deps_files = (
+        "pom.xml", "package.json", "build.gradle", "build.gradle.kts",
+        "requirements.txt", "pyproject.toml", "Pipfile",
+    )
+    out: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    for rel, text in scanned:
+        fn = os.path.basename(rel)
+        if not (fn in deps_files or fn.endswith((".csproj", ".fsproj", ".vbproj"))):
+            continue
+        for m in _AR01_BROKER_DEPS_RE.finditer(text):
+            tok = m.group(1).lower()
+            key = (rel, tok)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append({
+                "kind": "deps",
+                "where": rel,
+                "value": f"Messaging/broker dep: {m.group(1)}",
+            })
+            if len(out) >= 30:
+                return out
+    return out
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# AR04 — Scalable infrastructure (Phase 2)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def evaluate_AR04(source_dir: str | None,
+                  scanned: list[tuple[str, str]] | None = None) -> dict:
+    """Detect auto-scaling / serverless markers from IaC + build files.
+
+    Scoring (max 5 pts):
+      • ``score = 5`` when **≥ 2 distinct signal kinds** are found
+        (cross-validation, e.g. HPA + KEDA, or Terraform autoscale + FaaS deps)
+      • ``score = 3`` (60%) when exactly **1** signal kind is found
+      • ``score = 0`` otherwise (or no ``--source-dir`` provided)
+
+    Signal kinds (cross-validation buckets):
+      ``hpa``, ``keda``, ``helm-autoscale``, ``terraform-autoscale``,
+      ``bicep-autoscale``, ``serverless-config``, ``faas-deps``.
+    """
+    max_pts = ARCH_RULES["AR04_scalable_infra"]["max_pts"]
+    if not source_dir:
+        return {
+            "rule_id": "AR04", "score": 0, "max_pts": max_pts,
+            "matched": False, "category": "infrastructure",
+            "candidates": [], "evidence": [],
+            "recommendations": [
+                "AR04 nécessite --source-dir pour scanner IaC (HPA, KEDA, "
+                "autoscale Terraform/Bicep) et marqueurs serverless "
+                "(pom.xml, *.csproj, package.json)."
+            ],
+            "signal_kinds": [],
+        }
+
+    scanned = scanned if scanned is not None else _phase2_walk(source_dir)
+    if not scanned:
+        return {
+            "rule_id": "AR04", "score": 0, "max_pts": max_pts,
+            "matched": False, "category": "infrastructure",
+            "candidates": [], "evidence": [],
+            "recommendations": [
+                f"--source-dir='{source_dir}' introuvable, vide ou aucun "
+                "fichier IaC/build pertinent détecté."
+            ],
+            "signal_kinds": [],
+        }
+
+    evidence: list[dict] = []
+    signals: set[str] = set()
+
+    for rel, text in scanned:
+        fn = os.path.basename(rel)
+        is_yaml = rel.endswith((".yaml", ".yml"))
+
+        # K8s HPA
+        if is_yaml and _AR04_HPA_RE.search(text):
+            signals.add("hpa")
+            evidence.append({"kind": "iac", "where": rel,
+                             "value": "Kubernetes HorizontalPodAutoscaler"})
+        # KEDA
+        if is_yaml and _AR04_KEDA_RE.search(text):
+            signals.add("keda")
+            evidence.append({"kind": "iac", "where": rel,
+                             "value": "KEDA ScaledObject/ScaledJob"})
+        # Helm values.yaml — autoscaling.enabled: true
+        if fn in ("values.yaml", "values.yml") and _AR04_HELM_AUTOSCALE_RE.search(text):
+            signals.add("helm-autoscale")
+            evidence.append({"kind": "iac", "where": rel,
+                             "value": "Helm autoscaling.enabled=true"})
+        # Terraform
+        if rel.endswith((".tf", ".tfvars")):
+            m = _AR04_TF_AUTOSCALE_RE.search(text)
+            if m:
+                signals.add("terraform-autoscale")
+                evidence.append({"kind": "iac", "where": rel,
+                                 "value": f"Terraform: {m.group(1)}"})
+        # Bicep / ARM JSON templates
+        if rel.endswith(".bicep") or (rel.endswith(".json") and "Microsoft." in text):
+            if _AR04_BICEP_AUTOSCALE_RE.search(text):
+                signals.add("bicep-autoscale")
+                evidence.append({"kind": "iac", "where": rel,
+                                 "value": "Bicep/ARM autoscale settings"})
+        # Serverless framework / SAM / Azure Functions / GCF config files
+        if fn in _AR04_SERVERLESS_FILES:
+            signals.add("serverless-config")
+            evidence.append({"kind": "iac", "where": rel,
+                             "value": f"Serverless config: {fn}"})
+        # FaaS deps in build files
+        if (fn in ("pom.xml", "package.json", "build.gradle",
+                   "build.gradle.kts", "requirements.txt", "pyproject.toml")
+                or fn.endswith((".csproj", ".fsproj", ".vbproj"))):
+            m = _AR04_FAAS_DEPS_RE.search(text)
+            if m:
+                signals.add("faas-deps")
+                evidence.append({"kind": "deps", "where": rel,
+                                 "value": f"Serverless/FaaS dep: {m.group(1)}"})
+
+    n = len(signals)
+    matched = n >= 1
+    if n >= 2:
+        score = max_pts                  # 5/5 — cross-validated
+    elif n == 1:
+        score = round(max_pts * 0.6)     # 3/5 — partial
+    else:
+        score = 0
+
+    if n >= 2:
+        recs = [
+            f"Auto-scaling/serverless validé ({n} types de signaux): "
+            f"{', '.join(sorted(signals))}.",
+        ]
+    elif n == 1:
+        recs = [
+            f"Signal partiel ({next(iter(signals))}). Pour valider 5/5, "
+            "ajouter un second signal indépendant (ex. HPA + KEDA, "
+            "Terraform autoscale + FaaS deps)."
+        ]
+    else:
+        recs = [
+            "Aucun signal d'auto-scaling détecté dans les fichiers IaC/build.",
+            "Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, "
+            "ou déployer en serverless (Azure Functions, AWS Lambda, Cloud Run).",
+        ]
+
+    candidates = [
+        {"method": "IaC", "path": ev["where"], "matched": True, "reason": ev["value"]}
+        for ev in evidence[:10]
+    ]
+
+    return {
+        "rule_id": "AR04",
+        "score": int(score),
+        "max_pts": max_pts,
+        "matched": matched,
+        "category": "infrastructure",
+        "candidates": candidates,
+        "evidence": evidence[:50],
+        "recommendations": recs,
+        "signal_kinds": sorted(signals),
+        "scanned_files": len(scanned),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Public entry point used by the analyzer
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -768,6 +1262,8 @@ def evaluate_architecture_rules(
     footprint_confirmed: bool = False,
     enable_phase2: bool = False,   # source-dir/IaC/deps scan — wired in P2
     source_dir: str | None = None,
+    consumer_region: str = "",     # AR02 Phase 3
+    enable_geoip: bool = False,    # AR02 Phase 3
 ) -> dict[str, dict]:
     """Run every Architecture/Infrastructure rule and return:
 
@@ -781,43 +1277,81 @@ def evaluate_architecture_rules(
     base_urls = [b for (b, _spec, _src) in (sources or []) if b]
     specs_per_target = [(b, sp) for (b, sp, _src) in (sources or []) if sp]
 
+    # Phase 2 — single source-dir walk shared by AR01 (broker deps) and AR04
+    scanned_p2: list[tuple[str, str]] = []
+    if enable_phase2 and source_dir:
+        try:
+            scanned_p2 = _phase2_walk(source_dir)
+        except Exception:
+            scanned_p2 = []
+
     out: dict[str, dict] = {}
 
-    out["AR01_event_driven"] = evaluate_AR01(spec, base_urls, endpoints, measurements)
+    # ── AR01 — Event-Driven (spec/runtime + optional broker-deps evidence) ──
+    ar01 = evaluate_AR01(spec, base_urls, endpoints, measurements)
+    if scanned_p2:
+        broker_ev = _scan_broker_deps(scanned_p2)
+        if broker_ev:
+            ar01.setdefault("evidence", []).extend(broker_ev)
+            if not ar01.get("matched"):
+                ar01.setdefault("recommendations", []).append(
+                    f"{len(broker_ev)} dépendance(s) de broker détectée(s) dans le "
+                    "source-dir mais aucun signal AsyncAPI/callbacks/SSE dans la "
+                    "spec → documentez vos flux d'événements pour valider AR01."
+                )
+            else:
+                ar01.setdefault("recommendations", []).append(
+                    f"Cross-validation: {len(broker_ev)} dépendance(s) broker "
+                    "trouvée(s) dans le code source — cohérent avec les signaux EDA."
+                )
+    out["AR01_event_driven"] = ar01
 
-    # AR02 — Phase 3 placeholder (factual signals will land in a later patch)
-    out["AR02_runtime_close"] = {
-        "rule_id": "AR02",
-        "score": 0,
-        "max_pts": ARCH_RULES["AR02_runtime_close"]["max_pts"],
-        "matched": False,
-        "category": "architecture",
-        "candidates": [],
-        "evidence": [],
-        "recommendations": [
-            "AR02 sera évalué via headers edge/CDN, ASN anycast et latence TLS "
-            "(activable avec --enable-geoip --consumer-region <ISO2>) — "
-            "implémentation Phase 3."
-        ],
-    }
+    # ── AR02 — Runtime close to consumer (Phase 3) ──
+    try:
+        out["AR02_runtime_close"] = evaluate_AR02(
+            spec, base_urls,
+            measurements,
+            consumer_region=consumer_region or "",
+            enable_geoip=bool(enable_geoip),
+        )
+    except Exception as e:  # noqa: BLE001
+        out["AR02_runtime_close"] = {
+            "rule_id": "AR02",
+            "score": 0,
+            "max_pts": ARCH_RULES["AR02_runtime_close"]["max_pts"],
+            "matched": False,
+            "category": "architecture",
+            "candidates": [],
+            "evidence": [{"kind": "error", "where": "evaluate_AR02",
+                          "value": str(e)}],
+            "recommendations": [
+                "Évaluation AR02 en erreur — vérifier la connectivité réseau "
+                "et les flags --enable-geoip / --consumer-region."
+            ],
+        }
 
     out["AR03_unique_api"] = evaluate_AR03(specs_per_target, thresholds)
 
-    # AR04 — Phase 2 placeholder (needs IaC + deps scan)
-    out["AR04_scalable_infra"] = {
-        "rule_id": "AR04",
-        "score": 0,
-        "max_pts": ARCH_RULES["AR04_scalable_infra"]["max_pts"],
-        "matched": False,
-        "category": "infrastructure",
-        "candidates": [],
-        "evidence": [],
-        "recommendations": [
-            "AR04 sera évalué via scan IaC (HPA, KEDA, autoscale Terraform/Bicep) "
-            "et marqueurs serverless dans pom.xml/*.csproj/package.json — "
-            "implémentation Phase 2 (--source-dir requis)."
-        ],
-    }
+    # ── AR04 — Scalable infrastructure (Phase 2: IaC + serverless deps) ──
+    if enable_phase2 and source_dir:
+        out["AR04_scalable_infra"] = evaluate_AR04(source_dir, scanned=scanned_p2)
+    else:
+        out["AR04_scalable_infra"] = {
+            "rule_id": "AR04",
+            "score": 0,
+            "max_pts": ARCH_RULES["AR04_scalable_infra"]["max_pts"],
+            "matched": False,
+            "category": "infrastructure",
+            "candidates": [],
+            "evidence": [],
+            "recommendations": [
+                "AR04 sera évalué via scan IaC (HPA, KEDA, autoscale "
+                "Terraform/Bicep) et marqueurs serverless dans "
+                "pom.xml/*.csproj/package.json — passer --source-dir "
+                "<chemin> pour activer le scan Phase 2."
+            ],
+            "signal_kinds": [],
+        }
 
     out["AR05_cloud_footprint"] = evaluate_AR05(
         measurements, base_urls, auth_headers,

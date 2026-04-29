@@ -2139,6 +2139,8 @@ Examples:
                 footprint_confirmed=bool(args.cloud_footprint_confirmed),
                 enable_phase2=bool(args.source_dir),
                 source_dir=args.source_dir or None,
+                consumer_region=(args.consumer_region or "").strip(),
+                enable_geoip=bool(args.enable_geoip),
             )
         except Exception as e:
             log(f"  Architecture rules evaluation failed: {e}", "WARN")

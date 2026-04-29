@@ -2113,15 +2113,20 @@ function renderReport(report) {
     rulesList.innerHTML = '';
 
     const ruleLabels = {
-        'DE11_pagination': { name: 'DE11 — Pagination', defaultMax: 15, icon: '📄' },
-        'DE08_fields': { name: 'DE08 — Filtrage champs', defaultMax: 15, icon: '🔍' },
-        'DE01_compression': { name: 'DE01 — Compression Gzip', defaultMax: 15, icon: '🗜️' },
-        'DE02_DE03_cache': { name: 'DE02/03 — Cache ETag/304', defaultMax: 15, icon: '💾' },
-        'DE06_delta': { name: 'DE06 — Delta changes', defaultMax: 10, icon: '🔄' },
-        'range_206': { name: '206 — Partial Content', defaultMax: 10, icon: '✂️' },
-        'LO01_observability': { name: 'LO01 — Observabilité', defaultMax: 5, icon: '👁️' },
-        'US07_rate_limit': { name: 'US07 — Rate Limiting', defaultMax: 5, icon: '🚦' },
-        'AR02_format_cbor': { name: 'AR02 — Format CBOR', defaultMax: 10, icon: '📦' },
+        'DE11_pagination':     { name: 'DE11 — Pagination',          defaultMax: 15, icon: '📄' },
+        'DE08_fields':         { name: 'DE08 — Filtrage champs',     defaultMax: 15, icon: '🔍' },
+        'DE01_compression':    { name: 'DE01 — Compression Gzip',    defaultMax: 15, icon: '🗜️' },
+        'DE02_DE03_cache':     { name: 'DE02/03 — Cache ETag/304',   defaultMax: 15, icon: '💾' },
+        'DE06_delta':          { name: 'DE06 — Delta changes',       defaultMax: 10, icon: '🔄' },
+        'range_206':           { name: '206 — Partial Content',      defaultMax: 10, icon: '✂️' },
+        'AR02_format_cbor':    { name: 'BIN01 — Format binaire',     defaultMax: 10, icon: '📦' },
+        'LO01_observability':  { name: 'LO01 — Observabilité',       defaultMax:  5, icon: '👁️' },
+        'US07_rate_limit':     { name: 'US07 — Rate Limiting',       defaultMax:  5, icon: '🚦' },
+        'AR01_event_driven':   { name: 'AR01 — Event-driven',        defaultMax:  6, icon: '📡' },
+        'AR02_runtime_close':  { name: 'AR02 — Runtime proche',      defaultMax:  7, icon: '🌍' },
+        'AR03_unique_api':     { name: 'AR03 — Une API par besoin',  defaultMax:  3, icon: '🎯' },
+        'AR04_scalable_infra': { name: 'AR04 — Infra scalable',      defaultMax:  5, icon: '📈' },
+        'AR05_cloud_footprint':{ name: 'AR05 — Empreinte cloud',     defaultMax:  2, icon: '☁️' },
     };
 
     const rrm = gs.rule_resource_mapping || {};
@@ -2773,14 +2778,21 @@ function renderSuggestions(report) {
     const ruleIcons = {
         'DE11_pagination': '📄', 'DE08_fields': '🔍', 'DE01_compression': '🗜️',
         'DE02_DE03_cache': '💾', 'DE06_delta': '🔄', 'range_206': '✂️',
-        'AR02_format_cbor': '📦', 'LO01_observability': '👁️', 'US07_rate_limit': '🚦'
+        'AR02_format_cbor': '📦', 'LO01_observability': '👁️', 'US07_rate_limit': '🚦',
+        'AR01_event_driven': '📡', 'AR02_runtime_close': '🌍', 'AR03_unique_api': '🎯',
+        'AR04_scalable_infra': '📈', 'AR05_cloud_footprint': '☁️'
     };
     const ruleNames = {
         'DE11_pagination': 'DE11 — Pagination', 'DE08_fields': 'DE08 — Filtrage de champs',
         'DE01_compression': 'DE01 — Compression Gzip', 'DE02_DE03_cache': 'DE02/03 — Cache ETag/304',
         'DE06_delta': 'DE06 — Delta / Changes', 'range_206': '206 — Partial Content / Range',
-        'AR02_format_cbor': 'AR02 — Format binaire (CBOR)', 'LO01_observability': 'LO01 — Observabilité',
-        'US07_rate_limit': 'US07 — Rate Limiting'
+        'AR02_format_cbor': 'BIN01 — Format binaire (CBOR)', 'LO01_observability': 'LO01 — Observabilité',
+        'US07_rate_limit': 'US07 — Rate Limiting',
+        'AR01_event_driven': 'AR01 — Architecture événementielle',
+        'AR02_runtime_close': 'AR02 — Runtime proche du consommateur',
+        'AR03_unique_api': 'AR03 — Une seule API par besoin',
+        'AR04_scalable_infra': 'AR04 — Infrastructure scalable',
+        'AR05_cloud_footprint': 'AR05 — Dashboard d\'empreinte cloud'
     };
 
     let allSuggestions = [];
