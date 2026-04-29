@@ -1,6 +1,6 @@
 {
   "appname": "optcreedjavaarchinfr",
-  "timestamp": "2026-04-29T20:43:43Z",
+  "timestamp": "2026-04-29T21:01:46Z",
   "service_base_url": "http://localhost:8080",
   "service_base_urls": [
     "http://localhost:8080"
@@ -1074,6 +1074,72 @@
       "recommendations": [
         "Aucun signal EDA d\u00e9tect\u00e9 mais 7 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor)."
       ],
+      "suggestions": [
+        {
+          "target": "PUT /books/{id}",
+          "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
+          "priority": "high",
+          "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+          "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
+          "source": "AR01_eda_advisor"
+        },
+        {
+          "target": "POST /reactive/books/{id}/summary",
+          "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
+          "priority": "high",
+          "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+          "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
+          "source": "AR01_eda_advisor"
+        },
+        {
+          "target": "POST /books/{id}/summary",
+          "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
+          "priority": "high",
+          "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+          "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
+          "source": "AR01_eda_advisor"
+        },
+        {
+          "target": "GET /reactive/books/changes",
+          "action": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
+          "priority": "high",
+          "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+          "how": "Condition d\u00e9tect\u00e9e: polling-path-token\nIndice: Path matches /(changes|since|events|notifications|updates|polls)/\nCible recommand\u00e9e: SSE or AsyncAPI subscription",
+          "source": "AR01_eda_advisor"
+        },
+        {
+          "target": "GET /reactive/books/changes",
+          "action": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
+          "priority": "high",
+          "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+          "how": "Condition d\u00e9tect\u00e9e: long-polling-query\nIndice: Query params suggesting long-poll: since\nCible recommand\u00e9e: WebSocket or SSE",
+          "source": "AR01_eda_advisor"
+        },
+        {
+          "target": "GET /books/changes",
+          "action": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
+          "priority": "high",
+          "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+          "how": "Condition d\u00e9tect\u00e9e: polling-path-token\nIndice: Path matches /(changes|since|events|notifications|updates|polls)/\nCible recommand\u00e9e: SSE or AsyncAPI subscription",
+          "source": "AR01_eda_advisor"
+        },
+        {
+          "target": "GET /books/changes",
+          "action": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
+          "priority": "high",
+          "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+          "how": "Condition d\u00e9tect\u00e9e: long-polling-query\nIndice: Query params suggesting long-poll: since\nCible recommand\u00e9e: WebSocket or SSE",
+          "source": "AR01_eda_advisor"
+        },
+        {
+          "target": "AR01",
+          "action": "Aucun signal EDA d\u00e9tect\u00e9 mais 7 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor).",
+          "priority": "medium",
+          "impact": "+6 pts (AR01).",
+          "how": "",
+          "source": "AR01_reco"
+        }
+      ],
       "migration_advice": [
         {
           "endpoint": {
@@ -1172,6 +1238,32 @@
         "La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r\u00e9gionales (ex: eu-west, us-east) pour documenter un d\u00e9ploiement multi-r\u00e9gions.",
         "Activer HTTPS sur la cible pour permettre la mesure de latence TLS et b\u00e9n\u00e9ficier d'un edge/CDN moderne."
       ],
+      "suggestions": [
+        {
+          "target": "AR02",
+          "action": "Aucun signal d'edge/CDN cross-valid\u00e9 (runtime + HEAD). Mettre l'API derri\u00e8re un edge/CDN multi-r\u00e9gions (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) pour rapprocher le runtime des consommateurs.",
+          "priority": "medium",
+          "impact": "+7 pts (AR02).",
+          "how": "",
+          "source": "AR02_reco"
+        },
+        {
+          "target": "AR02",
+          "action": "La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r\u00e9gionales (ex: eu-west, us-east) pour documenter un d\u00e9ploiement multi-r\u00e9gions.",
+          "priority": "medium",
+          "impact": "+7 pts (AR02).",
+          "how": "",
+          "source": "AR02_reco"
+        },
+        {
+          "target": "AR02",
+          "action": "Activer HTTPS sur la cible pour permettre la mesure de latence TLS et b\u00e9n\u00e9ficier d'un edge/CDN moderne.",
+          "priority": "medium",
+          "impact": "+7 pts (AR02).",
+          "how": "",
+          "source": "AR02_reco"
+        }
+      ],
       "migration_advice": [],
       "duplicates": [],
       "detected_provider": null
@@ -1195,6 +1287,7 @@
         }
       ],
       "recommendations": [],
+      "suggestions": [],
       "migration_advice": [],
       "duplicates": [],
       "detected_provider": null
@@ -1214,6 +1307,24 @@
       "recommendations": [
         "Aucun signal d'auto-scaling d\u00e9tect\u00e9 dans les fichiers IaC/build.",
         "Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, ou d\u00e9ployer en serverless (Azure Functions, AWS Lambda, Cloud Run)."
+      ],
+      "suggestions": [
+        {
+          "target": "AR04",
+          "action": "Aucun signal d'auto-scaling d\u00e9tect\u00e9 dans les fichiers IaC/build.",
+          "priority": "medium",
+          "impact": "+5 pts (AR04).",
+          "how": "",
+          "source": "AR04_reco"
+        },
+        {
+          "target": "AR04",
+          "action": "Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, ou d\u00e9ployer en serverless (Azure Functions, AWS Lambda, Cloud Run).",
+          "priority": "medium",
+          "impact": "+5 pts (AR04).",
+          "how": "",
+          "source": "AR04_reco"
+        }
       ],
       "migration_advice": [],
       "duplicates": [],
@@ -1238,6 +1349,7 @@
         }
       ],
       "recommendations": [],
+      "suggestions": [],
       "migration_advice": [],
       "duplicates": [],
       "detected_provider": null

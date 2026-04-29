@@ -1,7 +1,7 @@
 {
   "appname": "optcreedjavaarchinfr",
   "report": {
-    "timestamp": "2026-04-29T20:43:43Z",
+    "timestamp": "2026-04-29T21:01:46Z",
     "green_score": {
       "total": 39,
       "max": 123,
@@ -1132,6 +1132,72 @@
           "recommendations": [
             "Aucun signal EDA d\u00e9tect\u00e9 mais 7 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor)."
           ],
+          "suggestions": [
+            {
+              "target": "PUT /books/{id}",
+              "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
+              "priority": "high",
+              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+              "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
+              "source": "AR01_eda_advisor"
+            },
+            {
+              "target": "POST /reactive/books/{id}/summary",
+              "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
+              "priority": "high",
+              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+              "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
+              "source": "AR01_eda_advisor"
+            },
+            {
+              "target": "POST /books/{id}/summary",
+              "action": "Publier un \u00e9v\u00e9nement domaine apr\u00e8s mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour d\u00e9coupler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI d\u00e9di\u00e9.",
+              "priority": "high",
+              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+              "how": "Condition d\u00e9tect\u00e9e: mutating-without-callback\nIndice: Mutation declared but no OAS callbacks/webhooks\nCible recommand\u00e9e: Domain Event publication",
+              "source": "AR01_eda_advisor"
+            },
+            {
+              "target": "GET /reactive/books/changes",
+              "action": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
+              "priority": "high",
+              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+              "how": "Condition d\u00e9tect\u00e9e: polling-path-token\nIndice: Path matches /(changes|since|events|notifications|updates|polls)/\nCible recommand\u00e9e: SSE or AsyncAPI subscription",
+              "source": "AR01_eda_advisor"
+            },
+            {
+              "target": "GET /reactive/books/changes",
+              "action": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
+              "priority": "high",
+              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+              "how": "Condition d\u00e9tect\u00e9e: long-polling-query\nIndice: Query params suggesting long-poll: since\nCible recommand\u00e9e: WebSocket or SSE",
+              "source": "AR01_eda_advisor"
+            },
+            {
+              "target": "GET /books/changes",
+              "action": "Remplacer le polling par un flux d'\u00e9v\u00e9nements: exposer le m\u00eame besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonn\u00e9s.",
+              "priority": "high",
+              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+              "how": "Condition d\u00e9tect\u00e9e: polling-path-token\nIndice: Path matches /(changes|since|events|notifications|updates|polls)/\nCible recommand\u00e9e: SSE or AsyncAPI subscription",
+              "source": "AR01_eda_advisor"
+            },
+            {
+              "target": "GET /books/changes",
+              "action": "Long-polling d\u00e9tect\u00e9 \u2192 migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et re\u00e7oit les \u00e9v\u00e9nements push, divisant les RTT/CPU par 10 \u00e0 100\u00d7.",
+              "priority": "high",
+              "impact": "+6 pts (AR01) \u2014 supprime un cycle de polling, r\u00e9duit la bande passante et la charge serveur.",
+              "how": "Condition d\u00e9tect\u00e9e: long-polling-query\nIndice: Query params suggesting long-poll: since\nCible recommand\u00e9e: WebSocket or SSE",
+              "source": "AR01_eda_advisor"
+            },
+            {
+              "target": "AR01",
+              "action": "Aucun signal EDA d\u00e9tect\u00e9 mais 7 opportunit\u00e9(s) de migration vers SSE/AsyncAPI/WebSocket trouv\u00e9es (cf. EDA Advisor).",
+              "priority": "medium",
+              "impact": "+6 pts (AR01).",
+              "how": "",
+              "source": "AR01_reco"
+            }
+          ],
           "migration_advice": [
             {
               "endpoint": {
@@ -1230,6 +1296,32 @@
             "La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r\u00e9gionales (ex: eu-west, us-east) pour documenter un d\u00e9ploiement multi-r\u00e9gions.",
             "Activer HTTPS sur la cible pour permettre la mesure de latence TLS et b\u00e9n\u00e9ficier d'un edge/CDN moderne."
           ],
+          "suggestions": [
+            {
+              "target": "AR02",
+              "action": "Aucun signal d'edge/CDN cross-valid\u00e9 (runtime + HEAD). Mettre l'API derri\u00e8re un edge/CDN multi-r\u00e9gions (Cloudflare, CloudFront, Front Door, Fastly, Akamai\u2026) pour rapprocher le runtime des consommateurs.",
+              "priority": "medium",
+              "impact": "+7 pts (AR02).",
+              "how": "",
+              "source": "AR02_reco"
+            },
+            {
+              "target": "AR02",
+              "action": "La spec OpenAPI ne d\u00e9clare qu'une seule URL de serveur. Ajouter plusieurs entr\u00e9es `servers[]` r\u00e9gionales (ex: eu-west, us-east) pour documenter un d\u00e9ploiement multi-r\u00e9gions.",
+              "priority": "medium",
+              "impact": "+7 pts (AR02).",
+              "how": "",
+              "source": "AR02_reco"
+            },
+            {
+              "target": "AR02",
+              "action": "Activer HTTPS sur la cible pour permettre la mesure de latence TLS et b\u00e9n\u00e9ficier d'un edge/CDN moderne.",
+              "priority": "medium",
+              "impact": "+7 pts (AR02).",
+              "how": "",
+              "source": "AR02_reco"
+            }
+          ],
           "migration_advice": [],
           "duplicates": [],
           "detected_provider": null
@@ -1253,6 +1345,7 @@
             }
           ],
           "recommendations": [],
+          "suggestions": [],
           "migration_advice": [],
           "duplicates": [],
           "detected_provider": null
@@ -1272,6 +1365,24 @@
           "recommendations": [
             "Aucun signal d'auto-scaling d\u00e9tect\u00e9 dans les fichiers IaC/build.",
             "Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, ou d\u00e9ployer en serverless (Azure Functions, AWS Lambda, Cloud Run)."
+          ],
+          "suggestions": [
+            {
+              "target": "AR04",
+              "action": "Aucun signal d'auto-scaling d\u00e9tect\u00e9 dans les fichiers IaC/build.",
+              "priority": "medium",
+              "impact": "+5 pts (AR04).",
+              "how": "",
+              "source": "AR04_reco"
+            },
+            {
+              "target": "AR04",
+              "action": "Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, ou d\u00e9ployer en serverless (Azure Functions, AWS Lambda, Cloud Run).",
+              "priority": "medium",
+              "impact": "+5 pts (AR04).",
+              "how": "",
+              "source": "AR04_reco"
+            }
           ],
           "migration_advice": [],
           "duplicates": [],
@@ -1296,6 +1407,7 @@
             }
           ],
           "recommendations": [],
+          "suggestions": [],
           "migration_advice": [],
           "duplicates": [],
           "detected_provider": null
@@ -1597,8 +1709,8 @@
         "full_payload": {
           "http_code": 200,
           "size_download": 209,
-          "time_total": 0.006956,
-          "speed_download": 30043
+          "time_total": 0.023281,
+          "speed_download": 8977
         },
         "single_resource": {
           "http_code": 0,
@@ -1617,32 +1729,32 @@
         "range_206": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.03125,
+          "time_total": 0.02139,
           "speed_download": 0
         },
         "fields_filter": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.00647,
+          "time_total": 0.007037,
           "speed_download": 0
         },
         "delta_changes": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.011268,
+          "time_total": 0.015055,
           "speed_download": 0
         },
         "cbor_format": {
           "http_code": 429,
           "size_download": 13,
-          "time_total": 0.004203,
-          "speed_download": 3172
+          "time_total": 0.005885,
+          "speed_download": 2265
         },
         "full_payload": {
           "http_code": 200,
           "size_download": 209,
-          "time_total": 0.006956,
-          "speed_download": 30043
+          "time_total": 0.023281,
+          "speed_download": 8977
         }
       }
     },
@@ -1653,122 +1765,122 @@
       "all_measurements": {
         "get:/books/{id}": {
           "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.013803,
-          "speed_download": 13330
+          "size_download": 207,
+          "time_total": 0.014962,
+          "speed_download": 13834
         },
         "put:/books/{id}": {
           "http_code": 200,
           "size_download": 209,
-          "time_total": 0.006956,
-          "speed_download": 30043
+          "time_total": 0.023281,
+          "speed_download": 8977
         },
         "get:/reactive/books/{id}/summary": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.03125,
+          "time_total": 0.02139,
           "speed_download": 0
         },
         "post:/reactive/books/{id}/summary": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.018779,
+          "time_total": 0.016128,
           "speed_download": 0
         },
         "get:/books/{id}/summary": {
           "http_code": 200,
           "size_download": 36,
-          "time_total": 0.002318,
-          "speed_download": 15532
+          "time_total": 0.003595,
+          "speed_download": 10014
         },
         "post:/books/{id}/summary": {
           "http_code": 200,
           "size_download": 207,
-          "time_total": 0.002261,
-          "speed_download": 91542
+          "time_total": 0.003175,
+          "speed_download": 65204
         },
         "get:/reactive/books": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.010501,
+          "time_total": 0.010064,
           "speed_download": 0
         },
         "get:/reactive/books/{id}": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.004105,
+          "time_total": 0.005109,
           "speed_download": 0
         },
         "get:/reactive/books/select": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.00647,
+          "time_total": 0.007037,
           "speed_download": 0
         },
         "get:/reactive/books/changes": {
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.011268,
+          "time_total": 0.015055,
           "speed_download": 0
         },
         "get:/reactive/books/cbor": {
           "http_code": 429,
           "size_download": 13,
-          "time_total": 0.004203,
-          "speed_download": 3172
+          "time_total": 0.005885,
+          "speed_download": 2265
         },
         "get:/reactive/books/cacheable": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000965,
-          "speed_download": 20000
+          "time_total": 0.001196,
+          "speed_download": 16717
         },
         "get:/books": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000828,
-          "speed_download": 20000
+          "time_total": 0.001366,
+          "speed_download": 14638
         },
         "get:/books/select": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000954,
+          "time_total": 0.000874,
           "speed_download": 20000
         },
         "get:/books/noCache/{id}": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001003,
-          "speed_download": 19947
+          "time_total": 0.00119,
+          "speed_download": 16802
         },
         "get:/books/changes": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000955,
-          "speed_download": 20000
+          "time_total": 0.001118,
+          "speed_download": 17883
         },
         "get:/books/cbor": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.00107,
-          "speed_download": 18682
+          "time_total": 0.001141,
+          "speed_download": 17529
         },
         "get:/books/batch": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000902,
+          "time_total": 0.000887,
           "speed_download": 20000
         },
         "get:/books/async": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001011,
-          "speed_download": 19782
+          "time_total": 0.001101,
+          "speed_download": 18170
         },
         "get:/books/async/{id}": {
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000926,
+          "time_total": 0.000844,
           "speed_download": 20000
         }
       },
@@ -1782,9 +1894,9 @@
             "book-controller"
           ],
           "http_code": 200,
-          "size_download": 184,
-          "time_total": 0.013803,
-          "speed_download": 13330
+          "size_download": 207,
+          "time_total": 0.014962,
+          "speed_download": 13834
         },
         {
           "method": "PUT",
@@ -1796,8 +1908,8 @@
           ],
           "http_code": 200,
           "size_download": 209,
-          "time_total": 0.006956,
-          "speed_download": 30043
+          "time_total": 0.023281,
+          "speed_download": 8977
         },
         {
           "method": "GET",
@@ -1809,7 +1921,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.03125,
+          "time_total": 0.02139,
           "speed_download": 0
         },
         {
@@ -1822,7 +1934,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.018779,
+          "time_total": 0.016128,
           "speed_download": 0
         },
         {
@@ -1835,8 +1947,8 @@
           ],
           "http_code": 200,
           "size_download": 36,
-          "time_total": 0.002318,
-          "speed_download": 15532
+          "time_total": 0.003595,
+          "speed_download": 10014
         },
         {
           "method": "POST",
@@ -1848,8 +1960,8 @@
           ],
           "http_code": 200,
           "size_download": 207,
-          "time_total": 0.002261,
-          "speed_download": 91542
+          "time_total": 0.003175,
+          "speed_download": 65204
         },
         {
           "method": "GET",
@@ -1861,7 +1973,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.010501,
+          "time_total": 0.010064,
           "speed_download": 0
         },
         {
@@ -1874,7 +1986,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.004105,
+          "time_total": 0.005109,
           "speed_download": 0
         },
         {
@@ -1887,7 +1999,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.00647,
+          "time_total": 0.007037,
           "speed_download": 0
         },
         {
@@ -1900,7 +2012,7 @@
           ],
           "http_code": 200,
           "size_download": 0,
-          "time_total": 0.011268,
+          "time_total": 0.015055,
           "speed_download": 0
         },
         {
@@ -1913,8 +2025,8 @@
           ],
           "http_code": 429,
           "size_download": 13,
-          "time_total": 0.004203,
-          "speed_download": 3172
+          "time_total": 0.005885,
+          "speed_download": 2265
         },
         {
           "method": "GET",
@@ -1926,8 +2038,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000965,
-          "speed_download": 20000
+          "time_total": 0.001196,
+          "speed_download": 16717
         },
         {
           "method": "GET",
@@ -1939,8 +2051,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000828,
-          "speed_download": 20000
+          "time_total": 0.001366,
+          "speed_download": 14638
         },
         {
           "method": "GET",
@@ -1952,7 +2064,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000954,
+          "time_total": 0.000874,
           "speed_download": 20000
         },
         {
@@ -1965,8 +2077,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001003,
-          "speed_download": 19947
+          "time_total": 0.00119,
+          "speed_download": 16802
         },
         {
           "method": "GET",
@@ -1978,8 +2090,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000955,
-          "speed_download": 20000
+          "time_total": 0.001118,
+          "speed_download": 17883
         },
         {
           "method": "GET",
@@ -1991,8 +2103,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.00107,
-          "speed_download": 18682
+          "time_total": 0.001141,
+          "speed_download": 17529
         },
         {
           "method": "GET",
@@ -2004,7 +2116,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000902,
+          "time_total": 0.000887,
           "speed_download": 20000
         },
         {
@@ -2017,8 +2129,8 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.001011,
-          "speed_download": 19782
+          "time_total": 0.001101,
+          "speed_download": 18170
         },
         {
           "method": "GET",
@@ -2030,7 +2142,7 @@
           ],
           "http_code": 429,
           "size_download": 20,
-          "time_total": 0.000926,
+          "time_total": 0.000844,
           "speed_download": 20000
         }
       ]

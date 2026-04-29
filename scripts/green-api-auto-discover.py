@@ -2164,6 +2164,79 @@ Examples:
             # the misleading "(0/0 resources)".
             ar_total = len(endpoints) if isinstance(endpoints, list) else 0
             ar_matched = ar_total if arch_res.get("matched") else 0
+            # ── Build first-class AR suggestions for the dashboard ──────
+            # The classic _generate_suggestions() only walks per-endpoint
+            # candidates, so AR rules (global, no candidates) end up with an
+            # empty suggestions[] and are invisible in the right-hand panel.
+            # We translate every actionable AR signal into a suggestion:
+            #   • AR01 EDA migration advice  → high-priority per-endpoint
+            #   • AR03 duplicates            → high-priority API/version
+            #   • Generic recommendations    → medium-priority "rule-level"
+            ar_suggestions: list = []
+            ar_max_pts = int(arch_res.get("max_pts", 0) or 0)
+            ar_score   = int(arch_res.get("score", 0) or 0)
+            ar_gap     = max(0, ar_max_pts - ar_score)
+
+            # 1) AR01 EDA Migration Advisor — one suggestion per opportunity
+            for adv in (arch_res.get("migration_advice") or []):
+                ep = adv.get("endpoint") or {}
+                tgt = (
+                    f"{ep.get('method','')} {ep.get('path','')}".strip()
+                    or arch_res.get("rule_id", arch_key)
+                )
+                ar_suggestions.append({
+                    "target": tgt,
+                    "action": adv.get("suggestion") or
+                              "Migrer ce endpoint vers un pattern événementiel "
+                              "(SSE, AsyncAPI, WebSocket).",
+                    "priority": "high",
+                    "impact": (
+                        f"+{ar_gap} pts (AR01) — supprime un cycle de polling, "
+                        "réduit la bande passante et la charge serveur."
+                    ),
+                    "how": (
+                        f"Condition détectée: {adv.get('condition','')}\n"
+                        f"Indice: {adv.get('evidence','')}\n"
+                        f"Cible recommandée: {adv.get('target_pattern','')}"
+                    ).strip(),
+                    "source": "AR01_eda_advisor",
+                })
+
+            # 2) AR03 duplicates — one suggestion per duplicated pair / version
+            for dup in (arch_res.get("duplicates") or []):
+                if dup.get("kind") == "cross-target":
+                    tgt = f"{dup.get('left','?')}  ⇄  {dup.get('right','?')}"
+                    action = ("Mutualiser les deux APIs très similaires pour "
+                              "éviter la double infrastructure.")
+                else:
+                    tgt = (f"{dup.get('base_url','')} {dup.get('method','')} "
+                           f"{' ⇄ '.join(dup.get('duplicate_paths') or [])}").strip()
+                    action = ("Déprécier explicitement l'ancienne version pour "
+                              "supprimer le runtime redondant.")
+                ar_suggestions.append({
+                    "target": tgt,
+                    "action": action,
+                    "priority": "high",
+                    "impact": (f"+{ar_gap} pts (AR03) — supprime une "
+                               "infrastructure redondante (= empreinte ÷2)."),
+                    "how": json.dumps(
+                        {k: v for k, v in dup.items() if k != "kind"},
+                        ensure_ascii=False, indent=2,
+                    ),
+                    "source": "AR03_duplicates",
+                })
+
+            # 3) Generic recommendations — fall-back medium-priority guidance
+            for reco in (arch_res.get("recommendations") or []):
+                ar_suggestions.append({
+                    "target": arch_res.get("rule_id", arch_key),
+                    "action": reco,
+                    "priority": "medium",
+                    "impact": f"+{ar_gap} pts ({arch_res.get('rule_id', arch_key)}).",
+                    "how": "",
+                    "source": f"{arch_res.get('rule_id', arch_key)}_reco",
+                })
+
             rule_mapping_full[arch_key] = {
                 "id": meta.get("id", arch_res.get("rule_id", arch_key)),
                 "label": meta.get("label", arch_key),
@@ -2177,6 +2250,8 @@ Examples:
                 "candidates": arch_res.get("candidates", []),
                 "evidence": arch_res.get("evidence", []),
                 "recommendations": arch_res.get("recommendations", []),
+                # Suggestions consumed by the dashboard's right-hand panel
+                "suggestions": ar_suggestions,
                 # AR01-only — visible by the dashboard if present
                 "migration_advice": arch_res.get("migration_advice", []),
                 # AR03/AR05 extras

@@ -4,7 +4,7 @@
 >
 > **Devoxx France 2026 — Green Architecture : moins de gras, plus d'impact !**
 
-📅 *Dernière analyse : 2026-04-29T20:43:43Z*
+📅 *Dernière analyse : 2026-04-29T21:01:46Z*
 
 ---
 
@@ -28,17 +28,17 @@
 
 | Méthode | Endpoint | Taille | Temps | HTTP |
 |:-------:|----------|-------:|------:|-----:|
-| GET | `/books/{id}` | 184 B | 0.014s | 200 |
-| PUT | `/books/{id}` | 209 B | 0.007s | 200 |
-| GET | `/reactive/books/{id}/summary` | 0 B | 0.031s | 200 |
-| POST | `/reactive/books/{id}/summary` | 0 B | 0.019s | 200 |
-| GET | `/books/{id}/summary` | 36 B | 0.002s | 200 |
-| POST | `/books/{id}/summary` | 207 B | 0.002s | 200 |
-| GET | `/reactive/books` | 0 B | 0.011s | 200 |
-| GET | `/reactive/books/{id}` | 0 B | 0.004s | 200 |
-| GET | `/reactive/books/select` | 0 B | 0.006s | 200 |
-| GET | `/reactive/books/changes` | 0 B | 0.011s | 200 |
-| GET | `/reactive/books/cbor` | 13 B | 0.004s | 429 |
+| GET | `/books/{id}` | 207 B | 0.015s | 200 |
+| PUT | `/books/{id}` | 209 B | 0.023s | 200 |
+| GET | `/reactive/books/{id}/summary` | 0 B | 0.021s | 200 |
+| POST | `/reactive/books/{id}/summary` | 0 B | 0.016s | 200 |
+| GET | `/books/{id}/summary` | 36 B | 0.004s | 200 |
+| POST | `/books/{id}/summary` | 207 B | 0.003s | 200 |
+| GET | `/reactive/books` | 0 B | 0.010s | 200 |
+| GET | `/reactive/books/{id}` | 0 B | 0.005s | 200 |
+| GET | `/reactive/books/select` | 0 B | 0.007s | 200 |
+| GET | `/reactive/books/changes` | 0 B | 0.015s | 200 |
+| GET | `/reactive/books/cbor` | 13 B | 0.006s | 429 |
 | GET | `/reactive/books/cacheable` | 20 B | 0.001s | 429 |
 | GET | `/books` | 20 B | 0.001s | 429 |
 | GET | `/books/select` | 20 B | 0.001s | 429 |
@@ -52,17 +52,17 @@
 ### 🔑 Métriques clés
 
 - **Endpoints mesurés** : 20
-- **Transfert total** : 829 B
-- **Transfert moyen / endpoint** : 41 B
-- **Temps moyen** : 0.006s
-- **⚡ Énergie totale / appel** : 0.0009 Wh
+- **Transfert total** : 852 B
+- **Transfert moyen / endpoint** : 42 B
+- **Temps moyen** : 0.007s
+- **⚡ Énergie totale / appel** : 0.0010 Wh
 - **🌍 CO₂ / appel** : 0.00005 g (France — 53 gCO₂/kWh)
 
 ### 💡 Suggestions d'amélioration
 
-> **Score actuel : 39/123** — Score potentiel avec toutes les suggestions : **105/123** (+66 pts possibles)
+> **Score actuel : 39/123** — Score potentiel avec toutes les suggestions : **123/123** (+84 pts possibles)
 
-🔴 Haute priorité : 8 | 🟡 Moyenne : 8 | ⚪ Basse : 2 | **Total : 18 suggestions**
+🔴 Haute priorité : 15 | 🟡 Moyenne : 14 | ⚪ Basse : 2 | **Total : 31 suggestions**
 
 #### 🗜️ DE01 — Compression Gzip (❌ Non validé — +15 pts possibles)
 
@@ -89,6 +89,40 @@ Option 2 — Nginx (if reverse proxy):
   gzip_comp_level 6;
 
 Both options apply to ALL endpoints automatically.
+```
+</details>
+
+#### 📌 AR02_runtime_close (❌ Non validé — +7 pts possibles)
+
+> Déployer l'API au plus près des consommateurs (CDN, edge, anycast multi-régions). (0/20 endpoints validés)
+
+| Priorité | Cible | Action | Impact |
+|:--------:|-------|--------|--------|
+| 🟡 Moyenne | `AR02` | Aucun signal d'edge/CDN cross-validé (runtime + HEAD). Mettre l'API derrière un edge/CDN multi-régions (Cloudflare, CloudFront, Front Door, Fastly, Akamai…) pour rapprocher le runtime des consommateurs. | +7 pts (AR02). |
+| 🟡 Moyenne | `AR02` | La spec OpenAPI ne déclare qu'une seule URL de serveur. Ajouter plusieurs entrées `servers[]` régionales (ex: eu-west, us-east) pour documenter un déploiement multi-régions. | +7 pts (AR02). |
+| 🟡 Moyenne | `AR02` | Activer HTTPS sur la cible pour permettre la mesure de latence TLS et bénéficier d'un edge/CDN moderne. | +7 pts (AR02). |
+
+#### 📌 AR01_event_driven (❌ Non validé — +6 pts possibles)
+
+> Utiliser une architecture événementielle (callbacks, webhooks, AsyncAPI, SSE, WebSocket, broker) pour éviter le polling. (0/20 endpoints validés)
+
+| Priorité | Cible | Action | Impact |
+|:--------:|-------|--------|--------|
+| 🔴 Haute | `PUT /books/{id}` | Publier un événement domaine après mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour découpler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI dédié. | +6 pts (AR01) — supprime un cycle de polling, réduit la bande passante et la charge serveur. |
+| 🔴 Haute | `POST /reactive/books/{id}/summary` | Publier un événement domaine après mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour découpler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI dédié. | +6 pts (AR01) — supprime un cycle de polling, réduit la bande passante et la charge serveur. |
+| 🔴 Haute | `POST /books/{id}/summary` | Publier un événement domaine après mutation (Kafka/RabbitMQ/Azure Service Bus/EventBridge) pour découpler les consommateurs. Documenter via callbacks (OAS 3.x) ou un AsyncAPI dédié. | +6 pts (AR01) — supprime un cycle de polling, réduit la bande passante et la charge serveur. |
+| 🔴 Haute | `GET /reactive/books/changes` | Remplacer le polling par un flux d'événements: exposer le même besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonnés. | +6 pts (AR01) — supprime un cycle de polling, réduit la bande passante et la charge serveur. |
+| 🔴 Haute | `GET /reactive/books/changes` | Long-polling détecté → migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et reçoit les événements push, divisant les RTT/CPU par 10 à 100×. | +6 pts (AR01) — supprime un cycle de polling, réduit la bande passante et la charge serveur. |
+| 🔴 Haute | `GET /books/changes` | Remplacer le polling par un flux d'événements: exposer le même besoin via SSE (text/event-stream) ou un sujet AsyncAPI/Kafka pour pousser les changements aux abonnés. | +6 pts (AR01) — supprime un cycle de polling, réduit la bande passante et la charge serveur. |
+| 🔴 Haute | `GET /books/changes` | Long-polling détecté → migrer vers WebSocket ou SSE. Le client ouvre une seule connexion et reçoit les événements push, divisant les RTT/CPU par 10 à 100×. | +6 pts (AR01) — supprime un cycle de polling, réduit la bande passante et la charge serveur. |
+| 🟡 Moyenne | `AR01` | Aucun signal EDA détecté mais 7 opportunité(s) de migration vers SSE/AsyncAPI/WebSocket trouvées (cf. EDA Advisor). | +6 pts (AR01). |
+
+<details><summary>🔧 Comment implémenter</summary>
+
+```
+Condition détectée: mutating-without-callback
+Indice: Mutation declared but no OAS callbacks/webhooks
+Cible recommandée: Domain Event publication
 ```
 </details>
 
@@ -144,6 +178,15 @@ Option 3 — Nginx:
   add_header X-RateLimit-Limit 100;
 ```
 </details>
+
+#### 📌 AR04_scalable_infra (❌ Non validé — +5 pts possibles)
+
+> Préférer une infrastructure auto-scalable (HPA, KEDA, autoscale, serverless). (0/20 endpoints validés)
+
+| Priorité | Cible | Action | Impact |
+|:--------:|-------|--------|--------|
+| 🟡 Moyenne | `AR04` | Aucun signal d'auto-scaling détecté dans les fichiers IaC/build. | +5 pts (AR04). |
+| 🟡 Moyenne | `AR04` | Activer HPA/KEDA (Kubernetes), autoscale Terraform/Bicep, ou déployer en serverless (Azure Functions, AWS Lambda, Cloud Run). | +5 pts (AR04). |
 
 #### 🔍 DE08 — Filtrage de champs (⚠️ Partiel (2/17) — +13 pts possibles)
 
@@ -343,7 +386,7 @@ Alternative (Protobuf):
 
 - **Effort de remédiation SonarQube** : 1h12min
 
-📅 *2026-04-29T20:46:09Z*
+📅 *2026-04-29T21:04:19Z*
 
 ---
 
