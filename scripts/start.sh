@@ -1142,6 +1142,42 @@ if [ "${CLOUD_FOOTPRINT_CONFIRMED:-false}" = "true" ]; then
 fi
 echo ""
 
+# ── Build interactive-config.json from the OpenAPI specs (non-interactive) ──
+# Mirrors the bridge's /api/discover + /api/analyze flow used by
+# dashboard/interactive.html: discover the swagger of every target, extract
+# the example payloads / path / query params declared in the spec, and
+# persist:
+#   - reports/interactive-config.json     → human-readable resolved config
+#   - reports/.interactive-scenario.json  → analyzer-side scenario file
+# The analyzer (green-api-auto-discover.py) honours the scenario when the
+# GREEN_INTERACTIVE_SCENARIO env var points to it, so POST/PUT/PATCH bodies
+# and {placeholder} path params come straight from the spec — no prompt.
+if [ ${#TARGETS[@]} -gt 0 ]; then
+  echo "🔎 Découverte swagger + extraction d'exemples (start.sh local mode)…"
+  REPORTS_DIR="$ROOT/reports"
+  mkdir -p "$REPORTS_DIR"
+  BUILD_CFG_CMD=(python3 "$ROOT/scripts/build-interactive-config.py"
+                 --targets "$TARGET_URL_JOINED"
+                 --output-dir "$REPORTS_DIR"
+                 --repeat 3)
+  if [ -n "${BEARER_TOKEN:-}" ]; then
+    BUILD_CFG_CMD+=(--bearer "$BEARER_TOKEN")
+  fi
+  if [ -n "${APPNAME:-}" ]; then
+    BUILD_CFG_CMD+=(--appname "$APPNAME")
+  fi
+  if "${BUILD_CFG_CMD[@]}"; then
+    INTERACTIVE_SCENARIO="$REPORTS_DIR/.interactive-scenario.json"
+    if [ -f "$INTERACTIVE_SCENARIO" ]; then
+      export GREEN_INTERACTIVE_SCENARIO="$INTERACTIVE_SCENARIO"
+      echo "📥 Scénario interactif activé: $GREEN_INTERACTIVE_SCENARIO"
+    fi
+  else
+    echo "⚠️  build-interactive-config a échoué — l'analyzer continuera sans scénario."
+  fi
+  echo ""
+fi
+
 echo "Running Green Score analyzer..."
 if [ "$RUN_CREEDENGO" = true ]; then
   bash "$ROOT/scripts/green-score-analyzer_withdiscovery.sh" $DEBUG_FLAG --skip-dashboard || true
