@@ -3,7 +3,7 @@
     "bash",
     "/Users/thiernodiallo/greenscoreimpl/apigreenscoreanalyzer/scripts/start.sh",
     "--appname",
-    "optcreedjavaarchinfr",
+    "javcreedgreen",
     "--targets",
     "http://localhost:8080",
     "--creedengo",
@@ -24,7 +24,7 @@
       "http://localhost:8080"
     ],
     "bearer": "",
-    "appname": "optcreedjavaarchinfr",
+    "appname": "javcreedgreen",
     "creedengo": true,
     "debug": false,
     "gitKeep": false,
