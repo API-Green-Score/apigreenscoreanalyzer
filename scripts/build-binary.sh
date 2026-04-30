@@ -44,22 +44,27 @@ STAGE="$(mktemp -d)"
 trap "rm -rf '$STAGE'" EXIT
 
 echo "📦 Staging runtime files into $STAGE ..."
-mkdir -p "$STAGE/bundle"
-
-# Scripts (analyzer + helpers)
 mkdir -p "$STAGE/bundle/scripts"
-cp "$GREEN_DIR/scripts/green-api-auto-discover.py"            "$STAGE/bundle/scripts/"
-cp "$GREEN_DIR/scripts/green-score-analyzer_withdiscovery.sh" "$STAGE/bundle/scripts/"
-cp "$GREEN_DIR/scripts/creedengo-analyzer.sh"                 "$STAGE/bundle/scripts/"
-cp "$GREEN_DIR/scripts/creedengo-detect-stack.py"             "$STAGE/bundle/scripts/"
-cp "$GREEN_DIR/scripts/creedengo-extract-results.py"          "$STAGE/bundle/scripts/"
-cp "$GREEN_DIR/scripts/_container-runtime.sh"                 "$STAGE/bundle/scripts/"
-cp "$GREEN_DIR/scripts/generate-badge.sh"                     "$STAGE/bundle/scripts/"
-cp "$GREEN_DIR/scripts/generate-dashboard.sh"                 "$STAGE/bundle/scripts/"
-cp "$GREEN_DIR/scripts/generate-dashboard.py"                 "$STAGE/bundle/scripts/"
-cp "$GREEN_DIR/scripts/start.sh"                              "$STAGE/bundle/scripts/"
+
+# ── Auto-discover the runtime scripts ──
+# Copy every .py and .sh under scripts/ EXCEPT this builder. Avoids the
+# error-prone hardcoded list that used to drift every time a new helper
+# was introduced (e.g. architecture_rules.py, build-interactive-config.py,
+# greenapianalyzer-server.py, etc.).
+for src in "$GREEN_DIR/scripts/"*.py "$GREEN_DIR/scripts/"*.sh; do
+  [ -f "$src" ] || continue
+  base="$(basename "$src")"
+  case "$base" in
+    build-binary.sh) continue ;;            # don't ship the builder itself
+    *) cp "$src" "$STAGE/bundle/scripts/" ;;
+  esac
+done
 [ -f "$GREEN_DIR/scripts/requirements.txt" ] && \
   cp "$GREEN_DIR/scripts/requirements.txt"                    "$STAGE/bundle/scripts/"
+
+# Spectral ruleset (used by the offline linter mode)
+[ -f "$GREEN_DIR/.spectral.yml"  ] && cp "$GREEN_DIR/.spectral.yml"  "$STAGE/bundle/" || true
+[ -f "$GREEN_DIR/.spectral.yaml" ] && cp "$GREEN_DIR/.spectral.yaml" "$STAGE/bundle/" || true
 
 # Templates / static
 mkdir -p "$STAGE/bundle/dashboard" "$STAGE/bundle/badges"
@@ -80,6 +85,7 @@ set -uo pipefail
 # $BUNDLE_DIR is exported by the outer self-extracting wrapper.
 : "${BUNDLE_DIR:=$(cd "$(dirname "$0")" && pwd)}"
 SCRIPTS="$BUNDLE_DIR/scripts"
+VERSION="1.1.0"
 
 show_help() {
   cat <<'HELP'
@@ -90,25 +96,37 @@ show_help() {
   ╚══════════════════════════════════════════════════════════════╝
 
   Measures the eco-design quality of any REST API and produces
-  a Green Score out of 100 (badge + HTML dashboard + JSON report).
+  a Green Score (badge + HTML dashboard + JSON report) — including
+  Architecture & Infra rules (AR01..AR05, +23 pts).
 
   USAGE
-    greenanalyzer [OPTIONS]
+    greenanalyzer [SUBCOMMAND] [OPTIONS]
 
-  CORE OPTIONS
-    --target  URL              Base URL of the API (repeat or use --targets CSV)
+  SUBCOMMANDS (default: analyze)
+    analyze                    Run the full Green Score (live API, badge,
+                               dashboard). This is the default when no
+                               subcommand is given.
+    lint   <openapi-file>      Offline lint of an OpenAPI spec — no live
+                               API needed. Outputs JSON or text findings.
+    serve                      Start the interactive web dashboard
+                               (http://127.0.0.1:8765 by default).
+    version                    Print the binary version.
+    help, --help, -h           This help.
+
+  ANALYZE OPTIONS  (greenanalyzer analyze ...)
+    --target  URL              Base URL of the API (repeat or use --targets)
     --targets URL,URL,...      Comma-separated list of base URLs
-    --swagger URL|FILE         OpenAPI/Swagger spec (URL or local file)
+    --swagger URL|FILE         OpenAPI spec (URL or local file)
     --swaggers CSV             Comma-separated list of specs
-    --bearer  TOKEN            Bearer token for authenticated APIs
-                               (or env BEARER_TOKEN=…)
+    --bearer  TOKEN            Bearer token (or env BEARER_TOKEN=…)
     --appname NAME             Application name in reports
     --repeat  N                Measurement repetitions (default: 3)
     --output-dir DIR           Where reports/dashboard/badges land
                                (default: $PWD/greenanalyzer-output)
+    --consumer-region XX       ISO-3166 region code for AR02
+    --enable-geoip             AR02 anycast/ASN cross-check (ipinfo.io)
+    --cloud-footprint-confirmed Validate AR05 (cloud dashboard attestation)
     --debug                    Verbose analyzer output
-    --version                  Print version and exit
-    --help, -h                 This help
 
   ECO-DESIGN CODE ANALYSIS (optional, requires Docker/Podman)
     --creedengo                Also run Creedengo static analysis
@@ -116,68 +134,92 @@ show_help() {
     --git-branch BRANCH        Branch/tag for --git-repo
     --git-subdir DIR           Sub-folder inside the cloned repo
     --git-keep                 Keep the cloned working copy after analysis
-    --root PATH                Local project to analyze (instead of CWD)
+
+  LINT OPTIONS  (greenanalyzer lint <spec> ...)
+    --format text|json|sarif   Output format (default: text)
+    --fail-on-warn             Exit non-zero if any finding is emitted
+
+  SERVE OPTIONS  (greenanalyzer serve ...)
+    --host HOST                Bind host (default: 127.0.0.1)
+    --port N                   Bind port (default: 8765)
+    --open                     Open the dashboard in a browser
 
   EXAMPLES
-    greenanalyzer --target http://localhost:8080
-    greenanalyzer --targets http://api1:8080,http://api2:8080
-    greenanalyzer --target http://my-api:8080 --bearer "eyJhb..." --repeat 5
-    greenanalyzer --creedengo --git-repo https://github.com/owner/repo.git \
-                  --git-branch develop
-
-  OUTPUT (under --output-dir, default ./greenanalyzer-output/)
-    reports/latest-report.json   Machine-readable Green Score report
-    dashboard/index.html         Interactive HTML dashboard
-    badges/green-score.svg       Score badge for README
+    greenanalyzer analyze --target http://localhost:8080
+    greenanalyzer analyze --targets http://api1:8080,http://api2:8080 \
+                          --consumer-region FR --enable-geoip
+    greenanalyzer lint   ./openapi.yaml --format json
+    greenanalyzer serve  --open
 
 HELP
 }
 
-VERSION="1.0.0"
-
-# Parse only flags that influence the runtime; everything else is passed
-# through to start.sh (which already accepts the same vocabulary).
-PASSTHROUGH=()
-OUTPUT_DIR="${GREEN_OUTPUT_DIR:-$PWD/greenanalyzer-output}"
-
-while [ $# -gt 0 ]; do
+# ── Subcommand dispatch ──
+SUB="analyze"
+if [ $# -gt 0 ]; then
   case "$1" in
+    analyze|lint|serve|version|help) SUB="$1"; shift ;;
     --help|-h)        show_help; exit 0 ;;
     --version)        echo "greenanalyzer $VERSION"; exit 0 ;;
-    --output-dir)     OUTPUT_DIR="$2"; shift 2; continue ;;
-    *)                PASSTHROUGH+=("$1"); shift ;;
   esac
-done
+fi
 
-# Prepare user-visible output tree.
-mkdir -p "$OUTPUT_DIR/reports" "$OUTPUT_DIR/dashboard" "$OUTPUT_DIR/badges"
+case "$SUB" in
+  help)              show_help; exit 0 ;;
+  version)           echo "greenanalyzer $VERSION"; exit 0 ;;
 
-# Make the bundle writable (some scripts copy reports next to themselves).
-# We mirror reports/dashboard/badges into the user's $OUTPUT_DIR via env
-# overrides so the binary appears stateless.
-export APPNAME="${APPNAME:-greenanalyzer-cli}"
-export BEARER_TOKEN="${BEARER_TOKEN:-}"
+  # ── Offline OpenAPI linter ──
+  lint)
+    chmod +x "$SCRIPTS/"*.sh 2>/dev/null || true
+    exec python3 "$SCRIPTS/green-api-lint.py" "$@"
+    ;;
 
-# Symlink the bundle's reports/dashboard/badges to the user's output dir so
-# every script in the bundle that writes to "$GREEN_DIR/reports/..." actually
-# writes into the user's chosen folder.
-mkdir -p "$BUNDLE_DIR/reports" "$BUNDLE_DIR/dashboard" "$BUNDLE_DIR/badges"
-# Overwrite with the user dir
-rm -rf "$BUNDLE_DIR/reports" "$BUNDLE_DIR/badges"
-ln -s "$OUTPUT_DIR/reports"   "$BUNDLE_DIR/reports"
-ln -s "$OUTPUT_DIR/badges"    "$BUNDLE_DIR/badges"
-# Dashboard: copy templates first (index.save.html), then point output dir
-cp -n "$BUNDLE_DIR/dashboard/index.save.html" "$OUTPUT_DIR/dashboard/" 2>/dev/null || true
+  # ── Interactive web dashboard ──
+  serve)
+    chmod +x "$SCRIPTS/"*.sh 2>/dev/null || true
+    # The bridge expects to find dashboard/ next to scripts/, which is the
+    # case inside the bundle.
+    cd "$BUNDLE_DIR"
+    exec python3 "$SCRIPTS/greenapianalyzer-server.py" "$@"
+    ;;
 
-echo ""
-echo "  🌿  Green Analyzer — running…"
-echo "  ────────────────────────────"
-echo "  Output: $OUTPUT_DIR"
-echo ""
+  # ── Live Green Score analysis (default) ──
+  analyze)
+    PASSTHROUGH=()
+    OUTPUT_DIR="${GREEN_OUTPUT_DIR:-$PWD/greenanalyzer-output}"
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --help|-h)        show_help; exit 0 ;;
+        --version)        echo "greenanalyzer $VERSION"; exit 0 ;;
+        --output-dir)     OUTPUT_DIR="$2"; shift 2; continue ;;
+        *)                PASSTHROUGH+=("$1"); shift ;;
+      esac
+    done
 
-# Forward to start.sh which already understands every CLI flag.
-chmod +x "$SCRIPTS/"*.sh 2>/dev/null || true
-exec bash "$SCRIPTS/start.sh" ${PASSTHROUGH[@]+"${PASSTHROUGH[@]}"}
+    mkdir -p "$OUTPUT_DIR/reports" "$OUTPUT_DIR/dashboard" "$OUTPUT_DIR/badges"
+    export APPNAME="${APPNAME:-greenanalyzer-cli}"
+    export BEARER_TOKEN="${BEARER_TOKEN:-}"
+
+    # Wire the bundle's reports/badges to the user-chosen output dir so
+    # every embedded script appears stateless from the outside.
+    mkdir -p "$BUNDLE_DIR/reports" "$BUNDLE_DIR/dashboard" "$BUNDLE_DIR/badges"
+    rm -rf "$BUNDLE_DIR/reports" "$BUNDLE_DIR/badges"
+    ln -s "$OUTPUT_DIR/reports"   "$BUNDLE_DIR/reports"
+    ln -s "$OUTPUT_DIR/badges"    "$BUNDLE_DIR/badges"
+    cp -n "$BUNDLE_DIR/dashboard/index.save.html" "$OUTPUT_DIR/dashboard/" 2>/dev/null || true
+
+    echo ""
+    echo "  🌿  Green Analyzer — running…"
+    echo "  ────────────────────────────"
+    echo "  Output: $OUTPUT_DIR"
+    echo ""
+
+    chmod +x "$SCRIPTS/"*.sh 2>/dev/null || true
+    exec bash "$SCRIPTS/start.sh" ${PASSTHROUGH[@]+"${PASSTHROUGH[@]}"}
+    ;;
+
+  *) echo "Unknown subcommand: $SUB" >&2; show_help; exit 2 ;;
+esac
 ENTRYPOINT
 chmod +x "$STAGE/bundle/__entrypoint.sh"
 
