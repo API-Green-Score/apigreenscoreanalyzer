@@ -13,7 +13,11 @@
     "feat/devoxx-creedengo",
     "--source-dir",
     ".",
-    "--build-and-run"
+    "--build-and-run",
+    "--consumer-region",
+    "FR",
+    "--enable-geoip",
+    "--cloud-footprint-confirmed"
   ],
   "request": {
     "targets": [
@@ -29,6 +33,9 @@
     "gitSubdir": "",
     "stack": "auto",
     "sourceDir": ".",
-    "buildAndRun": true
+    "buildAndRun": true,
+    "consumerRegion": "FR",
+    "enableGeoip": true,
+    "cloudFootprintConfirmed": true
   }
 }

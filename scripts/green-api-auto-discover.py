@@ -35,6 +35,18 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Local module: Architecture/Infrastructure rules (AR01..AR05)
+sys.path.insert(0, str(Path(__file__).parent))
+try:
+    from architecture_rules import (
+        evaluate_architecture_rules,
+        ARCH_RULES as _ARCH_RULES_CATALOGUE,
+    )
+    _ARCH_RULES_AVAILABLE = True
+except Exception as _arch_imp_err:  # pragma: no cover
+    _ARCH_RULES_AVAILABLE = False
+    _ARCH_RULES_IMPORT_ERROR = str(_arch_imp_err)
+
 # ── Fix Windows console encoding (CP1252 → UTF-8) ──────────────────────────
 # On Windows, the default stdout/stderr encoding is often CP1252 which cannot
 # handle emojis (✅, ❌, 🟢, …).  Force UTF-8 with replace fallback so that
@@ -73,46 +85,87 @@ GREEN_RULES = {
         "id": "DE11", "label": "Pagination", "max_pts": 15,
         "check": "collection_has_pagination_params",
         "description": "Les endpoints de collection doivent supporter la pagination (page/size ou limit/offset).",
+        "category": "data-efficiency",
     },
     "DE08_fields": {
         "id": "DE08", "label": "Filtrage de champs", "max_pts": 15,
         "check": "has_fields_param",
         "description": "Supporter un parametre 'fields' pour reduire le payload.",
+        "category": "data-efficiency",
     },
     "DE01_compression": {
         "id": "DE01", "label": "Compression", "max_pts": 15,
         "check": "server_supports_gzip",
         "description": "Le serveur doit supporter Accept-Encoding: gzip.",
+        "category": "data-efficiency",
     },
     "DE02_DE03_cache": {
         "id": "DE02/DE03", "label": "Cache ETag/304", "max_pts": 15,
         "check": "supports_etag_304",
         "description": "Les ressources unitaires doivent supporter ETag + If-None-Match -> 304.",
+        "category": "data-efficiency",
     },
     "DE06_delta": {
         "id": "DE06", "label": "Delta / Changes", "max_pts": 10,
         "check": "has_delta_endpoint",
         "description": "Un endpoint /changes?since= ou equivalent doit exister.",
+        "category": "data-efficiency",
     },
     "range_206": {
         "id": "206", "label": "Range / Partial Content", "max_pts": 10,
         "check": "supports_range_206",
         "description": "Supporter le header Range pour les gros payloads.",
+        "category": "data-efficiency",
     },
     "AR02_format_cbor": {
-        "id": "AR02", "label": "Format binaire (CBOR)", "max_pts": 10,
+        # NOTE: rule id renamed BIN01 (was "AR02") to free the official
+        # APIGreenScore AR02 (= "API runtime close to consumer"). The internal
+        # rule key is kept unchanged so legacy reports remain readable.
+        "id": "BIN01", "label": "Format binaire (CBOR)", "max_pts": 10,
         "check": "has_binary_format",
         "description": "Un endpoint en format binaire (CBOR, protobuf...) doit exister.",
+        "category": "data-efficiency",
     },
     "LO01_observability": {
         "id": "LO01", "label": "Observabilite", "max_pts": 5,
         "check": "has_actuator",
         "description": "Actuator / health / metrics doit etre expose.",
+        "category": "logs-observability",
     },
     "US07_rate_limit": {
         "id": "US07", "label": "Rate Limiting", "max_pts": 5,
         "check": "assumed_if_running",
         "description": "Un mecanisme de rate limiting doit etre present.",
+        "category": "usage",
+    },
+
+    # ── Architecture & Infrastructure (APIGreenScore official AR rules) ──
+    # Weights confirmed by the user (Option A): AR01=6, AR02=7, AR03=3,
+    # AR04=5, AR05=2 → +23 pts on top of the 100-pts legacy budget.
+    "AR01_event_driven": {
+        "id": "AR01", "label": "Architecture événementielle", "max_pts": 6,
+        "check": "external_arch_rules", "category": "architecture",
+        "description": "Utiliser une architecture événementielle (callbacks, webhooks, AsyncAPI, SSE, WebSocket, broker) pour éviter le polling.",
+    },
+    "AR02_runtime_close": {
+        "id": "AR02", "label": "Runtime proche du consommateur", "max_pts": 7,
+        "check": "external_arch_rules", "category": "architecture",
+        "description": "Déployer l'API au plus près des consommateurs (CDN, edge, anycast multi-régions).",
+    },
+    "AR03_unique_api": {
+        "id": "AR03", "label": "Une seule API par besoin", "max_pts": 3,
+        "check": "external_arch_rules", "category": "architecture",
+        "description": "Éviter la duplication d'APIs servant le même besoin (double infrastructure = double empreinte).",
+    },
+    "AR04_scalable_infra": {
+        "id": "AR04", "label": "Infrastructure scalable", "max_pts": 5,
+        "check": "external_arch_rules", "category": "infrastructure",
+        "description": "Préférer une infrastructure auto-scalable (HPA, KEDA, autoscale, serverless).",
+    },
+    "AR05_cloud_footprint": {
+        "id": "AR05", "label": "Dashboard d'empreinte cloud", "max_pts": 2,
+        "check": "external_arch_rules", "category": "infrastructure",
+        "description": "Suivre l'empreinte carbone via le dashboard natif du provider cloud.",
     },
 }
 
@@ -1755,6 +1808,15 @@ Examples:
     parser.add_argument("--output-dir", default="", help="Output directory for reports (default: reports/)")
     parser.add_argument("--skip-spectral", action="store_true", help="Skip Spectral linting")
     parser.add_argument("--skip-dashboard", action="store_true", help="Skip dashboard generation")
+    # Architecture rules (AR01–AR05) controls
+    parser.add_argument("--cloud-footprint-confirmed", action="store_true",
+                        help="Confirm that the cloud provider's carbon dashboard is actively used (required to validate AR05).")
+    parser.add_argument("--consumer-region", default="",
+                        help="ISO-3166 alpha-2 region of the API consumers (e.g. FR, US). Used by AR02 distance scoring.")
+    parser.add_argument("--enable-geoip", action="store_true",
+                        help="Enable optional GeoIP lookup (ipinfo.io) to compute consumer<->API distance for AR02.")
+    parser.add_argument("--source-dir", default="",
+                        help="Path to the API source code (Java/.NET/Node) for AR01/AR04 deps & IaC scan (Phase 2).")
     args = parser.parse_args()
 
     # ── Resolve paths ──
@@ -2050,6 +2112,207 @@ Examples:
     log("Computing Green Score...")
     green_score = analyze_green_rules(spec, endpoints, base_url, measurements, auth_headers)
     log(f"  GREEN SCORE: {green_score['total']}/{green_score['max']}  Grade: {green_score['grade']}", "OK")
+
+    # ── Step 4a: Architecture & Infrastructure rules (AR01..AR05) ──
+    if _ARCH_RULES_AVAILABLE:
+        # Load thresholds + cloud-dashboard URLs from green-score-threshold.json
+        thr_path = root_dir / "green-score-threshold.json"
+        thr_cfg: dict = {}
+        if thr_path.is_file():
+            try:
+                thr_cfg = json.loads(thr_path.read_text(encoding="utf-8")) or {}
+            except Exception as e:
+                log(f"  threshold config unreadable ({e}); falling back to defaults", "WARN")
+        arch_thresholds = thr_cfg.get("architecture", {})
+        cloud_dashboards = thr_cfg.get("cloud_footprint_dashboards", {})
+
+        # Re-extract per-target measurements for context
+        try:
+            arch_results = evaluate_architecture_rules(
+                spec=spec,
+                sources=sources,
+                endpoints=endpoints,
+                measurements=measurements.get("auto_discovery", {}).get("all_measurements", {}) or {},
+                auth_headers=auth_headers,
+                thresholds=arch_thresholds,
+                cloud_dashboards=cloud_dashboards,
+                footprint_confirmed=bool(args.cloud_footprint_confirmed),
+                enable_phase2=bool(args.source_dir),
+                source_dir=args.source_dir or None,
+                consumer_region=(args.consumer_region or "").strip(),
+                enable_geoip=bool(args.enable_geoip),
+            )
+        except Exception as e:
+            log(f"  Architecture rules evaluation failed: {e}", "WARN")
+            arch_results = {}
+
+        # Merge architecture results into green_score (mapping/breakdown/total/max)
+        rule_mapping_full = green_score.get("rule_resource_mapping", {}) or {}
+        scores_full = green_score.get("breakdown", {}) or {}
+        endpoint_rules_full = green_score.get("endpoint_rules", {}) or {}
+        details_full = green_score.get("details", {}) or {}
+
+        for arch_key, arch_res in arch_results.items():
+            meta = GREEN_RULES.get(arch_key, {})
+            # Architecture/Infra rules are *global*: a single check validates
+            # the property for the whole API. To stay consistent with the
+            # per-endpoint rule reporting (which shows "matched/candidates"),
+            # we expose every discovered endpoint as a "candidate" of the AR
+            # rule and either count them all matched (rule validated → all
+            # endpoints benefit) or none (rule failed). This makes the CLI
+            # rendering print e.g. "AR05  2/2  (20/20 resources)" instead of
+            # the misleading "(0/0 resources)".
+            ar_total = len(endpoints) if isinstance(endpoints, list) else 0
+            ar_matched = ar_total if arch_res.get("matched") else 0
+            # ── Build first-class AR suggestions for the dashboard ──────
+            # The classic _generate_suggestions() only walks per-endpoint
+            # candidates, so AR rules (global, no candidates) end up with an
+            # empty suggestions[] and are invisible in the right-hand panel.
+            # We translate every actionable AR signal into a suggestion:
+            #   • AR01 EDA migration advice  → high-priority per-endpoint
+            #   • AR03 duplicates            → high-priority API/version
+            #   • Generic recommendations    → medium-priority "rule-level"
+            ar_suggestions: list = []
+            ar_max_pts = int(arch_res.get("max_pts", 0) or 0)
+            ar_score   = int(arch_res.get("score", 0) or 0)
+            ar_gap     = max(0, ar_max_pts - ar_score)
+
+            # 1) AR01 EDA Migration Advisor — one suggestion per opportunity
+            for adv in (arch_res.get("migration_advice") or []):
+                ep = adv.get("endpoint") or {}
+                tgt = (
+                    f"{ep.get('method','')} {ep.get('path','')}".strip()
+                    or arch_res.get("rule_id", arch_key)
+                )
+                ar_suggestions.append({
+                    "target": tgt,
+                    "action": adv.get("suggestion") or
+                              "Migrer ce endpoint vers un pattern événementiel "
+                              "(SSE, AsyncAPI, WebSocket).",
+                    "priority": "high",
+                    "impact": (
+                        f"+{ar_gap} pts (AR01) — supprime un cycle de polling, "
+                        "réduit la bande passante et la charge serveur."
+                    ),
+                    "how": (
+                        f"Condition détectée: {adv.get('condition','')}\n"
+                        f"Indice: {adv.get('evidence','')}\n"
+                        f"Cible recommandée: {adv.get('target_pattern','')}"
+                    ).strip(),
+                    "source": "AR01_eda_advisor",
+                })
+
+            # 2) AR03 duplicates — one suggestion per duplicated pair / version
+            for dup in (arch_res.get("duplicates") or []):
+                if dup.get("kind") == "cross-target":
+                    tgt = f"{dup.get('left','?')}  ⇄  {dup.get('right','?')}"
+                    action = ("Mutualiser les deux APIs très similaires pour "
+                              "éviter la double infrastructure.")
+                else:
+                    tgt = (f"{dup.get('base_url','')} {dup.get('method','')} "
+                           f"{' ⇄ '.join(dup.get('duplicate_paths') or [])}").strip()
+                    action = ("Déprécier explicitement l'ancienne version pour "
+                              "supprimer le runtime redondant.")
+                ar_suggestions.append({
+                    "target": tgt,
+                    "action": action,
+                    "priority": "high",
+                    "impact": (f"+{ar_gap} pts (AR03) — supprime une "
+                               "infrastructure redondante (= empreinte ÷2)."),
+                    "how": json.dumps(
+                        {k: v for k, v in dup.items() if k != "kind"},
+                        ensure_ascii=False, indent=2,
+                    ),
+                    "source": "AR03_duplicates",
+                })
+
+            # 3) Generic recommendations — fall-back medium-priority guidance
+            for reco in (arch_res.get("recommendations") or []):
+                ar_suggestions.append({
+                    "target": arch_res.get("rule_id", arch_key),
+                    "action": reco,
+                    "priority": "medium",
+                    "impact": f"+{ar_gap} pts ({arch_res.get('rule_id', arch_key)}).",
+                    "how": "",
+                    "source": f"{arch_res.get('rule_id', arch_key)}_reco",
+                })
+
+            rule_mapping_full[arch_key] = {
+                "id": meta.get("id", arch_res.get("rule_id", arch_key)),
+                "label": meta.get("label", arch_key),
+                "description": meta.get("description", ""),
+                "max_pts": arch_res.get("max_pts", meta.get("max_pts", 0)),
+                "category": arch_res.get("category", meta.get("category", "architecture")),
+                "validated": bool(arch_res.get("matched")),
+                "score": int(arch_res.get("score", 0)),
+                "matched_count": ar_matched,
+                "candidate_count": ar_total,
+                "candidates": arch_res.get("candidates", []),
+                "evidence": arch_res.get("evidence", []),
+                "recommendations": arch_res.get("recommendations", []),
+                # Suggestions consumed by the dashboard's right-hand panel
+                "suggestions": ar_suggestions,
+                # AR01-only — visible by the dashboard if present
+                "migration_advice": arch_res.get("migration_advice", []),
+                # AR03/AR05 extras
+                "duplicates": arch_res.get("duplicates", []),
+                "detected_provider": arch_res.get("detected_provider"),
+            }
+            scores_full[arch_key] = int(arch_res.get("score", 0))
+            details_full[arch_key] = {
+                "note": " | ".join(arch_res.get("recommendations", []))[:300]
+            }
+
+        # Architecture/Infra rules apply globally → register them on every
+        # discovered endpoint's rule list so the dashboard "rules per
+        # endpoint" view (and CSV/JSON consumers) reflect that the rule
+        # is relevant to every resource, even though it is validated once.
+        if arch_results:
+            arch_keys = list(arch_results.keys())
+            for ep in (endpoints if isinstance(endpoints, list) else []):
+                ep_key = f"{(ep.get('method') or '').lower()}:{ep.get('path') or ''}"
+                if not ep_key.strip(":"):
+                    continue
+                lst = endpoint_rules_full.setdefault(ep_key, [])
+                for ak in arch_keys:
+                    if ak not in lst:
+                        lst.append(ak)
+
+        # Refresh totals & grade with the new 123-pts budget.
+        legacy_total = sum(v for k, v in scores_full.items() if k not in arch_results)
+        arch_total = sum(int(v) for k, v in scores_full.items() if k in arch_results)
+        legacy_max = sum(GREEN_RULES[k]["max_pts"] for k in scores_full
+                         if k in GREEN_RULES and k not in arch_results)
+        arch_max = sum(GREEN_RULES[k]["max_pts"] for k in arch_results if k in GREEN_RULES)
+
+        total_raw = legacy_total + arch_total
+        max_raw = legacy_max + arch_max
+        # Normalised score on 100 for backward compatibility with badge/CI gates
+        score_normalised = round(100 * total_raw / max_raw) if max_raw else 0
+        grade = ("A+" if score_normalised >= 90 else "A" if score_normalised >= 80
+                 else "B" if score_normalised >= 65 else "C" if score_normalised >= 50
+                 else "D" if score_normalised >= 30 else "E")
+
+        green_score["rule_resource_mapping"] = rule_mapping_full
+        green_score["breakdown"] = scores_full
+        green_score["details"] = details_full
+        green_score["endpoint_rules"] = endpoint_rules_full
+        green_score["total"] = total_raw
+        green_score["max"] = max_raw
+        green_score["grade"] = grade
+        green_score["score_normalised_100"] = score_normalised
+        green_score["legacy_total"] = legacy_total
+        green_score["legacy_max"] = legacy_max
+        green_score["architecture_total"] = arch_total
+        green_score["architecture_max"] = arch_max
+
+        log(f"  ARCHITECTURE: {arch_total}/{arch_max}  "
+            f"(AR01..AR05 → +23 pts budget)", "OK")
+        log(f"  GREEN SCORE (normalised /100): {score_normalised}  "
+            f"Grade: {grade}", "OK")
+    else:
+        log(f"  architecture_rules module unavailable: {_ARCH_RULES_IMPORT_ERROR}",
+            "WARN")
 
     # ── Step 4b: Display Rule ↔ Resource Mapping ──
     rule_mapping = green_score.get("rule_resource_mapping", {})

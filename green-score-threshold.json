@@ -1,4 +1,22 @@
 {
   "minScore": 0,
-  "note": "Seuil de Green Score minimum pour éviter les régressions en CI"
+  "note": "Seuil de Green Score minimum pour éviter les régressions en CI",
+
+  "architecture": {
+    "AR03_jaccard_threshold": 0.30,
+    "AR03_tags_overlap_threshold": 0.50,
+    "AR03_summary_cosine_threshold": 0.40,
+    "AR02_tls_handshake_max_ms": 50,
+    "AR02_anycast_asns": [13335, 54113, 16509, 20940, 15169, 8075, 32934, 22822]
+  },
+
+  "cloud_footprint_dashboards": {
+    "aws":        "https://console.aws.amazon.com/billing/home#/carbon",
+    "azure":      "https://www.microsoft.com/sustainability/emissions-impact-dashboard",
+    "gcp":        "https://console.cloud.google.com/carbon",
+    "ovh":        "https://www.ovh.com/manager/sustainability",
+    "cloudflare": "https://www.cloudflare.com/sustainability/",
+    "fastly":     "https://www.fastly.com/sustainability",
+    "akamai":     "https://www.akamai.com/why-akamai/sustainability"
+  }
 }

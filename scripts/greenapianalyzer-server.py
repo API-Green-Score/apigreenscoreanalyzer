@@ -743,6 +743,10 @@ class Handler(BaseHTTPRequestHandler):
         stack         = (payload.get("stack")     or "auto").strip().lower()
         source_dir    = (payload.get("sourceDir") or "").strip()
         build_and_run = bool(payload.get("buildAndRun"))
+        # Architecture rules (AR02 Phase 3 / AR05) — optional from UI
+        consumer_region          = (payload.get("consumerRegion") or "").strip()
+        enable_geoip             = bool(payload.get("enableGeoip"))
+        cloud_footprint_confirmed = bool(payload.get("cloudFootprintConfirmed"))
 
         if stack not in ("auto", "java", "dotnet"):
             return self._send_json(400, {"error": f"invalid stack: {stack!r} (expected auto|java|dotnet)"})
@@ -792,6 +796,13 @@ class Handler(BaseHTTPRequestHandler):
             cmd += ["--source-dir", source_dir]
         if build_and_run:
             cmd.append("--build-and-run")
+        # AR02 / AR05 forwarding
+        if consumer_region:
+            cmd += ["--consumer-region", consumer_region]
+        if enable_geoip:
+            cmd.append("--enable-geoip")
+        if cloud_footprint_confirmed:
+            cmd.append("--cloud-footprint-confirmed")
 
         REPORTS.mkdir(exist_ok=True)
         latest = REPORTS / "latest-report.json"

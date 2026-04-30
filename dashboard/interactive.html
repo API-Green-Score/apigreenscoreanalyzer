@@ -574,6 +574,27 @@ http://localhost:8081"></textarea>
       </div>
 
       <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
+        <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">🌍 Règles d'architecture (AR02 / AR05)</legend>
+        <div class="row">
+          <div>
+            <label for="loc-consumer-region">Région du consommateur (code ISO ou Azure)</label>
+            <input type="text" id="loc-consumer-region" placeholder="eu-west-1 / francecentral / FR">
+            <div class="hint">Utilisée par AR02 pour comparer la distance avec la région d'hébergement de l'API.</div>
+          </div>
+          <div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:24px">
+              <input type="checkbox" id="loc-enable-geoip" style="width:auto"> Activer la résolution <strong>GeoIP</strong>
+            </label>
+            <div class="hint">Tente de localiser l'API via DNS / GeoIP (peut nécessiter un accès réseau sortant).</div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+              <input type="checkbox" id="loc-cloud-footprint-confirmed" style="width:auto"> J'ai vérifié l'<strong>empreinte cloud</strong> (AR05)
+            </label>
+            <div class="hint">Confirme que le fournisseur cloud / la région sont validés (désactive le warning AR05).</div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
         <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">📦 Dépôt Git (optionnel — pour Creedengo)</legend>
         <label for="loc-git-repo">URL du dépôt</label>
         <input type="text" id="loc-git-repo" placeholder="https://github.com/owner/repo.git">
@@ -1052,11 +1073,60 @@ document.querySelectorAll(".step").forEach(s => {
 //   Mirrors the look & behavior of the full dashboard (index.html).
 //   Reused by both Remote and Local Green Score result tabs.
 // ════════════════════════════════════════════════════════════════
-const _SG_RULE_ICONS = {
-  DE11_pagination:"📄", DE08_fields:"🔍", DE01_compression:"🗜️",
-  DE02_DE03_cache:"💾", DE06_delta:"🔄", range_206:"✂️",
-  AR02_format_cbor:"📦", LO01_observability:"👁️", US07_rate_limit:"🚦",
+
+// ── Shared rule registry ────────────────────────────────────────
+// Single source of truth for the 14 Green API rules currently scored
+// by the backend (scripts/green-api-auto-discover.py → GREEN_RULES).
+//
+// Keys MUST match the keys emitted in `green_score.breakdown` /
+// `green_score.rule_resource_mapping` by the analyzer. If the backend
+// adds a new rule, append it here and both the Remote and Local
+// renderers will pick it up automatically.
+//
+// Note: the rule key `AR02_format_cbor` is kept for backward-compat
+// with historical reports, but its DISPLAY id was renamed `BIN01` in
+// GREEN_RULES so it doesn't collide with the new official AR02
+// ("API runtime close to consumer"). The label below reflects that.
+const RULE_REGISTRY = {
+  // Data efficiency
+  DE11_pagination:    { label: "DE11 · Pagination",          max: 15, icon: "📄", category: "data-efficiency" },
+  DE08_fields:        { label: "DE08 · Filtrage de champs",  max: 15, icon: "🔍", category: "data-efficiency" },
+  DE01_compression:   { label: "DE01 · Compression",         max: 15, icon: "🗜️", category: "data-efficiency" },
+  DE02_DE03_cache:    { label: "DE02/03 · Cache ETag/304",   max: 15, icon: "💾", category: "data-efficiency" },
+  DE06_delta:         { label: "DE06 · Delta / changes",     max: 10, icon: "🔄", category: "data-efficiency" },
+  range_206:          { label: "206 · Range / Partial",      max: 10, icon: "✂️", category: "data-efficiency" },
+  AR02_format_cbor:   { label: "BIN01 · Format binaire",     max: 10, icon: "📦", category: "data-efficiency" },
+  // Logs & observability
+  LO01_observability: { label: "LO01 · Observabilité",       max:  5, icon: "👁️", category: "logs-observability" },
+  // Usage
+  US07_rate_limit:    { label: "US07 · Rate limit",          max:  5, icon: "🚦", category: "usage" },
+  // Architecture (APIGreenScore official AR rules — +23 pts on top of legacy 100 pts)
+  AR01_event_driven:  { label: "AR01 · Event-driven",        max:  6, icon: "📡", category: "architecture" },
+  AR02_runtime_close: { label: "AR02 · Runtime proche",      max:  7, icon: "🌍", category: "architecture" },
+  AR03_unique_api:    { label: "AR03 · Une API par besoin",  max:  3, icon: "🎯", category: "architecture" },
+  // Infrastructure
+  AR04_scalable_infra:{ label: "AR04 · Infra scalable",      max:  5, icon: "📈", category: "infrastructure" },
+  AR05_cloud_footprint:{label: "AR05 · Empreinte cloud",     max:  2, icon: "☁️", category: "infrastructure" },
 };
+
+// Convenience views (kept as separate consts so the rest of the
+// renderers stays readable; recomputed once at load time).
+const RULE_LABELS = Object.fromEntries(
+  Object.entries(RULE_REGISTRY).map(([k, v]) => [k, v.label])
+);
+const RULE_MAX = Object.fromEntries(
+  Object.entries(RULE_REGISTRY).map(([k, v]) => [k, v.max])
+);
+const RULE_ICONS = Object.fromEntries(
+  Object.entries(RULE_REGISTRY).map(([k, v]) => [k, v.icon])
+);
+// Total budget (for sanity checks / progress bar fallback). The backend
+// is authoritative — if a project ships a custom green-score-threshold.json
+// the `gs.max` field overrides this value.
+const RULE_TOTAL_MAX = Object.values(RULE_REGISTRY).reduce((s, v) => s + v.max, 0);
+
+// Backward-compat alias for any code that still references the old name.
+const _SG_RULE_ICONS = RULE_ICONS;
 // Per-panel state (key = panelId, value = { rrm, ruleLabels, ruleMax, gs, filter })
 const _sgPanels = {};
 
@@ -1102,9 +1172,17 @@ function _sgRender(panelId){
     for (const s of sgs) all.push({...s, ruleKey: k});
   }
 
+  // Total possible — sum of *every* rule's max_pts in the report (not just
+  // the ones with suggestions, which excludes already-validated rules and
+  // would shrink the denominator). This must match the hero score and the
+  // index.html / index.save.html dashboards.
+  const allRulesMaxSum = Object.values(rrm || {})
+    .reduce((s, r) => s + ((r && r.max_pts) || 0), 0);
+
   // Empty state
   if (all.length === 0) {
-    const total = gs.total || 0, max = gs.max || 100;
+    const total = gs.total || 0;
+    const max = allRulesMaxSum > 0 ? allRulesMaxSum : (gs.max || 100);
     const pct = max > 0 ? Math.round(total/max*100) : 0;
     const isMax = total >= max;
     return `<div class="sg-summary" style="justify-content:center;text-align:center;padding:24px 16px">
@@ -1122,11 +1200,11 @@ function _sgRender(panelId){
     </div>`;
   }
 
-  // Summary bar
-  const total = gs.total || 0, max = gs.max || 100;
-  let gain = 0;
-  for (const r of rules) gain += Math.max(0, r.max_pts - r.score);
-  const potential = Math.min(total + gain, max);
+  // Summary bar — scaled on the full barème, "potentiel = total possible − actuel"
+  const total = gs.total || 0;
+  const max = allRulesMaxSum > 0 ? allRulesMaxSum : (gs.max || 100);
+  const gain = Math.max(0, max - total);
+  const potential = total + gain;          // == max by construction
   const curPct = max > 0 ? (total/max*100) : 0;
   const potPct = max > 0 ? (potential/max*100) : 0;
 
@@ -1281,21 +1359,8 @@ function renderResults(envelope, cfg, log){
   const pct = max > 0 ? Math.round((+total / max) * 100) : 0;
   const color = pct >= 80 ? "#22c55e" : pct >= 60 ? "#86efac" : pct >= 40 ? "#facc15" : pct >= 20 ? "#f97316" : "#ef4444";
 
-  const ruleLabels = {
-    DE11_pagination:    "DE11 · Pagination",
-    DE08_fields:        "DE08 · Filtrage de champs",
-    DE01_compression:   "DE01 · Compression",
-    DE02_DE03_cache:    "DE02/03 · Cache",
-    DE06_delta:         "DE06 · Delta / changes",
-    range_206:          "Range 206",
-    LO01_observability: "LO01 · Observabilité",
-    US07_rate_limit:    "US07 · Rate limit",
-    AR02_format_cbor:   "AR02 · Format CBOR",
-  };
-  const ruleMax = {
-    DE11_pagination:15, DE08_fields:15, DE01_compression:15, DE02_DE03_cache:15,
-    DE06_delta:10, range_206:10, LO01_observability:5, US07_rate_limit:5, AR02_format_cbor:10,
-  };
+  const ruleLabels = RULE_LABELS;
+  const ruleMax    = RULE_MAX;
 
   const breakdownHtml = Object.keys(ruleLabels).map(k => {
     const score = breakdown[k] ?? 0;
@@ -1571,6 +1636,9 @@ $("loc-btn-analyze").addEventListener("click", async () => {
   const stack       = ($("loc-stack")?.value || "auto").trim();
   const sourceDir   = ($("loc-source-dir")?.value || "").trim();
   const buildAndRun = $("loc-build-and-run")?.checked || false;
+  const consumerRegion          = ($("loc-consumer-region")?.value || "").trim();
+  const enableGeoip             = $("loc-enable-geoip")?.checked || false;
+  const cloudFootprintConfirmed = $("loc-cloud-footprint-confirmed")?.checked || false;
 
   if (targets.length === 0 && !gitRepo && !buildAndRun) {
     return setStatus("loc-status","error","Veuillez fournir au moins une URL d'API, un dépôt Git, <em>ou</em> activer Build &amp; run.");
@@ -1596,6 +1664,7 @@ $("loc-btn-analyze").addEventListener("click", async () => {
       creedengo, debug, gitKeep,
       gitRepo, gitBranch, gitSubdir,
       stack, sourceDir, buildAndRun,
+      consumerRegion, enableGeoip, cloudFootprintConfirmed,
     }, { timeoutMs: 10 * 60 * 1000 });   // 10 min — match server timeout
     if (!ok || !data.ok) {
       const detail = data.log ? `<details class="log"><summary>📜 Logs start.sh</summary><pre>${escHtml(data.log)}</pre></details>` : "";
@@ -1652,15 +1721,8 @@ function renderLocalResults(report, creedengo, cfg, log, opts){
   if (creedengo && creedengo.report && creedengo.report.creedengo_score) {
     creedengo = creedengo.report;
   }
-  const ruleLabels = {
-    DE11_pagination:"DE11 · Pagination", DE08_fields:"DE08 · Filtrage de champs",
-    DE01_compression:"DE01 · Compression", DE02_DE03_cache:"DE02/03 · Cache",
-    DE06_delta:"DE06 · Delta / changes", range_206:"Range 206",
-    LO01_observability:"LO01 · Observabilité", US07_rate_limit:"US07 · Rate limit",
-    AR02_format_cbor:"AR02 · Format CBOR",
-  };
-  const ruleMax = {DE11_pagination:15, DE08_fields:15, DE01_compression:15, DE02_DE03_cache:15,
-    DE06_delta:10, range_206:10, LO01_observability:5, US07_rate_limit:5, AR02_format_cbor:10};
+  const ruleLabels = RULE_LABELS;
+  const ruleMax    = RULE_MAX;
 
   // ── Green Score card ─────────────────────────────────────────
   let gsCardHtml = "";

@@ -187,6 +187,23 @@ if [ -n "$BEARER_TOKEN" ]; then
   CMD+=(--bearer "$BEARER_TOKEN")
 fi
 
+# AR02 / AR04 / AR05 forwarding (driven by start.sh exports or CI env).
+# SOURCE_DIR  → Phase 2 (AR04 IaC + AR01 broker-deps)
+# CONSUMER_REGION + ENABLE_GEOIP → AR02 Phase 3 (anycast / distance)
+# CLOUD_FOOTPRINT_CONFIRMED → AR05 dashboard validation
+if [ -n "${SOURCE_DIR:-}" ]; then
+  CMD+=(--source-dir "$SOURCE_DIR")
+fi
+if [ -n "${CONSUMER_REGION:-}" ]; then
+  CMD+=(--consumer-region "$CONSUMER_REGION")
+fi
+if [ "${ENABLE_GEOIP:-false}" = "true" ]; then
+  CMD+=(--enable-geoip)
+fi
+if [ "${CLOUD_FOOTPRINT_CONFIRMED:-false}" = "true" ]; then
+  CMD+=(--cloud-footprint-confirmed)
+fi
+
 if [ "$SKIP_SPECTRAL" = true ]; then
   CMD+=(--skip-spectral)
 fi
