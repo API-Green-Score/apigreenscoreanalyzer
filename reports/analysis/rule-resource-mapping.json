@@ -1,12 +1,12 @@
 {
-  "appname": "optcreedjavaarchinfr",
-  "timestamp": "2026-04-29T21:01:46Z",
+  "appname": "optcreedgreen",
+  "timestamp": "2026-05-01T09:53:46Z",
   "service_base_url": "http://localhost:8080",
   "service_base_urls": [
     "http://localhost:8080"
   ],
   "green_score_summary": {
-    "total": 39,
+    "total": 54,
     "max": 123,
     "grade": "D"
   },
@@ -286,137 +286,129 @@
         {
           "method": "GET",
           "path": "/books/{id}",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "PUT",
           "path": "/books/{id}",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}/summary",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "POST",
           "path": "/reactive/books/{id}/summary",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/{id}/summary",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "POST",
           "path": "/books/{id}/summary",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/select",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/changes",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/cbor",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/cacheable",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/select",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/noCache/{id}",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/changes",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/cbor",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/batch",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/async",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/async/{id}",
-          "matched": false,
-          "reason": "No gzip compression detected"
+          "matched": true,
+          "reason": "OpenAPI servers.x-server-compression.enabled=true"
         }
       ],
-      "validated": false,
-      "score": 0,
-      "matched_count": 0,
+      "validated": true,
+      "score": 15,
+      "matched_count": 20,
       "candidate_count": 20,
-      "suggestions": [
-        {
-          "target": "ALL endpoints (server-level)",
-          "action": "Enable gzip compression on the server",
-          "priority": "high",
-          "impact": "+0.8 pts/endpoint (total gap: 15 pts) \u2014 typically 60-80% payload reduction",
-          "how": "Option 1 \u2014 Spring Boot application.yml:\n  server:\n    compression:\n      enabled: true\n      min-response-size: 1024\n      mime-types: application/json,application/xml,text/html,text/plain\n\nOption 2 \u2014 Nginx (if reverse proxy):\n  gzip on;\n  gzip_types application/json application/xml text/plain;\n  gzip_min_length 1024;\n  gzip_comp_level 6;\n\nBoth options apply to ALL endpoints automatically."
-        }
-      ]
+      "suggestions": []
     },
     "DE02_DE03_cache": {
       "id": "DE02/DE03",
@@ -428,37 +420,37 @@
           "method": "GET",
           "path": "/books/{id}",
           "matched": true,
-          "reason": "OpenAPI spec declares 304 Not Modified response"
+          "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}/summary",
           "matched": true,
-          "reason": "OpenAPI spec declares 304 Not Modified response"
+          "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/{id}/summary",
           "matched": true,
-          "reason": "OpenAPI spec declares 304 Not Modified response"
+          "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}",
           "matched": true,
-          "reason": "OpenAPI spec declares 304 Not Modified response"
+          "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/noCache/{id}",
           "matched": true,
-          "reason": "OpenAPI spec declares 304 Not Modified response"
+          "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/async/{id}",
           "matched": true,
-          "reason": "OpenAPI spec declares 304 Not Modified response"
+          "reason": "OpenAPI servers.x-server-etag-support.enabled=true"
         }
       ],
       "validated": true,
@@ -614,103 +606,103 @@
           "method": "GET",
           "path": "/books/{id}",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}/summary",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/{id}/summary",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/{id}",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/select",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/changes",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/cbor",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/reactive/books/cacheable",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/select",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/noCache/{id}",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/changes",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/cbor",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/batch",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/async",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         },
         {
           "method": "GET",
           "path": "/books/async/{id}",
           "matched": true,
-          "reason": "OpenAPI operation GET /reactive/books/{id}/summary declares 206 response"
+          "reason": "OpenAPI servers.x-server-range-support.enabled=true"
         }
       ],
       "validated": true,

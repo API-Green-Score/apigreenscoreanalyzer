@@ -1,14 +1,14 @@
 # 🌿 Green API Score Dashboard
 
-> 📦 **Application : optcreedjavaarchinfr**
+> 📦 **Application : optcreedgreen**
 >
 > **Devoxx France 2026 — Green Architecture : moins de gras, plus d'impact !**
 
-📅 *Dernière analyse : 2026-04-29T21:01:46Z*
+📅 *Dernière analyse : 2026-05-01T09:53:46Z*
 
 ---
 
-## 🔴 Green Score : **39/100** — Grade **D** 📉
+## 🟡 Green Score : **54/100** — Grade **D** 📉
 
 ### 📋 Détail par règle
 
@@ -16,10 +16,10 @@
 |:------:|-------|------:|----:|:---------:|--------|
 | ⚠️ | DE11 Pagination | 5 | 15 | 4/11 | Pagination on 4/11 collection endpoint(s) |
 | ⚠️ | DE08 Filtrage champs | 2 | 15 | 2/17 | Field filtering on 2 endpoint(s) |
-| ❌ | DE01 Compression | 0 | 15 | 0/20 | Gzip not detected |
-| ✅ | DE02/03 Cache ETag | 15 | 15 | 6/6 | ETag + 304 supported (OpenAPI spec declares 304 Not Modified response) |
+| ✅ | DE01 Compression | 15 | 15 | 20/20 | Gzip compression active (OpenAPI servers.x-server-compression.enabled=true) |
+| ✅ | DE02/03 Cache ETag | 15 | 15 | 6/6 | ETag + 304 supported (OpenAPI servers.x-server-etag-support.enabled=true) |
 | ⚠️ | DE06 Delta | 1 | 10 | 2/17 | Delta endpoint(s) found: 2 |
-| ✅ | 206 Range | 10 | 10 | 17/17 | Range/206 supported (OpenAPI operation GET /reactive/books/{id}/summary declares 206 response) |
+| ✅ | 206 Range | 10 | 10 | 17/17 | Range/206 supported (OpenAPI servers.x-server-range-support.enabled=true) |
 | ❌ | LO01 Observabilité | 0 | 5 | 0/5 | No health endpoint |
 | ❌ | US07 Rate Limit | 0 | 5 | 0/20 | Assumed present (API running, no explicit headers) |
 | ⚠️ | AR02 CBOR | 1 | 10 | 2/20 | Binary format on 2 endpoint(s) |
@@ -28,17 +28,17 @@
 
 | Méthode | Endpoint | Taille | Temps | HTTP |
 |:-------:|----------|-------:|------:|-----:|
-| GET | `/books/{id}` | 207 B | 0.015s | 200 |
-| PUT | `/books/{id}` | 209 B | 0.023s | 200 |
-| GET | `/reactive/books/{id}/summary` | 0 B | 0.021s | 200 |
-| POST | `/reactive/books/{id}/summary` | 0 B | 0.016s | 200 |
-| GET | `/books/{id}/summary` | 36 B | 0.004s | 200 |
-| POST | `/books/{id}/summary` | 207 B | 0.003s | 200 |
-| GET | `/reactive/books` | 0 B | 0.010s | 200 |
-| GET | `/reactive/books/{id}` | 0 B | 0.005s | 200 |
-| GET | `/reactive/books/select` | 0 B | 0.007s | 200 |
-| GET | `/reactive/books/changes` | 0 B | 0.015s | 200 |
-| GET | `/reactive/books/cbor` | 13 B | 0.006s | 429 |
+| GET | `/books/{id}` | 184 B | 0.015s | 200 |
+| PUT | `/books/{id}` | 209 B | 0.007s | 200 |
+| GET | `/reactive/books/{id}/summary` | 0 B | 0.029s | 200 |
+| POST | `/reactive/books/{id}/summary` | 0 B | 0.020s | 200 |
+| GET | `/books/{id}/summary` | 36 B | 0.002s | 200 |
+| POST | `/books/{id}/summary` | 207 B | 0.002s | 200 |
+| GET | `/reactive/books` | 0 B | 0.012s | 200 |
+| GET | `/reactive/books/{id}` | 0 B | 0.004s | 200 |
+| GET | `/reactive/books/select` | 0 B | 0.005s | 200 |
+| GET | `/reactive/books/changes` | 0 B | 0.011s | 200 |
+| GET | `/reactive/books/cbor` | 20 B | 0.001s | 429 |
 | GET | `/reactive/books/cacheable` | 20 B | 0.001s | 429 |
 | GET | `/books` | 20 B | 0.001s | 429 |
 | GET | `/books/select` | 20 B | 0.001s | 429 |
@@ -52,45 +52,17 @@
 ### 🔑 Métriques clés
 
 - **Endpoints mesurés** : 20
-- **Transfert total** : 852 B
-- **Transfert moyen / endpoint** : 42 B
-- **Temps moyen** : 0.007s
-- **⚡ Énergie totale / appel** : 0.0010 Wh
-- **🌍 CO₂ / appel** : 0.00005 g (France — 53 gCO₂/kWh)
+- **Transfert total** : 836 B
+- **Transfert moyen / endpoint** : 41 B
+- **Temps moyen** : 0.006s
+- **⚡ Énergie totale / appel** : 0.0008 Wh
+- **🌍 CO₂ / appel** : 0.00004 g (France — 53 gCO₂/kWh)
 
 ### 💡 Suggestions d'amélioration
 
-> **Score actuel : 39/123** — Score potentiel avec toutes les suggestions : **123/123** (+84 pts possibles)
+> **Score actuel : 54/123** — Score potentiel avec toutes les suggestions : **123/123** (+69 pts possibles)
 
-🔴 Haute priorité : 15 | 🟡 Moyenne : 14 | ⚪ Basse : 2 | **Total : 31 suggestions**
-
-#### 🗜️ DE01 — Compression Gzip (❌ Non validé — +15 pts possibles)
-
-> Le serveur doit supporter Accept-Encoding: gzip. (0/20 endpoints validés)
-
-| Priorité | Cible | Action | Impact |
-|:--------:|-------|--------|--------|
-| 🔴 Haute | `ALL endpoints (server-level)` | Enable gzip compression on the server | +0.8 pts/endpoint (total gap: 15 pts) — typically 60-80% payload reduction |
-
-<details><summary>🔧 Comment implémenter</summary>
-
-```
-Option 1 — Spring Boot application.yml:
-  server:
-    compression:
-      enabled: true
-      min-response-size: 1024
-      mime-types: application/json,application/xml,text/html,text/plain
-
-Option 2 — Nginx (if reverse proxy):
-  gzip on;
-  gzip_types application/json application/xml text/plain;
-  gzip_min_length 1024;
-  gzip_comp_level 6;
-
-Both options apply to ALL endpoints automatically.
-```
-</details>
+🔴 Haute priorité : 14 | 🟡 Moyenne : 14 | ⚪ Basse : 2 | **Total : 30 suggestions**
 
 #### 📌 AR02_runtime_close (❌ Non validé — +7 pts possibles)
 
@@ -317,29 +289,29 @@ Alternative (Protobuf):
 | 🔴 **Bloquant** | 0 |
 | 🟠 **Critique** | 0 |
 | 🟡 **Majeur** | 0 |
-| ⚪ **Mineur** | 142 |
+| ⚪ **Mineur** | 145 |
 | 🔵 **Info** | 0 |
-| **Total** | **142** |
+| **Total** | **145** |
 
-- **Issues écodesign** : 142
+- **Issues écodesign** : 145
 - **Règles écodesign violées** : 2 / 17 analysées
 - **Formule du score** : (1 − 2/17) × 100 = **88/100**
-- **Effort de remédiation** : 12h20min
+- **Effort de remédiation** : 12h35min
 
-- **Lignes de code** : 942
+- **Lignes de code** : 1,017
 
 ### 🏷️ Catégories éco-design
 
 | Catégorie | Issues | Règles |
 |-----------|-------:|-------:|
-| 🌱 Éco-conception générale | 140 | 1 |
+| 🌱 Éco-conception générale | 143 | 1 |
 | 💾 Utilisation mémoire | 2 | 1 |
 
 ### 📋 Règles Creedengo violées
 
 | Sévérité | Règle | Issues | Catégorie |
 |:--------:|-------|-------:|-----------|
-| ⚪ MINOR | **GCI82** — Variable can be made constant | 140 | general |
+| ⚪ MINOR | **GCI82** — Variable can be made constant | 143 | general |
 | ⚪ MINOR | **GCI76** — Avoid usage of static collections. | 2 | memory |
 
 ### 📁 Fichiers les plus impactés (écodesign)
@@ -356,25 +328,25 @@ Alternative (Protobuf):
 | `repo/BookRepository.java` | 5 |
 | `web/ApiError.java` | 5 |
 | `web/RateLimitFilter.java` | 5 |
-| *… et 5 autres* | |
+| *… et 6 autres* | |
 
 ---
 
-### 🔧 Issues SonarQube générales (hors écodesign) — 15 issues
+### 🔧 Issues SonarQube générales (hors écodesign) — 16 issues
 
 > Ces issues proviennent des règles SonarQube standard (qualité de code, bugs, sécurité). Elles ne sont **pas** comptabilisées dans le score Creedengo.
 
 | Sévérité | Nombre |
 |:--------:|-------:|
-| 🟠 Critique | 2 |
+| 🟠 Critique | 3 |
 | 🟡 Majeur | 7 |
 | ⚪ Mineur | 5 |
 | 🔵 Info | 1 |
-| **Total** | **15** |
+| **Total** | **16** |
 
 | Sévérité | Règle | Issues |
 |:--------:|-------|-------:|
-| 🟠 CRITICAL | **S1192** — S1192 | 2 |
+| 🟠 CRITICAL | **S1192** — S1192 | 3 |
 | 🟡 MAJOR | **S6126** — S6126 | 5 |
 | 🟡 MAJOR | **S108** — S108 | 1 |
 | 🟡 MAJOR | **S107** — S107 | 1 |
@@ -384,9 +356,9 @@ Alternative (Protobuf):
 | ⚪ MINOR | **S1319** — S1319 | 1 |
 | 🔵 INFO | **S1135** — S1135 | 1 |
 
-- **Effort de remédiation SonarQube** : 1h12min
+- **Effort de remédiation SonarQube** : 1h26min
 
-📅 *2026-04-29T21:04:19Z*
+📅 *2026-05-01T10:02:38Z*
 
 ---
 
