@@ -9,6 +9,12 @@ Configuration (environment variables):
   SOBRIIT_BASE_URL   Base URL of the SobriIT API (e.g. https://sobriit.example.com)
   SOBRIIT_API_KEY    API key for authentication (sent as X-API-Key header)
 
+  Application metadata (optional, used when creating a new application):
+    SOBRIIT_APP_CODE        Application code (defaults to appname)
+    SOBRIIT_APP_DSI         DSI name
+    SOBRIIT_APP_TRIBE       Tribe name
+    SOBRIIT_APP_TRIBE_ID    Tribe UUID
+
 These can also be passed as function parameters (override env vars).
 
 Usage from Python:
@@ -21,7 +27,11 @@ Usage from CLI (for shell script integration):
         --green-report reports/latest-report.json \\
         --creedengo-report reports/creedengo-report.json \\
         [--base-url https://sobriit.example.com] \\
-        [--api-key xxx]
+        [--api-key xxx] \\
+        [--app-code CODE] \\
+        [--app-dsi DSI] \\
+        [--app-tribe TRIBE] \\
+        [--app-tribe-id UUID]
     Exit code 0 = success, 1 = failure (non-blocking by design).
 """
 from __future__ import annotations
@@ -87,6 +97,10 @@ def send_to_sobriit(
     creedengo_report: dict | None = None,
     base_url: str | None = None,
     api_key: str | None = None,
+    app_code: str | None = None,
+    app_dsi: str | None = None,
+    app_tribe: str | None = None,
+    app_tribe_id: str | None = None,
 ) -> dict:
     """
     Send analysis results to SobriIT.
@@ -102,6 +116,10 @@ def send_to_sobriit(
     """
     base_url = (base_url or os.environ.get("SOBRIIT_BASE_URL", "")).rstrip("/")
     api_key = api_key or os.environ.get("SOBRIIT_API_KEY", "")
+    app_code = app_code or os.environ.get("SOBRIIT_APP_CODE", "") or appname
+    app_dsi = app_dsi or os.environ.get("SOBRIIT_APP_DSI", "") or None
+    app_tribe = app_tribe or os.environ.get("SOBRIIT_APP_TRIBE", "") or None
+    app_tribe_id = app_tribe_id or os.environ.get("SOBRIIT_APP_TRIBE_ID", "") or None
 
     if not base_url:
         return {"ok": False, "error": "SOBRIIT_BASE_URL not configured"}
@@ -132,28 +150,63 @@ def send_to_sobriit(
 
     # ── Step 1: Lookup or create application ──
     app_id = None
+    quoted = urllib.request.quote(appname, safe='')
 
-    # Try lookup by name
-    status, resp = _api_call(
-        "GET",
-        f"{base_url}/api/v1/applications/by-name/{urllib.request.quote(appname, safe='')}",
-        api_key,
-    )
-    if status == 200 and isinstance(resp, dict) and resp.get("id"):
-        app_id = resp["id"]
-    elif status == 404:
-        # Create the application
+    # Try lookup by name first, then by code via the search endpoint
+    for search_field in ("name", "code"):
+        status, resp = _api_call(
+            "GET",
+            f"{base_url}/api/v1/applications/search?{search_field}={quoted}",
+            api_key,
+        )
+        if status == 200 and isinstance(resp, dict):
+            items = resp.get("data") or []
+            # Exact match (search may return partial matches)
+            for item in items:
+                if isinstance(item, dict) and item.get("id"):
+                    val = (item.get(search_field) or "").strip()
+                    if val.lower() == appname.lower():
+                        app_id = item["id"]
+                        break
+            if app_id:
+                break
+
+    # Also try the direct by-name endpoint as fallback
+    if not app_id:
+        status, resp = _api_call(
+            "GET",
+            f"{base_url}/api/v1/applications/by-name/{quoted}",
+            api_key,
+        )
+        if status == 200 and isinstance(resp, dict) and resp.get("id"):
+            app_id = resp["id"]
+
+    # If still not found, create the application with all available fields
+    if not app_id:
         app_payload = {
             "name": appname,
-            "code": appname,
+            "code": app_code,
+            "dsi": app_dsi,
+            "tribe": app_tribe,
+            "tribeId": app_tribe_id,
+            "globalScore": score_normalised or 0.0,
+            "performance": 0.0,
+            "accessibility": 0.0,
+            "bestPractices": 0.0,
+            "ecoindex": 0.0,
+            "bestPracticesCnumr": round(cs.get("total", 0) / cs.get("max", 100) * 100, 2) if cs.get("max") else 0.0,
+            "accessibilityAxeCore": 0.0,
+            "greenApiScore": score_normalised or 0.0,
+            "greenBackendScore": 0.0,
         }
+        # Remove None values
+        app_payload = {k: v for k, v in app_payload.items() if v is not None}
+
         status, resp = _api_call("POST", f"{base_url}/api/v1/applications", api_key, body=app_payload)
         if status in (200, 201) and isinstance(resp, dict) and resp.get("id"):
             app_id = resp["id"]
         else:
             return {"ok": False, "error": f"failed to create application (HTTP {status}): {resp}"}
-    else:
-        return {"ok": False, "error": f"failed to lookup application (HTTP {status}): {resp}"}
 
     # ── Step 2: Create build ──
     build_payload = {
@@ -166,6 +219,8 @@ def send_to_sobriit(
         "ecoindex": 0.0,
         "bestPracticesCnumr": round(cs.get("total", 0) / cs.get("max", 100) * 100, 2) if cs.get("max") else 0.0,
         "accessibilityAxeCore": 0.0,
+        "greenApiScore": score_normalised or 0.0,
+        "greenBackendScore": 0.0,
     }
     status, resp = _api_call("POST", f"{base_url}/api/v1/builds", api_key, body=build_payload)
     if status not in (200, 201) or not isinstance(resp, dict) or not resp.get("id"):
@@ -208,6 +263,7 @@ def send_to_sobriit(
         "creedengoCategoriesJson": _json_str(creedengo_report.get("categories")) if creedengo_report else None,
         "creedengoTopFilesJson": _json_str(creedengo_report.get("top_files")) if creedengo_report else None,
         "creedengoIssuesJson": _json_str(creedengo_report.get("issues")) if creedengo_report else None,
+        "sonarIssuesJson": _json_str(creedengo_report.get("sonar_issues")) if creedengo_report else None,
         "creedengoDetectionJson": _json_str(creedengo_report.get("detection")) if creedengo_report else None,
     }
 
@@ -243,6 +299,10 @@ def main():
     p.add_argument("--creedengo-report", help="Path to creedengo-report.json")
     p.add_argument("--base-url", default=None, help="SobriIT base URL (or SOBRIIT_BASE_URL env)")
     p.add_argument("--api-key", default=None, help="SobriIT API key (or SOBRIIT_API_KEY env)")
+    p.add_argument("--app-code", default=None, help="Application code (or SOBRIIT_APP_CODE env, defaults to appname)")
+    p.add_argument("--app-dsi", default=None, help="DSI name (or SOBRIIT_APP_DSI env)")
+    p.add_argument("--app-tribe", default=None, help="Tribe name (or SOBRIIT_APP_TRIBE env)")
+    p.add_argument("--app-tribe-id", default=None, help="Tribe UUID (or SOBRIIT_APP_TRIBE_ID env)")
     args = p.parse_args()
 
     green_report = None
@@ -273,6 +333,10 @@ def main():
         creedengo_report=creedengo_report,
         base_url=args.base_url,
         api_key=args.api_key,
+        app_code=args.app_code,
+        app_dsi=args.app_dsi,
+        app_tribe=args.app_tribe,
+        app_tribe_id=args.app_tribe_id,
     )
 
     print(json.dumps(result, indent=2, ensure_ascii=False))
