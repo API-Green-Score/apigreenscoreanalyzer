@@ -47,6 +47,7 @@ OUTPUT_DIR="$ROOT/reports"
 DEBUG=""
 SKIP_WAIT=false
 SKIP_DASHBOARD=false
+SEND_TO_SOBRIIT=false
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -59,6 +60,7 @@ while [ $# -gt 0 ]; do
     --output-dir)     OUTPUT_DIR="${2:-}"; shift 2 ;;
     --skip-wait)      SKIP_WAIT=true;      shift ;;
     --skip-dashboard) SKIP_DASHBOARD=true; shift ;;
+    --send-to-sobriit) SEND_TO_SOBRIIT=true; shift ;;
     --debug)          DEBUG="--debug";     shift ;;
     -h|--help)        sed -n '1,40p' "$0"; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
@@ -223,4 +225,22 @@ fi
 
 echo ""
 echo "✅ Report ready: $LATEST"
+
+###############################################################################
+# 4) SobriIT integration — send results if --send-to-sobriit is set
+###############################################################################
+if [ "$SEND_TO_SOBRIIT" = true ]; then
+  echo ""
+  echo "━━━ 📤 Sending results to SobriIT ━━━"
+  SOBRIIT_CMD=(python3 "$ROOT/scripts/sobriit_sender.py"
+               --appname "$APPNAME")
+  [ -f "$LATEST" ] && SOBRIIT_CMD+=(--green-report "$LATEST")
+  CREEDENGO_REPORT="$ROOT/reports/creedengo-report.json"
+  [ -f "$CREEDENGO_REPORT" ] && SOBRIIT_CMD+=(--creedengo-report "$CREEDENGO_REPORT")
+  if "${SOBRIIT_CMD[@]}"; then
+    echo "✅ Results sent to SobriIT"
+  else
+    echo "⚠️  Failed to send results to SobriIT (non-blocking)"
+  fi
+fi
 

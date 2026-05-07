@@ -921,6 +921,20 @@ class Handler(BaseHTTPRequestHandler):
                 "log": log[-12000:],
             })
 
+        # ── SobriIT integration (conditional) ──
+        sobriit_result = None
+        if payload.get("sendToSobriit"):
+            try:
+                sobriit_result = _sobriit_send(
+                    appname=appname,
+                    green_report=report,
+                    creedengo_report=creedengo_report,
+                    base_url=payload.get("sobriitBaseUrl"),
+                    api_key=payload.get("sobriitApiKey"),
+                )
+            except Exception as e:
+                sobriit_result = {"ok": False, "error": str(e)}
+
         return self._send_json(200, {
             "ok": True,
             "report": report,
@@ -930,6 +944,7 @@ class Handler(BaseHTTPRequestHandler):
             "creedengo_requested": creedengo_requested,
             "exit_code": proc.returncode,
             "log_tail": log[-8000:],
+            "sobriit": sobriit_result,
             "config": {
                 "targets": targets,
                 "appname": appname,
@@ -978,4 +993,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

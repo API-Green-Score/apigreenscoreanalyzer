@@ -1196,12 +1196,33 @@ else
 fi
 
 ###############################################################################
+# Report paths (used by SobriIT + Dashboard)
+###############################################################################
+LATEST_REPORT="$ROOT/reports/latest-report.json"
+CREEDENGO_REPORT="$ROOT/reports/creedengo-report.json"
+
+###############################################################################
+# SobriIT integration — send results if --send-to-sobriit is set
+###############################################################################
+if [ "$SEND_TO_SOBRIIT" = true ]; then
+  echo ""
+  echo "━━━ 📤 Sending results to SobriIT ━━━"
+  SOBRIIT_CMD=(python3 "$ROOT/scripts/sobriit_sender.py"
+               --appname "$APPNAME")
+  [ -f "$LATEST_REPORT" ]   && SOBRIIT_CMD+=(--green-report "$LATEST_REPORT")
+  [ -f "$CREEDENGO_REPORT" ] && SOBRIIT_CMD+=(--creedengo-report "$CREEDENGO_REPORT")
+  if "${SOBRIIT_CMD[@]}"; then
+    echo "✅ Results sent to SobriIT"
+  else
+    echo "⚠️  Failed to send results to SobriIT (non-blocking)"
+  fi
+fi
+
+###############################################################################
 # Dashboard generation — AFTER all analyses (green-score + creedengo)
 ###############################################################################
 echo ""
 echo "━━━ 📊 Generating final Dashboard ━━━"
-LATEST_REPORT="$ROOT/reports/latest-report.json"
-CREEDENGO_REPORT="$ROOT/reports/creedengo-report.json"
 
 if [ -f "$ROOT/scripts/generate-dashboard.sh" ] && [ -f "$LATEST_REPORT" ]; then
   DASHBOARD_ARGS=("$LATEST_REPORT" "$ROOT/dashboard/index.save.html" "$ROOT/dashboard/index.html")

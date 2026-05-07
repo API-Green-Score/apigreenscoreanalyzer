@@ -421,6 +421,26 @@ https://api.example.com"></textarea>
       </div>
     </div>
 
+    <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
+      <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">📤 Envoi vers SobriIT (optionnel)</legend>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="send-to-sobriit" style="width:auto"> Envoyer les résultats à <strong>SobriIT</strong>
+      </label>
+      <div class="hint">Si activé, le Green Score sera publié sur la plateforme SobriIT après l'analyse.</div>
+      <div class="row" id="sobriit-fields" style="margin-top:8px;display:none">
+        <div>
+          <label for="sobriit-base-url">URL de l'API SobriIT</label>
+          <input type="text" id="sobriit-base-url" placeholder="https://sobriit.example.com">
+          <div class="hint">Ou définir <code>SOBRIIT_BASE_URL</code> côté serveur.</div>
+        </div>
+        <div>
+          <label for="sobriit-api-key">Clé API SobriIT</label>
+          <input type="password" id="sobriit-api-key" placeholder="votre-clé-api" autocomplete="off">
+          <div class="hint">Ou définir <code>SOBRIIT_API_KEY</code> côté serveur.</div>
+        </div>
+      </div>
+    </fieldset>
+
     <div class="actions">
       <button class="btn primary" id="btn-discover">🔍 Démarrer l'analyse</button>
       <button class="btn ghost" id="btn-load-sample" type="button">↺ Charger un exemple</button>
@@ -606,6 +626,26 @@ http://localhost:8081"></textarea>
           <div>
             <label for="loc-git-subdir">Sous-dossier à analyser</label>
             <input type="text" id="loc-git-subdir" placeholder="services/api">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset style="margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:12px 16px">
+        <legend style="padding:0 6px;color:var(--txt-2);font-size:.82rem;font-weight:600">📤 Envoi vers SobriIT (optionnel)</legend>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="loc-send-to-sobriit" style="width:auto"> Envoyer les résultats à <strong>SobriIT</strong>
+        </label>
+        <div class="hint">Si activé, Green Score + Creedengo seront publiés sur SobriIT après l'analyse.</div>
+        <div class="row" id="loc-sobriit-fields" style="margin-top:8px;display:none">
+          <div>
+            <label for="loc-sobriit-base-url">URL de l'API SobriIT</label>
+            <input type="text" id="loc-sobriit-base-url" placeholder="https://sobriit.example.com">
+            <div class="hint">Ou définir <code>SOBRIIT_BASE_URL</code> côté serveur.</div>
+          </div>
+          <div>
+            <label for="loc-sobriit-api-key">Clé API SobriIT</label>
+            <input type="password" id="loc-sobriit-api-key" placeholder="votre-clé-api" autocomplete="off">
+            <div class="hint">Ou définir <code>SOBRIIT_API_KEY</code> côté serveur.</div>
           </div>
         </div>
       </fieldset>
@@ -923,6 +963,28 @@ $("btn-test-bridge").addEventListener("click", async () => {
 
 initBridge();
 
+// ── SobriIT toggle (show/hide URL+key fields) + localStorage persistence ──
+function setupSobriitToggle(checkboxId, fieldsId, urlId, keyId, lsPrefix) {
+  const cb = $(checkboxId), fields = $(fieldsId), urlEl = $(urlId), keyEl = $(keyId);
+  if (!cb || !fields) return;
+  // Restore from localStorage
+  try {
+    if (localStorage.getItem(lsPrefix + ".enabled") === "true") cb.checked = true;
+    if (urlEl) urlEl.value = localStorage.getItem(lsPrefix + ".url") || "";
+    if (keyEl) keyEl.value = localStorage.getItem(lsPrefix + ".key") || "";
+  } catch {}
+  const sync = () => {
+    fields.style.display = cb.checked ? "" : "none";
+    try { localStorage.setItem(lsPrefix + ".enabled", cb.checked); } catch {}
+  };
+  cb.addEventListener("change", sync);
+  sync();
+  if (urlEl) urlEl.addEventListener("input", () => { try { localStorage.setItem(lsPrefix + ".url", urlEl.value); } catch {} });
+  if (keyEl) keyEl.addEventListener("input", () => { try { localStorage.setItem(lsPrefix + ".key", keyEl.value); } catch {} });
+}
+setupSobriitToggle("send-to-sobriit", "sobriit-fields", "sobriit-base-url", "sobriit-api-key", "greenapi.sobriit.remote");
+setupSobriitToggle("loc-send-to-sobriit", "loc-sobriit-fields", "loc-sobriit-base-url", "loc-sobriit-api-key", "greenapi.sobriit.local");
+
 // ── Step 2 rendering ────────────────────────────────────────────
 function renderTargetsSummary(targets){
   $("targets-summary").innerHTML = targets.map(t => {
@@ -1029,6 +1091,9 @@ $("btn-analyze").addEventListener("click", async () => {
       swaggers: state.swaggers,
       bearer:  state.bearer,
       appname: state.appname || undefined,
+      sendToSobriit: $("send-to-sobriit")?.checked || false,
+      sobriitBaseUrl: $("sobriit-base-url")?.value?.trim() || undefined,
+      sobriitApiKey: $("sobriit-api-key")?.value?.trim() || undefined,
       endpoints: selected.map(r => ({
         target: r.target, method: r.method, path: r.path,
         calls: r.calls || 3,
@@ -1042,7 +1107,7 @@ $("btn-analyze").addEventListener("click", async () => {
     }
     state.report = data.report;
     clearStatus("status-2");
-    renderResults(data.report, data.config, data.log_tail);
+    renderResults(data.report, data.config, data.log_tail, data.sobriit);
   } catch (err) {
     setStatus("status-2","error","❌ " + (err.message || err));
     $("results-body").innerHTML = `<div class="empty"><div class="icon">💥</div><p>Échec de l'analyse — voir le message ci-dessus.</p></div>`;
@@ -1343,7 +1408,7 @@ function sgToggleHow(howId, btn){
   if (arrow) arrow.textContent = open ? "▲" : "▼";
 }
 
-function renderResults(envelope, cfg, log){
+function renderResults(envelope, cfg, log, sobriit){
   const report = (envelope && envelope.report) ? envelope.report : envelope;
   const gs = report.green_score || {};
   const total = gs.total ?? "?";
@@ -1397,6 +1462,16 @@ function renderResults(envelope, cfg, log){
 
   $("results-meta").textContent = `📅 ${ts} · ${disc.endpoints_measured||0}/${disc.endpoints_discovered||0} endpoints · repeat=${cfg?.repeat ?? "?"}`;
 
+  // SobriIT status banner
+  let sobriitHtml = "";
+  if (sobriit) {
+    if (sobriit.ok) {
+      sobriitHtml = `<div class="status success" style="margin-top:14px">📤 <strong>SobriIT</strong> : résultats envoyés avec succès (app: ${escHtml(sobriit.applicationId||"—")}, build: ${escHtml(sobriit.buildId||"—")})</div>`;
+    } else {
+      sobriitHtml = `<div class="status error" style="margin-top:14px">📤 <strong>SobriIT</strong> : échec de l'envoi — ${escHtml(sobriit.error||"erreur inconnue")}</div>`;
+    }
+  }
+
   $("results-body").innerHTML = `
     <div class="results-grid">
       <div class="score-card">
@@ -1445,6 +1520,7 @@ function renderResults(envelope, cfg, log){
       ${log ? `<details class="log" style="margin-top:14px"><summary>📜 Logs analyzer</summary><pre>${escHtml(log)}</pre></details>` : ""}
       </div>
     </details>
+    ${sobriitHtml}
   `;
 }
 
@@ -1665,6 +1741,9 @@ $("loc-btn-analyze").addEventListener("click", async () => {
       gitRepo, gitBranch, gitSubdir,
       stack, sourceDir, buildAndRun,
       consumerRegion, enableGeoip, cloudFootprintConfirmed,
+      sendToSobriit: $("loc-send-to-sobriit")?.checked || false,
+      sobriitBaseUrl: $("loc-sobriit-base-url")?.value?.trim() || undefined,
+      sobriitApiKey: $("loc-sobriit-api-key")?.value?.trim() || undefined,
     }, { timeoutMs: 10 * 60 * 1000 });   // 10 min — match server timeout
     if (!ok || !data.ok) {
       const detail = data.log ? `<details class="log"><summary>📜 Logs start.sh</summary><pre>${escHtml(data.log)}</pre></details>` : "";
@@ -1685,11 +1764,10 @@ $("loc-btn-analyze").addEventListener("click", async () => {
     state.localReport = data.report || null;
     renderLocalResults(data.report, data.creedengo, data.config, data.log_tail, {
       appname,
-      // True when the report (if requested) is fresh; null when not requested
-      // → suppresses the warning entirely on the front side.
       freshGS: !data.report ? false : data.report_fresh !== false,
       freshCD: !cdRequested ? null : (!data.creedengo ? false : data.creedengo_fresh !== false),
       cdRequested,
+      sobriit: data.sobriit,
     });
     setLocalStep(2);
   } catch (err) {
@@ -1891,6 +1969,17 @@ function renderLocalResults(report, creedengo, cfg, log, opts){
          <br><small>Vérifiez les logs <code>start.sh</code> ci-dessous pour comprendre pourquoi.</small>
        </div>`
     : "";
+  // SobriIT status banner (local tab)
+  let sobriitHtml = "";
+  if (opts?.sobriit) {
+    const s = opts.sobriit;
+    if (s.ok) {
+      sobriitHtml = `<div class="status success" style="margin-top:14px">📤 <strong>SobriIT</strong> : résultats envoyés avec succès (app: ${escHtml(s.applicationId||"—")}, build: ${escHtml(s.buildId||"—")})</div>`;
+    } else {
+      sobriitHtml = `<div class="status error" style="margin-top:14px">📤 <strong>SobriIT</strong> : échec de l'envoi — ${escHtml(s.error||"erreur inconnue")}</div>`;
+    }
+  }
+
   $("loc-results-body").innerHTML = warnHtml + `
     <div class="results-grid" style="grid-template-columns:1fr 1fr">
       ${gsCardHtml}
@@ -1935,6 +2024,7 @@ function renderLocalResults(report, creedengo, cfg, log, opts){
     </details>` : ""}
 
     ${log ? `<details class="log" style="margin-top:14px"><summary>📜 Logs start.sh</summary><pre>${escHtml(log)}</pre></details>` : ""}
+    ${sobriitHtml}
   `;
 }
 </script>
